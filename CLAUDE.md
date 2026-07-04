@@ -9,12 +9,14 @@ implementation plan (DB schema/RLS/Edge Functions) is at
 
 **Real and running:** Next.js app (App Router, TypeScript, Tailwind v4,
 shadcn/ui), bilingual routing (next-intl), role-based middleware, the real
-PhaDinCoffee brand theme (colors/font), and one real feature (Food Cost
-Calculator). `npm run build`/`npm run dev` work.
+PhaDinCoffee brand theme (colors/font), the Food Cost Calculator, and the
+full customer ordering flow (Menu/Cart/Checkout/Order Tracking) with a real
+client-side cart and mock data. `npm run build`/`npm run dev` work.
 
-**Still placeholder:** every other page renders only a translated heading —
-no real feature UI. **Not yet built:** Supabase database (migrations exist
-only as comment stubs), Edge Functions, Stripe/VNPay integration, Realtime.
+**Still placeholder:** staff pages (POS, Kitchen Display) and most admin
+pages (besides Food Cost) render only a translated heading. **Not yet
+built:** Supabase database (migrations exist only as comment stubs), Edge
+Functions, Stripe/VNPay integration, Realtime.
 
 ## Stack
 
@@ -125,6 +127,36 @@ via the `FoodCost` message namespace; uses the shared brand (brick red
 #B3341F, Be Vietnam Pro, shadcn components) rather than a separate palette.
 Responsive: 1-column mobile, 2-column tablet (≥768px), 3-column desktop
 (≥1024px) input grid; all interactive controls are ≥44px for touch.
+
+## Customer ordering flow (`/menu`, `/cart`, `/checkout`, `/orders/[orderId]`)
+
+Real, interactive pages ported from `design/stitch-exports/02-menu.html`
+through `05-order-tracking.html` — not placeholders. Components live in
+`components/customer/`. Shared layout: `(customer)/layout.tsx` renders
+`CustomerHeader` (brand bar) + `BottomNav` (tab bar that hides itself on
+`/checkout` and `/orders/[id]`, which have their own sticky action bar —
+matches the Stitch mockups' "Destination Rule" for focused pages).
+
+- `hooks/useCart.tsx` — real cart state (React Context + localStorage), not
+  mocked. `addItem`/`updateQuantity`/`removeItem`/`clear`, computed
+  `subtotal`/`itemCount`. Wrap any new customer page that needs cart access
+  in the existing `CartProvider` (already in the customer layout).
+- `lib/mock-data/menu.ts` — placeholder menu items/categories/sizes/modifiers
+  until `menu_items` etc. exist in Supabase. Uses `nameVi`/`nameEn` directly;
+  the planned DB schema only has one `name` column, so this needs a decision
+  later (translation columns vs. Vietnamese-only content).
+- Order Tracking (`components/customer/order-tracking.tsx`) shows a fixed
+  mock status regardless of the URL's `orderId` — no `orders` table or
+  Realtime yet. "Place Order" on Checkout clears the cart and navigates
+  there; it does not submit anything anywhere.
+- Item "photos" are lucide-react icon placeholders in a colored box, not
+  real images — the Stitch exports' image URLs point at Google's internal
+  AI-generation service and aren't stable to hardcode into the app.
+- **Gotcha:** this project's shadcn `Button` wraps **Base UI**
+  (`@base-ui/react/button`), not Radix — there is no `asChild` prop. For
+  polymorphic rendering (e.g. a `Button` that navigates), use Base UI's
+  `render` prop: `<Button render={<Link href="/x" />}>text</Button>`, not
+  `<Button asChild><Link>...</Link></Button>`.
 
 ## Database (`supabase/migrations/`)
 

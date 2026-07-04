@@ -12,11 +12,13 @@ intentionally works differently).
 
 ## Current status
 
-Next.js app is real, running, and now genuinely bilingual: every route is
-locale-prefixed (`/vi/...`, `/en/...`) via next-intl, with a working "VI |
-EN" toggle in the corner of every page. The first real (non-placeholder)
-feature is built: a Food Cost % Calculator at `/admin/food-cost`. Everything
-else is still a translated placeholder heading. No Supabase database yet.
+Next.js app is real, running, and genuinely bilingual (every route
+locale-prefixed, working "VI | EN" toggle), with the real brand theme wired
+in. Real (non-placeholder) features so far: Food Cost Calculator
+(`/admin/food-cost`) and the full customer ordering flow — Menu, Cart,
+Checkout, Order Tracking — all interactive with mock data and a working
+client-side cart. Staff and admin pages (besides Food Cost) are still
+translated placeholder headings. No Supabase database yet.
 
 ## Completed
 
@@ -129,25 +131,76 @@ default gray theme:
   to brand-consistent values even though unused yet (dashboard/admin nav
   will need them later) — avoids a second pass.
 
+## Customer ordering flow (FE priority #2, done: Menu/Cart/Checkout/Order Tracking)
+
+Ported from `design/stitch-exports/02-menu.html` through `05-order-tracking.html`
+into real, interactive components — not just translated headings like the
+rest of the app. All four pages share one `(customer)` layout with a
+branded header (`components/customer/header.tsx`) and a bottom tab bar
+(`components/customer/bottom-nav.tsx`) that hides itself on focused
+single-task pages (`/checkout`, `/orders/[id]`) to avoid competing with
+their own sticky action bar — matching the Stitch mockups' explicit
+"Destination Rule" for those two screens.
+
+- **Mock data, not Supabase** (menu_items/etc. don't exist yet): `lib/mock-data/menu.ts`
+  — 9 items across 4 categories, with sizes (S/M/L) and a milk modifier group on
+  some items. Uses `nameVi`/`nameEn` fields directly since the planned DB schema
+  (design spec Section 2) only has a single `name` column — worth deciding later
+  whether menu content itself needs translation columns, or whether only the app
+  chrome stays bilingual and menu item names are entered once.
+- **Real client-side cart**, not mocked: `hooks/useCart.tsx` — React Context +
+  localStorage persistence (hydrated client-side only, no SSR mismatch), add/
+  update-quantity/remove/clear, computed subtotal/itemCount. Used live by Menu
+  (add items, floating "View Cart" bar), Cart (edit quantities, remove, proceed),
+  Checkout (summary, total), and the bottom nav's cart badge.
+- **Menu** (`components/customer/menu-browser.tsx`): search, category filter chips,
+  tap-to-expand item cards with size/modifier selection and live price calc, direct
+  "+" add for simple items. Item images are icon placeholders in a colored box
+  (lucide-react `Coffee`/`CupSoda`/`Cookie`/`Milk`) — the Stitch exports' image URLs
+  are Google's internal AI-generation service, not stable/production URLs, so they
+  were deliberately not carried over. Swap for real photos when available.
+- **Cart** (`components/customer/cart-view.tsx`): line items with quantity steppers,
+  remove, subtotal/total, empty state, "Proceed to Checkout".
+- **Checkout** (`components/customer/checkout-view.tsx`): pickup/dine-in toggle
+  (mock table "04" when dine-in), pickup time select, order summary from real
+  cart state, mock loyalty redemption (150 pts balance, 50 pts = 10,000đ — matches
+  the Stitch example; real rates come from `loyalty_settings` once it exists),
+  payment method picker (Stripe/Cash/VNPay), sticky total bar. "Place Order"
+  clears the cart and navigates to `/orders/{mock-id}` — there's no orders table
+  yet, so this is a UI-only simulation of a successful order, not a real submission.
+- **Order Tracking** (`components/customer/order-tracking.tsx`): fixed mock status
+  ("Preparing", step 2 of 4) regardless of the `orderId` in the URL — becomes a
+  real Realtime-subscribed query once Supabase's `orders` table + trigger exist.
+  "Contact Shop" is a real `tel:` link (works without any backend).
+- **Gotcha for next time:** this project's shadcn `Button` is built on **Base UI**
+  (`@base-ui/react/button`), not Radix — it has no `asChild` prop. Polymorphic
+  rendering (e.g. a `Button` that's actually a `Link`) uses Base UI's `render`
+  prop instead: `<Button render={<Link href="/x" />}>text</Button>`. Caught by
+  a build error, not a runtime bug, but worth knowing before reaching for the
+  Radix pattern from habit.
+- Verified: `npm run build` succeeds (still 20 routes), and all 4 pages return
+  200 with correct bilingual server-rendered content on both `/vi/*` and `/en/*`.
+  Interactive behavior (add-to-cart, quantity steppers, place-order navigation)
+  was verified by code review and successful TypeScript compilation, not by
+  driving a real browser — no browser automation tool is available in this
+  environment, same limitation noted for the Food Cost Calculator earlier.
+
 ## Next steps (FE priority order, confirmed with user)
 
-1. Port remaining Stitch HTML exports (`design/stitch-exports/`) into real page
-   components, starting with the **customer flow** (Menu → Cart → Checkout →
-   Order Tracking), then **staff** (POS, Kitchen Display), then **admin**
-   (Dashboard, Menu, Inventory, Tables, Staff, Settings) — following the Food
-   Cost Calculator as the template: brand tokens now come for free from the
-   theme, translations in both `messages/vi.json` and `messages/en.json`,
-   shadcn components, lucide-react icons (already installed via shadcn, no
-   separate icon-package decision needed). Pages can use mock/hardcoded data
-   since Supabase doesn't exist yet.
+1. Port remaining Stitch pages: **staff** (POS, Kitchen Display), then **admin**
+   (Dashboard, Menu, Inventory, Tables, Staff, Settings) — same template as the
+   customer flow: mock data, real interactivity where sensible, both message
+   files updated together, `render` prop (not `asChild`) for polymorphic Buttons.
 2. Execute the DB schema/RLS/trigger/Edge Function tasks from the implementation
    plan (Tasks 3-11) — fully unaffected by the frontend/i18n work, can happen
-   in parallel with #1.
+   in parallel with #1. Once `menu_items`/`orders`/etc. exist, replace
+   `lib/mock-data/menu.ts` and the Order Tracking mock with real Supabase queries.
 3. Wire real Supabase env vars once local Supabase is running (`npx supabase start`)
    so middleware actually resolves roles instead of falling back to anonymous —
    this also unblocks direct (not just indirect) verification of bilingual
    rendering on auth-gated pages.
-4. Business logic (Stripe/VNPay integration, order placement, Realtime wiring).
+4. Business logic (Stripe/VNPay integration, real order placement, Realtime wiring
+   for order status and the Kitchen Display queue).
 5. Add Vitest/RTL test setup (skipped so far) — including a regression test for
    the force-dynamic/locale-caching bug so it can't silently reappear.
 6. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16 deprecation

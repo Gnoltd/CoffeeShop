@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { CheckoutView } from "@/components/customer/checkout-view"
 
 export default async function CheckoutPage() {
   const t = await getTranslations("Customer")
-  return <main className="p-8"><h1>{t("checkoutTitle")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("checkoutTitle")}</h1>
+      <CheckoutView />
+    </>
+  )
 }

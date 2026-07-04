@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { CartView } from "@/components/customer/cart-view"
 
 export default async function CartPage() {
   const t = await getTranslations("Customer")
-  return <main className="p-8"><h1>{t("cartTitle")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("cartTitle")}</h1>
+      <CartView />
+    </>
+  )
 }

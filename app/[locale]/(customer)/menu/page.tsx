@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { MenuBrowser } from "@/components/customer/menu-browser"
 
 export default async function MenuPage() {
   const t = await getTranslations("Customer")
-  return <main className="p-8"><h1>{t("menuTitle")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("menuTitle")}</h1>
+      <MenuBrowser />
+    </>
+  )
 }

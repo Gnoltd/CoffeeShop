@@ -1,4 +1,5 @@
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
+import { OrderTracking } from "@/components/customer/order-tracking"
 
 export default async function OrderTrackingPage({
   params,
@@ -7,10 +8,11 @@ export default async function OrderTrackingPage({
 }) {
   const { orderId } = await params
   const t = await getTranslations("Customer")
+  const locale = await getLocale()
   return (
-    <main className="p-8">
-      <h1>{t("orderTrackingTitle")}</h1>
-      <p>{t("orderIdLabel")}: {orderId}</p>
-    </main>
+    <>
+      <h1 className="sr-only">{t("orderTrackingTitle")}</h1>
+      <OrderTracking orderId={orderId} locale={locale} />
+    </>
   )
 }
