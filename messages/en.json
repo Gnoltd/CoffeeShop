@@ -201,6 +201,12 @@
     "birthdayBonus": "Birthday Bonus",
     "pointsUnit": "pts"
   },
+  "ProductDetail": {
+    "addToCart": "Add to Cart",
+    "reviewsTitle": "Reviews",
+    "reviewCount": "{count, plural, one {# review} other {# reviews}}",
+    "daysAgo": "{days, plural, one {# day ago} other {# days ago}}"
+  },
   "Pos": {
     "searchPlaceholder": "Search items...",
     "orderTitle": "Order",
@@ -259,7 +265,21 @@
     "available": "Status",
     "actions": "Actions",
     "inStock": "Active",
-    "outOfStock": "Inactive"
+    "outOfStock": "Inactive",
+    "nameViLabel": "Name (Vietnamese)",
+    "nameEnLabel": "Name (English)",
+    "categoryLabel": "Category",
+    "priceLabel": "Base Price (VND)",
+    "descriptionViLabel": "Description (Vietnamese)",
+    "descriptionEnLabel": "Description (English)",
+    "photoLabel": "Item Photo",
+    "dragDropText": "Drag and drop an image here, or",
+    "browseButton": "Browse from Computer",
+    "removeImage": "Remove image",
+    "availableToggle": "Available for sale",
+    "cancel": "Cancel",
+    "save": "Save Item",
+    "requiredFieldsError": "Please fill in name, price, and category."
   },
   "AdminInventory": {
     "title": "Inventory",

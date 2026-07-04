@@ -16,7 +16,11 @@ const NAV_ITEMS = [
 
 /** Focused, single-task pages hide the tab bar rather than compete with their own primary action. */
 function isFocusedPage(pathname: string): boolean {
-  return pathname === "/checkout" || (pathname.startsWith("/orders/") && pathname !== "/orders")
+  return (
+    pathname === "/checkout" ||
+    (pathname.startsWith("/orders/") && pathname !== "/orders") ||
+    (pathname.startsWith("/menu/") && pathname !== "/menu")
+  )
 }
 
 export function BottomNav() {

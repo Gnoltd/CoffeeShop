@@ -166,18 +166,20 @@ matches the Stitch mockups' "Destination Rule" for focused pages).
   dine-in badge shows the real table number and it's appended as
   `?table=` on the Order Tracking URL. Falls back to a fixed mock number
   only if Dine-in is picked manually without ever scanning a QR code.
-- Item "photos" are lucide-react icon placeholders in a colored box, not
-  real images — the Stitch exports' image URLs point at Google's internal
-  AI-generation service and aren't stable to hardcode into the app.
-- **Per-item order notes:** tapping a menu item's card (not the quick "+")
-  opens the customize panel, which now always includes a free-text note
-  field (e.g. "less sugar", "extra ice") regardless of whether the item has
-  sizes/modifiers — `CartItem.note` in `hooks/useCart.tsx`. Note is part of
-  `buildCartItemId`'s identity key, so adding the same drink twice with
+- Item "photos" are lucide-react icon placeholders in a colored box by
+  default — `MenuItem.imageUrl` (optional) overrides this with a real
+  `<img>` when set. No seed item ships with a photo (the Stitch exports'
+  image URLs point at Google's internal AI-generation service and aren't
+  stable to hardcode); real photos only exist for items an admin has
+  uploaded through the new Add Item form — see "Product Detail Page" below.
+- **Per-item order notes:** `CartItem.note` in `hooks/useCart.tsx`, entered
+  on the Product Detail Page (e.g. "less sugar", "extra ice"). Note is part
+  of `buildCartItemId`'s identity key, so adding the same drink twice with
   different notes creates two separate cart lines instead of merging and
   silently dropping one note. Shown in both Cart and Checkout's order
-  summary as "Note: {text}". The quick "+" one-tap add path never sets a
-  note (by design — it's the express lane for no-customization items).
+  summary as "Note: {text}". The quick "+" one-tap add on the Menu grid
+  never sets a note (by design — it's the express lane for
+  no-customization items, and skips the detail page entirely).
 - **Back button:** `components/customer/header.tsx` (`CustomerHeader`)
   takes an optional `showBack` prop; when true it renders
   `components/customer/back-button.tsx` (client, `router.back()`) to the
@@ -187,6 +189,30 @@ matches the Stitch mockups' "Destination Rule" for focused pages).
   sensible to go back to. This also fixed a real dead-end: Checkout and
   Order Tracking hide `BottomNav` (Destination Rule) and, before this,
   had no navigation at all once you were on them.
+## Product Detail Page (`/menu/[itemId]`)
+
+Each drink/item now has its own real page, per the approved Stitch design
+(project `4654820544595168289`, screen `bde2264a719d4f02b6086fa3d58d0c08`).
+Tapping a Menu grid card (`components/customer/menu-browser.tsx`) navigates
+here instead of the old inline expand-in-place panel — that panel is gone;
+size/modifier selection, the note field, and Add to Cart all live on this
+page now. The quick "+" one-tap add on the grid is unaffected (still adds
+directly for items with no sizes/modifiers, bypassing this page).
+
+- `components/customer/product-detail.tsx` (client) +
+  `app/[locale]/(customer)/menu/[itemId]/page.tsx` (looks up the item in
+  `lib/mock-data/menu.ts`, calls Next's `notFound()` for an unknown id).
+  Hides `BottomNav` (added to `bottom-nav.tsx`'s `isFocusedPage`) since it
+  has its own sticky Add-to-Cart bar — safe now that every customer page
+  has the header back button (see below), unlike when this Destination
+  Rule pattern was first introduced.
+- Rating/reviews are mock, not real: `MenuItem.rating`/`reviewCount` (per
+  item, in `lib/mock-data/menu.ts`) drive the star summary; the actual
+  review list is `lib/mock-data/reviews.ts` — **one shared set of 3 generic
+  reviews reused across every product**, not per-item content, and
+  deliberately read-only (no submit form) since a real review needs a
+  customer identity that doesn't exist yet. `components/customer/star-rating.tsx`
+  is the shared 5-star display, reused on both this page and the Menu grid.
 - **Gotcha:** this project's shadcn `Button` wraps **Base UI**
   (`@base-ui/react/button`), not Radix — there is no `asChild` prop. For
   polymorphic rendering (e.g. a `Button` that navigates), use Base UI's
@@ -296,16 +322,26 @@ header for the same reason as staff — no real auth data yet.
   Management reuses `lib/mock-data/menu.ts`; the rest define their mocks
   inline since nothing else needs them).
 - **Convention for not-yet-backed actions:** every "Add X" button
-  (Menu/Tables/Staff) is rendered `disabled` with an explanatory `title`
+  (Tables/Staff) is rendered `disabled` with an explanatory `title`
   tooltip ("Not implemented yet — no `<table>` to write to") rather than
   silently doing nothing or faking success — keep this pattern for any new
-  admin action that has no real table to persist to yet.
+  admin action that has no real table to persist to yet. **Menu's "Add New
+  Item" is the one exception** (see below) — adding to `MenuManagement`'s
+  own local item list needs no real table, so it's implemented for real
+  like the other local-state actions, not disabled.
 - Actions that only need **local** state (no persistence) are implemented
-  for real, not stubbed: Menu's availability toggle + delete, Inventory's
-  restock (increments stock and flips the status badge), Tables' rename
-  and QR token regeneration (via the shared `useTables()` hook — see
-  "Table identity flow" below), Staff's activate/deactivate toggle,
-  Settings' save (shows a real confirmation, doesn't persist).
+  for real, not stubbed: Menu's availability toggle + delete + **Add New
+  Item** (`components/admin/menu-item-form.tsx` — a real modal with a
+  working drag-and-drop/browse-from-computer image picker using
+  `URL.createObjectURL`; saved items are prepended to `MenuManagement`'s
+  local state with a real `imageUrl`, matching what the Menu grid and
+  Product Detail Page render for that item in the same browser session —
+  resets on reload, like every other admin mock mutation. No per-row
+  "Edit" yet — out of scope for this pass, same reasoning as before),
+  Inventory's restock (increments stock and flips the status badge),
+  Tables' rename and QR token regeneration (via the shared `useTables()`
+  hook — see "Table identity flow" below), Staff's activate/deactivate
+  toggle, Settings' save (shows a real confirmation, doesn't persist).
 - Dashboard's KPI numbers, chart, best-sellers, and low-stock table are
   fixed mock data matching the approved Stitch example values — no
   analytics query yet.

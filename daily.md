@@ -1,41 +1,43 @@
-# Today: Guest-logout decision, universal back button, per-item order notes
+# Today: Product Detail Page per drink + real admin image upload
 
 ## Task
 
-Three follow-ups from the user previewing the app live:
-1. Clarified Logout should return guests to `/menu`, not force `/login`
-   (customer routes are intentionally never auth-gated).
-2. User couldn't navigate out of Order History's drill-down — traced to
-   Checkout and Order Tracking hiding the bottom tab bar with zero
-   replacement navigation. Added a back button to every customer page.
-3. Added a free-text per-item note field ("less sugar", "extra ice") to
-   the Menu customize flow, shown through Cart and Checkout.
+User wanted each drink to have its own page (description, image, basic
+info, comments, rating) and an admin form to add a new product with an
+image picked from a local folder. Visualized both in Stitch first (user's
+explicit request) — Product Detail Page + Admin "Add New Item" modal with
+drag-and-drop upload — got approval, then built the real implementation.
 
 ## Context
 
-- Full details: `continuity.md` ("Back button + per-item order notes"
-  section), `CLAUDE.md` (same)
-- New: `components/customer/back-button.tsx`
-- Changed: `components/customer/header.tsx` (new `showBack` prop),
-  `app/[locale]/(customer)/layout.tsx`, `hooks/useCart.tsx` (new `note`
-  field), `components/customer/{menu-browser,cart-view,checkout-view,
-  profile-view}.tsx`
+- Full details: `continuity.md` ("Product Detail Page + Admin image
+  upload" section), `CLAUDE.md` (same)
+- New: `app/[locale]/(customer)/menu/[itemId]/page.tsx`,
+  `components/customer/{product-detail,star-rating}.tsx`,
+  `components/admin/menu-item-form.tsx`, `lib/mock-data/reviews.ts`
+- Changed: `lib/mock-data/menu.ts` (new `imageUrl`/`rating`/`reviewCount`
+  fields), `components/customer/menu-browser.tsx` (cards now navigate to
+  the detail page instead of expanding in place),
+  `components/customer/bottom-nav.tsx` (hides tab bar on `/menu/[id]`),
+  `components/admin/menu-management.tsx` (Add New Item is now real)
 
 ## Done when
 
-- `npm run build` succeeds, no type errors — done
-- curl confirms back button present on `/menu` and `/checkout`, absent on
-  `/` and `/login` — done
-- Note field translation keys present in the client message payload —
-  done; actual textarea interaction not click-tested (no browser
-  automation tool available in this environment, standing caveat)
-- Logout tooltip documents the intended guest-friendly behavior for when
-  Supabase Auth lands — done
+- `npm run build` succeeds, new `/menu/[itemId]` route present — done
+- curl confirms the detail page renders real content and an unknown item
+  id returns 404 — done
+- Admin's Add New Item button opens a real form with a working image
+  picker (drag-and-drop + browse), not disabled — done
+- Reviews are explicitly read-only (confirmed with the user — no customer
+  identity exists yet to attribute a real review to)
+- Not click-tested in a real browser (drag-and-drop, size/modifier
+  selection on the new page) — no browser automation tool available in
+  this environment, standing caveat for the whole project
 
 ## Next session
 
-Same as before: nothing left on the frontend that isn't a documented,
-intentional gap. Backend is next — Supabase DB schema/RLS/Edge Functions,
-then replace every mock data source with real queries (+ Realtime), then
-re-enable the disabled Login/Signup/Logout/Admin-Add buttons as their real
-tables/auth land.
+Still nothing left on the frontend that isn't a documented, intentional
+gap. Backend is next — Supabase DB schema/RLS/Edge Functions, then replace
+every mock data source (including the new reviews/ratings and the
+session-only uploaded images, which need Supabase Storage) with real
+queries.

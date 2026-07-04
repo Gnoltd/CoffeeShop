@@ -47,6 +47,11 @@ export type MenuItem = {
   isPopular?: boolean
   sizes?: MenuItemSize[]
   modifierGroups?: MenuModifierGroup[]
+  /** Real image (e.g. an admin's uploaded file, as an object URL) — falls back to the icon placeholder when unset. */
+  imageUrl?: string
+  /** Mock rating summary, 1-5 — no reviews table yet, see lib/mock-data/reviews.ts. */
+  rating?: number
+  reviewCount?: number
 }
 
 export type MenuCategory = {
@@ -93,6 +98,8 @@ export const menuItems: MenuItem[] = [
     isPopular: true,
     sizes: sizeOptions,
     modifierGroups: [milkModifierGroup],
+    rating: 4.6,
+    reviewCount: 128,
   },
   {
     id: "ca-phe-den",
@@ -105,6 +112,8 @@ export const menuItems: MenuItem[] = [
     icon: "coffee",
     isAvailable: true,
     sizes: sizeOptions,
+    rating: 4.3,
+    reviewCount: 64,
   },
   {
     id: "ca-phe-trung",
@@ -116,6 +125,8 @@ export const menuItems: MenuItem[] = [
     basePrice: 45000,
     icon: "coffee",
     isAvailable: true,
+    rating: 4.8,
+    reviewCount: 96,
   },
   {
     id: "bac-xiu",
@@ -128,6 +139,8 @@ export const menuItems: MenuItem[] = [
     icon: "milk",
     isAvailable: false,
     sizes: sizeOptions,
+    rating: 4.4,
+    reviewCount: 41,
   },
   {
     id: "tra-sen-vang",
@@ -140,6 +153,8 @@ export const menuItems: MenuItem[] = [
     icon: "cup-soda",
     isAvailable: true,
     sizes: sizeOptions,
+    rating: 4.5,
+    reviewCount: 57,
   },
   {
     id: "tra-vai",
@@ -151,6 +166,8 @@ export const menuItems: MenuItem[] = [
     basePrice: 35000,
     icon: "cup-soda",
     isAvailable: true,
+    rating: 4.2,
+    reviewCount: 33,
   },
   {
     id: "banh-mi-que",
@@ -162,6 +179,8 @@ export const menuItems: MenuItem[] = [
     basePrice: 19000,
     icon: "cookie",
     isAvailable: true,
+    rating: 4.1,
+    reviewCount: 22,
   },
   {
     id: "banh-croissant",
@@ -173,6 +192,8 @@ export const menuItems: MenuItem[] = [
     basePrice: 28000,
     icon: "cookie",
     isAvailable: true,
+    rating: 4.7,
+    reviewCount: 74,
   },
   {
     id: "ca-phe-da-xay",
@@ -185,5 +206,7 @@ export const menuItems: MenuItem[] = [
     icon: "cup-soda",
     isAvailable: true,
     sizes: sizeOptions,
+    rating: 4.5,
+    reviewCount: 48,
   },
 ]

@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
-import { menuCategories, menuItems as initialMenuItems, type MenuIcon } from "@/lib/mock-data/menu"
+import { menuCategories, menuItems as initialMenuItems, type MenuIcon, type MenuItem } from "@/lib/mock-data/menu"
+import { MenuItemForm } from "@/components/admin/menu-item-form"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -26,6 +27,7 @@ export function MenuManagement() {
   )
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [isAddingItem, setIsAddingItem] = useState(false)
 
   const categoryLabel = (id: string) => {
     const category = menuCategories.find((c) => c.id === id)
@@ -51,15 +53,25 @@ export function MenuManagement() {
     setItems((prev) => prev.filter((item) => item.id !== id))
   }
 
+  function addItem(item: MenuItem) {
+    setItems((prev) => [item, ...prev])
+    setAvailability((prev) => ({ ...prev, [item.id]: item.isAvailable }))
+    setIsAddingItem(false)
+  }
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
-        <Button className="h-10 gap-2" disabled title="Not implemented yet — no menu_items table to write to">
+        <Button className="h-10 gap-2" onClick={() => setIsAddingItem(true)}>
           <Plus className="h-4 w-4" />
           {t("addItem")}
         </Button>
       </div>
+
+      {isAddingItem && (
+        <MenuItemForm onCancel={() => setIsAddingItem(false)} onSave={addItem} />
+      )}
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative sm:max-w-xs">
@@ -120,9 +132,18 @@ export function MenuManagement() {
                 <tr key={item.id}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                        <Icon className="h-5 w-5" />
-                      </div>
+                      {item.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={item.imageUrl}
+                          alt=""
+                          className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                      )}
                       <div>
                         <p className="font-bold text-card-foreground">
                           {locale === "vi" ? item.nameVi : item.nameEn}

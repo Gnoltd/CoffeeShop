@@ -407,6 +407,43 @@ Two follow-up fixes from user feedback while previewing:
   on `/menu`/`/checkout` but not on `/` or `/login`, and the new
   translation keys are present in the client message payload.
 
+## Product Detail Page + Admin image upload (done)
+
+User asked for: each drink to have its own page (description, basic info,
+image, comments, rating), and an admin form to add a new product with an
+image picked from a local folder on the admin's PC. Design was visualized
+in Stitch first (per the user's explicit request) — two new screens: a
+Product Detail Page (with a real generated hero photo) and an Admin "Add
+New Item" modal with a drag-and-drop/browse image upload — both approved
+before any code was written.
+
+- `MenuItem` (`lib/mock-data/menu.ts`) gained optional `imageUrl`,
+  `rating`, `reviewCount` — all 9 seed items got a rating/review count;
+  none got a seed `imageUrl` (no stable real photo asset available for
+  them — see CLAUDE.md).
+- **Tapping a Menu card now navigates to `/menu/[itemId]`** instead of the
+  old inline expand-in-place customize panel, which is gone —
+  size/modifier picking, the note field, and Add to Cart all moved to the
+  new `components/customer/product-detail.tsx` page. The quick "+" one-tap
+  add for simple items is unaffected.
+- Reviews are shared/generic mock content (`lib/mock-data/reviews.ts`, 3
+  reviews reused on every product), explicitly **read-only** — confirmed
+  with the user rather than building a submit form, since a real review
+  needs a customer identity that doesn't exist yet.
+- **Admin Add New Item is now real**, not disabled: `components/admin/
+  menu-item-form.tsx` — bilingual name/description, category, price, and
+  a genuinely working image picker (drag-and-drop + native file browse via
+  a hidden `<input type="file">`, previewed with `URL.createObjectURL`).
+  Saved items are prepended to Admin Menu Management's local state with a
+  real image — the Menu grid and the new Product Detail Page both render
+  it. This is the first admin "Add X" button that's real instead of
+  disabled+tooltip, since — unlike Tables/Staff — adding to Menu
+  Management's own local array needs no real table.
+- Verified: `npm run build` clean (new `/menu/[itemId]` route present);
+  curl confirmed the detail page renders real content (name, Add to Cart,
+  a sample reviewer name), an unknown item id 404s, and the admin bypass
+  session still reaches the new Add Item button.
+
 ## Next steps
 
 The originally agreed FE priority order (theme → customer → staff → admin)

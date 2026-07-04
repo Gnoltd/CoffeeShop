@@ -201,6 +201,12 @@
     "birthdayBonus": "Thưởng Sinh Nhật",
     "pointsUnit": "điểm"
   },
+  "ProductDetail": {
+    "addToCart": "Thêm Vào Giỏ",
+    "reviewsTitle": "Đánh Giá",
+    "reviewCount": "{count} đánh giá",
+    "daysAgo": "{days} ngày trước"
+  },
   "Pos": {
     "searchPlaceholder": "Tìm kiếm món...",
     "orderTitle": "Hóa Đơn",
@@ -259,7 +265,21 @@
     "available": "Trạng Thái",
     "actions": "Hành Động",
     "inStock": "Đang Bán",
-    "outOfStock": "Ngừng Bán"
+    "outOfStock": "Ngừng Bán",
+    "nameViLabel": "Tên (Tiếng Việt)",
+    "nameEnLabel": "Tên (English)",
+    "categoryLabel": "Danh Mục",
+    "priceLabel": "Giá Cơ Bản (VNĐ)",
+    "descriptionViLabel": "Mô Tả (Tiếng Việt)",
+    "descriptionEnLabel": "Mô Tả (English)",
+    "photoLabel": "Hình Ảnh Món",
+    "dragDropText": "Kéo thả ảnh vào đây hoặc",
+    "browseButton": "Chọn Ảnh Từ Máy Tính",
+    "removeImage": "Xóa ảnh",
+    "availableToggle": "Đang Bán",
+    "cancel": "Hủy",
+    "save": "Lưu Món",
+    "requiredFieldsError": "Vui lòng nhập đầy đủ tên, giá và danh mục."
   },
   "AdminInventory": {
     "title": "Kho Hàng",
