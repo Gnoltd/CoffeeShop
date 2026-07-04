@@ -103,29 +103,52 @@ not live app content). Note: there is a separate, unrelated `PhaDinCoffee`
 project folder on the user's Desktop with its own Vite-based dev servers —
 untouched by this rename, just worth being aware of.
 
+## Theme wired (FE priority #1, done)
+
+`app/globals.css` now carries the real PhaDinCoffee brand instead of shadcn's
+default gray theme:
+- Colors (light): `--primary` brick red `#b3341f`, `--secondary` coffee brown
+  `#6f4e37`, `--accent` caramel `#c9a66b`, `--background` warm cream `#fff8f2`,
+  `--foreground` dark espresso `#3a2e22`, `--muted` `#f3e9dd`, `--border`/`--input`
+  `#e8dcc8`. `--destructive` is a distinct burnt orange-red `#c1440e` (not the
+  same hue as `--primary`, so "error" and "brand" don't visually collide).
+- A coherent `.dark` variant also defined (brightened primary `#e0533a` for
+  contrast on a dark espresso `#241b12` background) even though no dark-mode
+  toggle UI exists yet — keeps shadcn's expected structure consistent.
+- `--radius: 0.75rem` (12px, matches Stitch's `ROUND_TWELVE`).
+- Font switched from the default Geist to **Be Vietnam Pro** (`app/[locale]/layout.tsx`),
+  loaded with `subsets: ["latin", "vietnamese"]` for full diacritic coverage,
+  wired directly into the `--font-sans` CSS variable (the shadcn-generated
+  `--font-sans: var(--font-sans)` line in `@theme inline` was a circular
+  no-op until this — previously the app was silently falling back to the
+  system font stack instead of actually using a custom font).
+- Verified: compiled CSS output contains `--primary: #b3341f` (light) /
+  `#e0533a` (dark) and resolves `--font-sans` to `"Be Vietnam Pro"`; build
+  and dev server both clean, no errors.
+- Chart colors (`--chart-1..5`) and sidebar tokens (`--sidebar-*`) also set
+  to brand-consistent values even though unused yet (dashboard/admin nav
+  will need them later) — avoids a second pass.
+
 ## Next steps (FE priority order, confirmed with user)
 
-1. **Wire Stitch design tokens into the real app theme** — brick red/brown/cream
-   palette + Be Vietnam Pro into `app/globals.css`'s Tailwind v4 `@theme` block
-   (currently still shadcn's default gray theme). Do this before porting pages
-   so every subsequent page is on-brand from the start, not re-themed later.
-2. Port remaining Stitch HTML exports (`design/stitch-exports/`) into real page
+1. Port remaining Stitch HTML exports (`design/stitch-exports/`) into real page
    components, starting with the **customer flow** (Menu → Cart → Checkout →
    Order Tracking), then **staff** (POS, Kitchen Display), then **admin**
    (Dashboard, Menu, Inventory, Tables, Staff, Settings) — following the Food
-   Cost Calculator as the template: shared brand tokens, translations in both
-   `messages/vi.json` and `messages/en.json`, shadcn components, lucide-react
-   icons (already installed via shadcn, no separate icon-package decision needed).
-   Pages can use mock/hardcoded data since Supabase doesn't exist yet.
-3. Execute the DB schema/RLS/trigger/Edge Function tasks from the implementation
+   Cost Calculator as the template: brand tokens now come for free from the
+   theme, translations in both `messages/vi.json` and `messages/en.json`,
+   shadcn components, lucide-react icons (already installed via shadcn, no
+   separate icon-package decision needed). Pages can use mock/hardcoded data
+   since Supabase doesn't exist yet.
+2. Execute the DB schema/RLS/trigger/Edge Function tasks from the implementation
    plan (Tasks 3-11) — fully unaffected by the frontend/i18n work, can happen
-   in parallel with #1-2.
-4. Wire real Supabase env vars once local Supabase is running (`npx supabase start`)
+   in parallel with #1.
+3. Wire real Supabase env vars once local Supabase is running (`npx supabase start`)
    so middleware actually resolves roles instead of falling back to anonymous —
    this also unblocks direct (not just indirect) verification of bilingual
    rendering on auth-gated pages.
-5. Business logic (Stripe/VNPay integration, order placement, Realtime wiring).
-6. Add Vitest/RTL test setup (skipped so far) — including a regression test for
+4. Business logic (Stripe/VNPay integration, order placement, Realtime wiring).
+5. Add Vitest/RTL test setup (skipped so far) — including a regression test for
    the force-dynamic/locale-caching bug so it can't silently reappear.
-7. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16 deprecation
+6. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16 deprecation
    warning, non-blocking).

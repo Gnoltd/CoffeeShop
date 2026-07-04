@@ -8,8 +8,9 @@ implementation plan (DB schema/RLS/Edge Functions) is at
 ## Current reality vs. planned
 
 **Real and running:** Next.js app (App Router, TypeScript, Tailwind v4,
-shadcn/ui), bilingual routing (next-intl), role-based middleware, and one
-real feature (Food Cost Calculator). `npm run build`/`npm run dev` work.
+shadcn/ui), bilingual routing (next-intl), role-based middleware, the real
+PhaDinCoffee brand theme (colors/font), and one real feature (Food Cost
+Calculator). `npm run build`/`npm run dev` work.
 
 **Still placeholder:** every other page renders only a translated heading —
 no real feature UI. **Not yet built:** Supabase database (migrations exist
@@ -68,6 +69,25 @@ Admin = Manager + staff accounts/roles + shop/loyalty settings.
 - Vietnamese-locale formatting helpers: `lib/format.ts` (`formatVND` →
   `"1.500.000đ"`, `formatNumber`, `formatDateVN` → `DD/MM/YYYY`,
   `formatPhoneVN`).
+
+## Theme (`app/globals.css`)
+
+Brand tokens wired into shadcn's Tailwind v4 CSS-variable theme (no
+`tailwind.config.ts` — Tailwind v4 uses `@theme`/`:root` in CSS). Source of
+truth: `design/stitch-exports/` (Stitch design system "Highland Red & Brown
+Coffee"). Key tokens (light mode): `--primary` `#b3341f` (brick red),
+`--secondary` `#6f4e37` (coffee brown), `--accent` `#c9a66b` (caramel),
+`--background` `#fff8f2` (warm cream), `--foreground` `#3a2e22` (dark
+espresso). `--destructive` (`#c1440e`, burnt orange-red) is deliberately a
+different hue from `--primary` so brand red and error red don't look the
+same. `--radius: 0.75rem` (12px). A `.dark` variant exists (brightened
+primary `#e0533a` on dark espresso background) even with no dark-mode
+toggle built yet, to keep shadcn's expected structure complete. Font is
+**Be Vietnam Pro** (`app/[locale]/layout.tsx`, `subsets: ["latin", "vietnamese"]`),
+wired directly to the `--font-sans` variable — don't reintroduce Geist.
+When adding new UI, use the semantic Tailwind classes (`bg-primary`,
+`text-muted-foreground`, `border-border`, etc.) rather than hardcoding hex
+values, so a future palette change stays a one-file edit.
 
 ## Route map
 
