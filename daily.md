@@ -1,30 +1,33 @@
-# Today: Customer ordering flow built
+# Today: Staff pages built (POS, Kitchen Display)
 
 ## Task
 
-Ported the customer ordering flow (Menu → Cart → Checkout → Order Tracking)
-from the approved Stitch designs into real, interactive Next.js pages —
-not placeholders. Built a real client-side cart (React Context +
-localStorage) and mock menu data since Supabase doesn't exist yet.
+Ported the two staff pages (POS terminal, Kitchen Display) from the
+approved Stitch designs into real, interactive Next.js pages, simplifying
+the mockups' sidebar chrome (staff photo, shift stats) since it needs real
+auth data that doesn't exist yet. Both reuse the customer flow's mock menu
+data and patterns (real interactivity, both message files, Base UI's
+`render` prop not `asChild`).
 
 ## Context
 
-- Full details: `continuity.md` ("Customer ordering flow" section), `CLAUDE.md`
-  (same section name)
-- Design source: `design/stitch-exports/02-menu.html` through `05-order-tracking.html`
-- New files: `hooks/useCart.tsx`, `lib/mock-data/menu.ts`,
-  `components/customer/{header,bottom-nav,menu-browser,cart-view,checkout-view,order-tracking}.tsx`
+- Full details: `continuity.md` ("Staff pages" section), `CLAUDE.md` (same
+  section name)
+- Design source: `design/stitch-exports/10-staff-pos.html`,
+  `11-staff-kitchen-display.html`
+- New files: `components/staff/{staff-nav,pos-terminal,kitchen-display}.tsx`
 
 ## Done when
 
 - `npm run build` succeeds, still 20 routes — done
-- All 4 pages return 200 with correct bilingual content on both `/vi/*` and
-  `/en/*` — done, verified with curl
-- Add-to-cart → view cart → checkout → place order → order tracking is a
-  complete, navigable flow (cart persists via localStorage, "Place Order"
-  clears it and redirects to a mock order tracking page) — done by code
-  review + successful build; not click-tested in a real browser (no
-  browser automation tool available in this environment)
-- Next session starts on: staff pages (POS, Kitchen Display), then admin
-  pages, using this session's pattern (mock data, real interactivity,
-  both message files updated together, Base UI's `render` prop not `asChild`)
+- Anonymous visitors still redirect from `/staff/pos` and `/staff/orders` to
+  `/login` (regression check that these changes didn't weaken the auth gate)
+  — done, verified with curl
+- POS: category filter, item grid, order-building sidebar with quantity
+  steppers, order type/payment selection, tax calc, charge button — done by
+  code review + successful build; not click-tested against a real
+  authenticated session (no live Supabase, no browser automation tool)
+- Kitchen Display: 3-column board with real ticking timers and working
+  status-advance buttons — same verification caveat as POS
+- Next session starts on: admin pages (Dashboard, Menu, Inventory, Tables,
+  Staff, Settings) — the last set of pages in the agreed FE priority order

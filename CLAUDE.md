@@ -9,14 +9,15 @@ implementation plan (DB schema/RLS/Edge Functions) is at
 
 **Real and running:** Next.js app (App Router, TypeScript, Tailwind v4,
 shadcn/ui), bilingual routing (next-intl), role-based middleware, the real
-PhaDinCoffee brand theme (colors/font), the Food Cost Calculator, and the
-full customer ordering flow (Menu/Cart/Checkout/Order Tracking) with a real
-client-side cart and mock data. `npm run build`/`npm run dev` work.
+PhaDinCoffee brand theme (colors/font), the Food Cost Calculator, the full
+customer ordering flow (Menu/Cart/Checkout/Order Tracking) with a real
+client-side cart, and both staff pages (POS, Kitchen Display) — all with
+mock data. `npm run build`/`npm run dev` work.
 
-**Still placeholder:** staff pages (POS, Kitchen Display) and most admin
-pages (besides Food Cost) render only a translated heading. **Not yet
-built:** Supabase database (migrations exist only as comment stubs), Edge
-Functions, Stripe/VNPay integration, Realtime.
+**Still placeholder:** admin pages besides Food Cost (Dashboard, Menu,
+Inventory, Tables, Staff, Settings) render only a translated heading. **Not
+yet built:** Supabase database (migrations exist only as comment stubs),
+Edge Functions, Stripe/VNPay integration, Realtime.
 
 ## Stack
 
@@ -157,6 +158,30 @@ matches the Stitch mockups' "Destination Rule" for focused pages).
   polymorphic rendering (e.g. a `Button` that navigates), use Base UI's
   `render` prop: `<Button render={<Link href="/x" />}>text</Button>`, not
   `<Button asChild><Link>...</Link></Button>`.
+
+## Staff pages (`/staff/pos`, `/staff/orders`)
+
+Real, interactive pages ported from `design/stitch-exports/10-staff-pos.html`
+and `11-staff-kitchen-display.html`, simplified to drop chrome that needs
+real auth data (staff photo/name, shift stats) we don't have yet. Shared nav:
+`components/staff/staff-nav.tsx` (brand name + POS/Kitchen Display links).
+
+- **POS** (`components/staff/pos-terminal.tsx`) reuses `lib/mock-data/menu.ts`
+  (same menu source as the customer app). Tapping an item adds it at base
+  price directly — there is no size/modifier picker here yet, unlike the
+  customer Menu page; that's a known gap, not an oversight, tracked in
+  continuity.md. Local component state only (not `useCart` — POS is a
+  separate staff-side transaction, not a shared persisted cart).
+- **Kitchen Display** (`components/staff/kitchen-display.tsx`) is a 3-column
+  board (New/Preparing/Ready) with a real ticking elapsed-time counter per
+  order (`setInterval`). Advancing an order is local state only — becomes a
+  Realtime subscription on `orders` once that table exists (design spec
+  Section 3d).
+- Both routes are still gated by the existing `/staff/*` middleware rule
+  (staff|manager|admin) — confirmed the gate itself wasn't broken by these
+  changes, but couldn't verify the pages' own rendering against a real
+  authenticated session (no live Supabase yet, and no browser automation
+  tool in this environment) — same caveat as the Food Cost Calculator.
 
 ## Database (`supabase/migrations/`)
 

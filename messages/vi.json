@@ -111,6 +111,33 @@
     "total": "Tổng Cộng",
     "contactShop": "Liên Hệ Cửa Hàng"
   },
+  "Pos": {
+    "searchPlaceholder": "Tìm kiếm món...",
+    "orderTitle": "Hóa Đơn",
+    "clearOrder": "Xóa Đơn",
+    "emptyOrder": "Chưa có món nào trong đơn.",
+    "type": "Loại",
+    "dineIn": "Tại Bàn",
+    "takeaway": "Mang Đi",
+    "table": "Bàn",
+    "payment": "Thanh Toán",
+    "payCash": "Tiền Mặt",
+    "payCard": "Thẻ",
+    "subtotal": "Tạm Tính",
+    "tax": "Thuế (8%)",
+    "charge": "Thanh Toán"
+  },
+  "KitchenDisplay": {
+    "columnNew": "Mới",
+    "columnPreparing": "Đang Pha Chế",
+    "columnReady": "Sẵn Sàng",
+    "pickup": "Mang Đi",
+    "table": "Bàn {table}",
+    "startPreparing": "Bắt Đầu",
+    "markReady": "Hoàn Thành",
+    "complete": "Xong",
+    "empty": "Không có đơn hàng."
+  },
   "FoodCost": {
     "title": "Tính Tỷ Lệ Chi Phí Thực Phẩm",
     "subtitle": "Công thức: (Tồn đầu kỳ + Mua hàng - Tồn cuối kỳ) / Doanh thu món ăn × 100",

@@ -111,6 +111,33 @@
     "total": "Total",
     "contactShop": "Contact Shop"
   },
+  "Pos": {
+    "searchPlaceholder": "Search items...",
+    "orderTitle": "Order",
+    "clearOrder": "Clear Order",
+    "emptyOrder": "No items in this order yet.",
+    "type": "Type",
+    "dineIn": "Dine-in",
+    "takeaway": "Takeaway",
+    "table": "Table",
+    "payment": "Payment",
+    "payCash": "Cash",
+    "payCard": "Card",
+    "subtotal": "Subtotal",
+    "tax": "Tax (8%)",
+    "charge": "Charge"
+  },
+  "KitchenDisplay": {
+    "columnNew": "New",
+    "columnPreparing": "Preparing",
+    "columnReady": "Ready",
+    "pickup": "Pickup",
+    "table": "Table {table}",
+    "startPreparing": "Start",
+    "markReady": "Mark Ready",
+    "complete": "Complete",
+    "empty": "No orders."
+  },
   "FoodCost": {
     "title": "Food Cost Percentage Calculator",
     "subtitle": "Formula: (Beginning Inventory + Purchases - Ending Inventory) / Food Sales x 100",

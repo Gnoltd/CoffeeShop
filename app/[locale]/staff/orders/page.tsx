@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { KitchenDisplay } from "@/components/staff/kitchen-display"
 
 export default async function KitchenDisplayPage() {
   const t = await getTranslations("Staff")
-  return <main className="p-8"><h1>{t("kitchenDisplayTitle")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("kitchenDisplayTitle")}</h1>
+      <KitchenDisplay />
+    </>
+  )
 }

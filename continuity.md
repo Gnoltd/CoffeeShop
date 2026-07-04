@@ -15,9 +15,9 @@ intentionally works differently).
 Next.js app is real, running, and genuinely bilingual (every route
 locale-prefixed, working "VI | EN" toggle), with the real brand theme wired
 in. Real (non-placeholder) features so far: Food Cost Calculator
-(`/admin/food-cost`) and the full customer ordering flow — Menu, Cart,
-Checkout, Order Tracking — all interactive with mock data and a working
-client-side cart. Staff and admin pages (besides Food Cost) are still
+(`/admin/food-cost`), the full customer ordering flow (Menu, Cart, Checkout,
+Order Tracking), and both staff pages (POS, Kitchen Display) — all
+interactive with mock data. Admin pages (besides Food Cost) are still
 translated placeholder headings. No Supabase database yet.
 
 ## Completed
@@ -185,23 +185,57 @@ their own sticky action bar — matching the Stitch mockups' explicit
   driving a real browser — no browser automation tool is available in this
   environment, same limitation noted for the Food Cost Calculator earlier.
 
+## Staff pages (FE priority #3, done: POS, Kitchen Display)
+
+Ported from `design/stitch-exports/10-staff-pos.html` and `11-staff-kitchen-display.html`.
+Simplified relative to the mockups: dropped the elaborate left sidebar (staff
+photo/name, shift stats, settings/logout) since that needs real auth data we
+don't have — replaced with one shared top nav (`components/staff/staff-nav.tsx`,
+brand name + POS/Kitchen Display links with active state) used by both pages.
+
+- **POS** (`components/staff/pos-terminal.tsx`): reuses `lib/mock-data/menu.ts`
+  (same source as the customer Menu — one shop, one menu). Search, category
+  tabs, item grid; tapping an item adds it at base price directly (no
+  size/modifier picker in this pass — a real gap for drinks that need
+  customization, noted for later, not silently ignored). Right sidebar:
+  order lines with quantity steppers, dine-in/takeaway toggle with a mock
+  table picker, payment method (Cash/Card/VNPay), subtotal + 8% mock tax,
+  "Charge" button that clears the order (no orders table yet, so this
+  simulates a completed sale rather than submitting anything).
+- **Kitchen Display** (`components/staff/kitchen-display.tsx`): 3-column
+  board (New/Preparing/Ready) seeded with 4 fixed mock orders, each with a
+  real ticking elapsed-time counter (`setInterval`, not static). Tapping an
+  order's action button advances it to the next column (or removes it after
+  "Complete") via local state — no Realtime subscription yet; becomes one
+  once the `orders` table + Realtime exist, per the design spec's Section 3d.
+- Both pages are behind the existing `/staff/*` role gate (staff|manager|admin)
+  — verified the gate itself still redirects anonymous visitors correctly
+  after these changes (regression check), but the pages' own rendering was
+  verified by successful build/type-check and code review only, same
+  limitation as POS/Food-Cost/customer-flow: no browser automation tool
+  available to click-test an authenticated session, and no live Supabase to
+  authenticate against yet.
+
 ## Next steps (FE priority order, confirmed with user)
 
-1. Port remaining Stitch pages: **staff** (POS, Kitchen Display), then **admin**
-   (Dashboard, Menu, Inventory, Tables, Staff, Settings) — same template as the
-   customer flow: mock data, real interactivity where sensible, both message
-   files updated together, `render` prop (not `asChild`) for polymorphic Buttons.
+1. Port remaining Stitch pages: **admin** (Dashboard, Menu, Inventory,
+   Tables, Staff, Settings) — same template as customer/staff: mock data,
+   real interactivity where sensible, both message files updated together,
+   `render` prop (not `asChild`) for polymorphic Buttons.
 2. Execute the DB schema/RLS/trigger/Edge Function tasks from the implementation
    plan (Tasks 3-11) — fully unaffected by the frontend/i18n work, can happen
    in parallel with #1. Once `menu_items`/`orders`/etc. exist, replace
-   `lib/mock-data/menu.ts` and the Order Tracking mock with real Supabase queries.
+   `lib/mock-data/menu.ts` and the Order Tracking / Kitchen Display mocks with
+   real Supabase queries (+ Realtime for the latter two).
 3. Wire real Supabase env vars once local Supabase is running (`npx supabase start`)
    so middleware actually resolves roles instead of falling back to anonymous —
    this also unblocks direct (not just indirect) verification of bilingual
-   rendering on auth-gated pages.
+   rendering and interactivity on auth-gated pages (POS, Kitchen Display, admin).
 4. Business logic (Stripe/VNPay integration, real order placement, Realtime wiring
    for order status and the Kitchen Display queue).
-5. Add Vitest/RTL test setup (skipped so far) — including a regression test for
+5. Revisit POS to add size/modifier selection for items that have it (currently
+   adds at base price only — see "Staff pages" above).
+6. Add Vitest/RTL test setup (skipped so far) — including a regression test for
    the force-dynamic/locale-caching bug so it can't silently reappear.
-6. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16 deprecation
+7. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16 deprecation
    warning, non-blocking).

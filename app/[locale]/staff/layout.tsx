@@ -1,14 +1,10 @@
-import { getTranslations } from "next-intl/server"
+import { StaffNav } from "@/components/staff/staff-nav"
 
-export default async function StaffLayout({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations("Nav")
+export default function StaffLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <nav className="p-4 border-b flex gap-4">
-        <span>{t("pos")}</span>
-        <span>{t("kitchenDisplay")}</span>
-      </nav>
-      {children}
+    <div className="flex h-screen flex-col overflow-hidden">
+      <StaffNav />
+      <div className="flex-1 overflow-hidden">{children}</div>
     </div>
   )
 }
