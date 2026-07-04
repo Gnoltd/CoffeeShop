@@ -28,7 +28,15 @@ const MOCK_SUBTOTAL = 65000
 const MOCK_DISCOUNT = 5000
 const MOCK_TOTAL = MOCK_SUBTOTAL - MOCK_DISCOUNT
 
-export async function OrderTracking({ orderId, locale }: { orderId: string; locale: string }) {
+export async function OrderTracking({
+  orderId,
+  locale,
+  table,
+}: {
+  orderId: string
+  locale: string
+  table?: string
+}) {
   const t = await getTranslations("OrderTracking")
   const progressPercent = (MOCK_CURRENT_STEP / (STEPS.length - 1)) * 100
 
@@ -87,7 +95,7 @@ export async function OrderTracking({ orderId, locale }: { orderId: string; loca
             <TableIcon className="h-5 w-5" />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-card-foreground">{t("tableLabel", { table: "04" })}</h4>
+            <h4 className="text-sm font-bold text-card-foreground">{t("tableLabel", { table: table ?? "04" })}</h4>
             <p className="text-xs text-muted-foreground">{t("dineInBadge")}</p>
           </div>
         </div>

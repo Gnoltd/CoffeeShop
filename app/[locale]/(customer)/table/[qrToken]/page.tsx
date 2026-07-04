@@ -1,4 +1,5 @@
 import { getTranslations } from "next-intl/server"
+import { TableLanding } from "@/components/customer/table-landing"
 
 export default async function TableOrderPage({
   params,
@@ -8,9 +9,9 @@ export default async function TableOrderPage({
   const { qrToken } = await params
   const t = await getTranslations("Customer")
   return (
-    <main className="p-8">
-      <h1>{t("tableOrderTitle")}</h1>
-      <p>{t("tableTokenLabel")}: {qrToken}</p>
-    </main>
+    <>
+      <h1 className="sr-only">{t("tableOrderTitle")}</h1>
+      <TableLanding qrToken={qrToken} />
+    </>
   )
 }

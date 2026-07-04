@@ -111,6 +111,15 @@
     "total": "Total",
     "contactShop": "Contact Shop"
   },
+  "TableLanding": {
+    "orderingAt": "You're ordering at",
+    "tableName": "Table {number}",
+    "servedHere": "Your order will be served at this table",
+    "viewMenu": "View Menu",
+    "invalidTitle": "Invalid Table Code",
+    "invalidMessage": "Please scan the QR code on your table again or ask staff for help.",
+    "backToMenu": "Back to Menu"
+  },
   "Pos": {
     "searchPlaceholder": "Search items...",
     "orderTitle": "Order",
@@ -187,7 +196,10 @@
     "addTable": "Add New Table",
     "table": "Table",
     "downloadQr": "Download QR",
-    "regenerateCode": "Regenerate Code"
+    "regenerateCode": "Regenerate Code",
+    "rename": "Rename Table",
+    "save": "Save",
+    "cancel": "Cancel"
   },
   "AdminStaff": {
     "title": "Staff Accounts",

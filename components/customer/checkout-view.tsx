@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart } from "@/hooks/useCart"
+import { useTables } from "@/hooks/useTables"
 
 /**
  * Loyalty numbers are mocked (no loyalty_settings table yet — see
@@ -19,7 +20,8 @@ import { useCart } from "@/hooks/useCart"
 const MOCK_POINTS_BALANCE = 150
 const MOCK_REDEEM_POINTS = 50
 const MOCK_REDEEM_AMOUNT = 10000
-const MOCK_TABLE_NUMBER = "04"
+/** Fallback shown only when Dine-in is picked manually without scanning a table's QR code first. */
+const FALLBACK_TABLE_NUMBER = "04"
 
 type OrderType = "pickup" | "dine-in"
 type PaymentMethod = "stripe" | "cash" | "vnpay"
@@ -34,12 +36,14 @@ export function CheckoutView() {
   const t = useTranslations("Checkout")
   const router = useRouter()
   const { items, subtotal, clear } = useCart()
+  const { activeTable } = useTables()
 
-  const [orderType, setOrderType] = useState<OrderType>("pickup")
+  const [orderType, setOrderType] = useState<OrderType>(activeTable ? "dine-in" : "pickup")
   const [pickupTime, setPickupTime] = useState("asap")
   const [redeemLoyalty, setRedeemLoyalty] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null)
 
+  const tableNumber = activeTable?.number ?? FALLBACK_TABLE_NUMBER
   const discount = redeemLoyalty ? MOCK_REDEEM_AMOUNT : 0
   const total = Math.max(subtotal - discount, 0)
 
@@ -47,7 +51,11 @@ export function CheckoutView() {
     if (items.length === 0 || !paymentMethod) return
     const mockOrderId = `PDC-${Math.floor(1000 + Math.random() * 9000)}`
     clear()
-    router.push(`/orders/${mockOrderId}`)
+    if (orderType === "dine-in") {
+      router.push(`/orders/${mockOrderId}?table=${encodeURIComponent(tableNumber)}`)
+    } else {
+      router.push(`/orders/${mockOrderId}`)
+    }
   }
 
   if (items.length === 0) {
@@ -94,7 +102,7 @@ export function CheckoutView() {
         {orderType === "dine-in" && (
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/20 px-3 py-1.5 text-sm text-accent-foreground">
             <TableIcon className="h-4 w-4" />
-            {t("table")}: <strong>{MOCK_TABLE_NUMBER}</strong>
+            {t("table")}: <strong>{tableNumber}</strong>
           </div>
         )}
       </section>

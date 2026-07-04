@@ -247,9 +247,13 @@ Food Cost Calculator still renders correctly inside this new sidebar shell
   trail yet since there's no DB.
 - **Tables** (`components/admin/tables-management.tsx`): grid of table
   cards with a QR-icon placeholder (no real QR image — no `qr_code_token`
-  from a `tables` table yet), a working "Regenerate Code" that swaps in a
-  new random mock token, and a disabled "Download QR" (nothing real to
-  download) / disabled "Add Table" (same reasoning as Menu's Add button).
+  from a `tables` table yet), a real inline rename (pencil → input →
+  save/cancel, highlighted border while editing) and a working
+  "Regenerate Code" that swaps in a new random mock token — both now
+  backed by the shared `hooks/useTables.tsx` hook rather than local state
+  (see "Table identity flow" section below), plus a disabled "Download QR"
+  (nothing real to download) / disabled "Add Table" (same reasoning as
+  Menu's Add button).
 - **Staff Accounts** (`components/admin/staff-accounts.tsx`): table with
   role badges (Admin/Manager/Staff, color-coded) and a working
   activate/deactivate toggle (local state) — "Add Staff" disabled, same
@@ -266,6 +270,54 @@ Food Cost Calculator still renders correctly inside this new sidebar shell
   verified the gate still works for every admin route after the layout
   change, same rendering-verification caveat as customer/staff pages (no
   live Supabase session, no browser automation tool here).
+
+## Table identity flow (done: rename → QR scan → checkout → order tracking)
+
+Answers the user's question "can I rename the table and if a customer
+scans the QR will the status show they ordered at that table?" — yes, and
+it's now wired for real (client-side; no `tables` table yet). Visualized
+in Stitch first per the user's request (two new approved screens: Table QR
+Landing, Admin Tables rename state) before any real UI was built.
+
+- New shared hook `hooks/useTables.tsx` (`TablesProvider` + `useTables()`),
+  mounted once in `app/[locale]/layout.tsx` around the whole app so admin
+  and customer sides read/write the same table list and "active table"
+  session. Both persist to `localStorage`
+  (`phadincoffee-tables`, `phadincoffee-active-table`), same hydrate-safe
+  pattern as `useCart`. Seeded with demo tokens `table-1`..`table-6` so the
+  flow is directly testable by visiting `/vi/table/table-1`.
+- New `components/customer/table-landing.tsx` (client) behind
+  `/table/[qrToken]` (`app/[locale]/(customer)/table/[qrToken]/page.tsx`,
+  rewritten — was a placeholder printing the raw token): resolves the
+  token via `setActiveTableByToken`, shows "You're ordering at Table N" +
+  "View Menu" on success, or an "Invalid Table Code" screen with a link
+  back to the menu if the token doesn't match any table.
+- `components/customer/checkout-view.tsx` now reads `activeTable` from
+  `useTables()`: shows the real table number in the dine-in badge, and
+  appends it as `?table=` on the Order Tracking URL when placing a dine-in
+  order. Falls back to a fixed mock number only if a customer picks
+  Dine-in manually without ever scanning a QR code.
+- `components/customer/order-tracking.tsx` (+ its page, which now also
+  reads `searchParams`) accepts a real optional `table` prop and displays
+  it instead of the old hardcoded "04" when present.
+- `components/admin/tables-management.tsx` rewritten to consume
+  `useTables()` instead of local `useState` — renaming a table here is
+  immediately what a customer sees after scanning that table's QR code.
+- New translation keys added to both `messages/vi.json` and
+  `messages/en.json`: `AdminTables.{rename,save,cancel}`, and a new
+  `TableLanding` namespace (`orderingAt`, `tableName`, `servedHere`,
+  `viewMenu`, `invalidTitle`, `invalidMessage`, `backToMenu`).
+- Verified: `npm run build` succeeds (still 20 routes, no TypeScript
+  errors); dev-server curl checks confirmed `/vi/table/table-1` and
+  `/en/table/table-2` render, `/vi/orders/PDC-1234?table=7` shows
+  "Bàn số 7" while the no-param URL still shows the "Bàn số 04" fallback,
+  and the `/admin/*` anonymous-redirect gate is unaffected (still 307 to
+  `/vi/login`). Interactive rename/scan behavior itself wasn't
+  click-tested in a real browser — no browser automation tool available in
+  this environment, same caveat as every other page.
+- Known gap, documented not hidden: regenerating a table's QR token
+  doesn't invalidate an already-active session client-side. Becomes moot
+  once real `tables` rows + RLS + Realtime exist.
 
 ## Next steps
 

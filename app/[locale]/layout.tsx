@@ -5,6 +5,7 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { Be_Vietnam_Pro } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
+import { TablesProvider } from "@/hooks/useTables";
 import "../globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -43,10 +44,12 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <div className="fixed top-2 right-2 z-50">
-            <LanguageSwitcher />
-          </div>
-          {children}
+          <TablesProvider>
+            <div className="fixed top-2 right-2 z-50">
+              <LanguageSwitcher />
+            </div>
+            {children}
+          </TablesProvider>
         </NextIntlClientProvider>
       </body>
     </html>

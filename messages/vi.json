@@ -111,6 +111,15 @@
     "total": "Tổng Cộng",
     "contactShop": "Liên Hệ Cửa Hàng"
   },
+  "TableLanding": {
+    "orderingAt": "Bạn đang đặt món tại",
+    "tableName": "Bàn {number}",
+    "servedHere": "Món của bạn sẽ được phục vụ tại bàn này",
+    "viewMenu": "Xem Thực Đơn",
+    "invalidTitle": "Mã Bàn Không Hợp Lệ",
+    "invalidMessage": "Vui lòng quét lại mã QR trên bàn hoặc nhờ nhân viên hỗ trợ.",
+    "backToMenu": "Về Thực Đơn"
+  },
   "Pos": {
     "searchPlaceholder": "Tìm kiếm món...",
     "orderTitle": "Hóa Đơn",
@@ -187,7 +196,10 @@
     "addTable": "Thêm Bàn Mới",
     "table": "Bàn",
     "downloadQr": "Tải QR",
-    "regenerateCode": "Tạo Lại Mã"
+    "regenerateCode": "Tạo Lại Mã",
+    "rename": "Đổi Tên Bàn",
+    "save": "Lưu",
+    "cancel": "Hủy"
   },
   "AdminStaff": {
     "title": "Nhân Viên",

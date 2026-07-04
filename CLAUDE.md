@@ -152,7 +152,16 @@ matches the Stitch mockups' "Destination Rule" for focused pages).
 - Order Tracking (`components/customer/order-tracking.tsx`) shows a fixed
   mock status regardless of the URL's `orderId` — no `orders` table or
   Realtime yet. "Place Order" on Checkout clears the cart and navigates
-  there; it does not submit anything anywhere.
+  there; it does not submit anything anywhere. It now accepts a real
+  optional `table` prop (from the URL's `?table=` search param, read by
+  `app/[locale]/(customer)/orders/[orderId]/page.tsx`) and shows that
+  number instead of a hardcoded one when present — see "Table identity
+  flow" below.
+- Checkout (`components/customer/checkout-view.tsx`) reads `activeTable`
+  from `useTables()` — if the customer arrived via a table's QR code, the
+  dine-in badge shows the real table number and it's appended as
+  `?table=` on the Order Tracking URL. Falls back to a fixed mock number
+  only if Dine-in is picked manually without ever scanning a QR code.
 - Item "photos" are lucide-react icon placeholders in a colored box, not
   real images — the Stitch exports' image URLs point at Google's internal
   AI-generation service and aren't stable to hardcode into the app.
@@ -206,9 +215,10 @@ header for the same reason as staff — no real auth data yet.
   admin action that has no real table to persist to yet.
 - Actions that only need **local** state (no persistence) are implemented
   for real, not stubbed: Menu's availability toggle + delete, Inventory's
-  restock (increments stock and flips the status badge), Tables' QR token
-  regeneration, Staff's activate/deactivate toggle, Settings' save
-  (shows a real confirmation, doesn't persist).
+  restock (increments stock and flips the status badge), Tables' rename
+  and QR token regeneration (via the shared `useTables()` hook — see
+  "Table identity flow" below), Staff's activate/deactivate toggle,
+  Settings' save (shows a real confirmation, doesn't persist).
 - Dashboard's KPI numbers, chart, best-sellers, and low-stock table are
   fixed mock data matching the approved Stitch example values — no
   analytics query yet.
@@ -218,6 +228,37 @@ header for the same reason as staff — no real auth data yet.
   after the layout change; same rendering-verification caveat as
   staff/customer pages (no live Supabase session, no browser automation
   tool here).
+
+## Table identity flow (`/table/[qrToken]` → Checkout → Order Tracking)
+
+Connects an admin-renamed table's identity all the way through to a
+customer's order, entirely client-side (no `tables` table yet).
+
+- `hooks/useTables.tsx` — `TablesProvider` + `useTables()`, mounted app-wide
+  in `app/[locale]/layout.tsx` (outside/around everything, so both the
+  admin and customer sides share one source of truth). Holds the table
+  list (`{ id, number, qrToken }[]`, seeded with demo tokens `table-1`
+  through `table-6` so the flow is testable by visiting `/vi/table/table-1`
+  directly) and the current `activeTable` session. Both persist to
+  `localStorage` independently (`phadincoffee-tables`,
+  `phadincoffee-active-table`) with the same hydrate-then-persist pattern
+  as `useCart`. `setActiveTableByToken(token)` looks up a table by its QR
+  token, sets it as the active session, and returns it (or `null` if the
+  token doesn't match any table).
+- `components/customer/table-landing.tsx` — client component rendered by
+  `/table/[qrToken]`. Calls `setActiveTableByToken` on mount; shows a
+  "You're ordering at Table N" screen with a "View Menu" button on success,
+  or an "Invalid Table Code" screen with a link back to the menu if the
+  token doesn't match (e.g. a stale/regenerated QR code).
+- Checkout reads `activeTable` and shows/forwards the real number (see
+  "Customer ordering flow" above).
+- Admin Tables' rename (`components/admin/tables-management.tsx`) writes
+  through the same hook, so renaming "Table 3" to e.g. "Patio 1" is
+  immediately what a customer sees after scanning that table's QR code.
+- Gap, documented not hidden: token regeneration doesn't invalidate a
+  currently-active session client-side (mirrors how a real QR reprint
+  wouldn't affect an order already in progress) — becomes moot once real
+  `tables` rows + RLS exist.
 
 ## Database (`supabase/migrations/`)
 
