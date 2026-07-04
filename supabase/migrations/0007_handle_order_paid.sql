@@ -1,0 +1,1 @@
+-- trigger: deduct inventory + earn loyalty points when an order is marked paid

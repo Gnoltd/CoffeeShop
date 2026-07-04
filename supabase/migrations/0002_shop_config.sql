@@ -1,0 +1,1 @@
+-- shop_settings, loyalty_settings (admin-configurable rates: 10,000 VND = 1 point, 100 points = 10,000 VND)

@@ -1,0 +1,1 @@
+-- profiles, user_role enum, current_user_role(), auto-profile trigger, RLS

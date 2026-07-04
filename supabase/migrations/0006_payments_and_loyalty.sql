@@ -1,0 +1,1 @@
+-- payment_transactions, loyalty_transactions

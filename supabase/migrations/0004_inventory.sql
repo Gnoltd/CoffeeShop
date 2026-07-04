@@ -1,0 +1,1 @@
+-- ingredients, menu_item_ingredients, modifier_ingredients, inventory_logs
