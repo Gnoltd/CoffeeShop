@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { MenuManagement } from "@/components/admin/menu-management"
 
 export default async function AdminMenuPage() {
   const t = await getTranslations("Admin")
-  return <main className="p-8"><h1>{t("menuTitle")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("menuTitle")}</h1>
+      <MenuManagement />
+    </>
+  )
 }

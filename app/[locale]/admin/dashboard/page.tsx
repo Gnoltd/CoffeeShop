@@ -1,6 +1,13 @@
-import { getTranslations } from "next-intl/server"
+import { getLocale, getTranslations } from "next-intl/server"
+import { DashboardView } from "@/components/admin/dashboard-view"
 
 export default async function DashboardPage() {
   const t = await getTranslations("Admin")
-  return <main className="p-8"><h1>{t("dashboardTitle")}</h1></main>
+  const locale = await getLocale()
+  return (
+    <>
+      <h1 className="sr-only">{t("dashboardTitle")}</h1>
+      <DashboardView locale={locale} />
+    </>
+  )
 }

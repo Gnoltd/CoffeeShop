@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { StaffAccounts } from "@/components/admin/staff-accounts"
 
 export default async function StaffAccountsPage() {
   const t = await getTranslations("Admin")
-  return <main className="p-8"><h1>{t("staffTitle")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("staffTitle")}</h1>
+      <StaffAccounts />
+    </>
+  )
 }

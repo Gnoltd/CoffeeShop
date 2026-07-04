@@ -9,15 +9,18 @@ implementation plan (DB schema/RLS/Edge Functions) is at
 
 **Real and running:** Next.js app (App Router, TypeScript, Tailwind v4,
 shadcn/ui), bilingual routing (next-intl), role-based middleware, the real
-PhaDinCoffee brand theme (colors/font), the Food Cost Calculator, the full
+PhaDinCoffee brand theme (colors/font), and **every page in the design is
+now real, interactive UI with mock data** — Food Cost Calculator, the full
 customer ordering flow (Menu/Cart/Checkout/Order Tracking) with a real
-client-side cart, and both staff pages (POS, Kitchen Display) — all with
-mock data. `npm run build`/`npm run dev` work.
+client-side cart, both staff pages (POS, Kitchen Display), and all six
+admin pages (Dashboard, Menu, Inventory, Tables, Staff, Settings).
+`npm run build`/`npm run dev` work. No page is a translated-heading
+placeholder anymore.
 
-**Still placeholder:** admin pages besides Food Cost (Dashboard, Menu,
-Inventory, Tables, Staff, Settings) render only a translated heading. **Not
-yet built:** Supabase database (migrations exist only as comment stubs),
-Edge Functions, Stripe/VNPay integration, Realtime.
+**Not yet built:** Supabase database (migrations exist only as comment
+stubs), Edge Functions, Stripe/VNPay integration, Realtime — every mock
+data source in the app is waiting on these. See each feature section below
+for exactly what's mocked and what's a documented (not hidden) gap.
 
 ## Stack
 
@@ -183,6 +186,39 @@ real auth data (staff photo/name, shift stats) we don't have yet. Shared nav:
   authenticated session (no live Supabase yet, and no browser automation
   tool in this environment) — same caveat as the Food Cost Calculator.
 
+## Admin pages (`/admin/dashboard`, `/menu`, `/inventory`, `/tables`, `/staff`, `/settings`)
+
+Real, interactive pages ported from `design/stitch-exports/12-admin-dashboard.html`
+through `17-admin-settings.html`. All admin routes (including the
+pre-existing Food Cost Calculator) now share one left-sidebar shell:
+`components/admin/admin-sidebar.tsx` + `app/[locale]/admin/layout.tsx`
+(replaced the old plain top-nav). Dropped the mockups' fake admin-profile
+header for the same reason as staff — no real auth data yet.
+
+- `components/admin/{dashboard-view,menu-management,inventory-management,tables-management,staff-accounts,settings-view}.tsx`
+  — one component per page, each with its own local mock data (Menu
+  Management reuses `lib/mock-data/menu.ts`; the rest define their mocks
+  inline since nothing else needs them).
+- **Convention for not-yet-backed actions:** every "Add X" button
+  (Menu/Tables/Staff) is rendered `disabled` with an explanatory `title`
+  tooltip ("Not implemented yet — no `<table>` to write to") rather than
+  silently doing nothing or faking success — keep this pattern for any new
+  admin action that has no real table to persist to yet.
+- Actions that only need **local** state (no persistence) are implemented
+  for real, not stubbed: Menu's availability toggle + delete, Inventory's
+  restock (increments stock and flips the status badge), Tables' QR token
+  regeneration, Staff's activate/deactivate toggle, Settings' save
+  (shows a real confirmation, doesn't persist).
+- Dashboard's KPI numbers, chart, best-sellers, and low-stock table are
+  fixed mock data matching the approved Stitch example values — no
+  analytics query yet.
+- All six routes remain behind the existing `/admin/*` middleware rule
+  (manager|admin, with `/admin/staff` and `/admin/settings` admin-only) —
+  confirmed the gate still works for every route (including Food Cost)
+  after the layout change; same rendering-verification caveat as
+  staff/customer pages (no live Supabase session, no browser automation
+  tool here).
+
 ## Database (`supabase/migrations/`)
 
 Not yet built — files are still comment-only placeholders in intended apply
@@ -199,9 +235,15 @@ in the plan doc's Task 11.
 
 ## Building the rest
 
-Follow `docs/superpowers/plans/2026-07-04-coffee-shop-scaffold.md` for the
-DB/RLS/Edge Function tasks — unaffected by the frontend/i18n work done so
-far. For remaining page UI, port `design/stitch-exports/*.html` (exact
-Stitch-generated markup) into real components, same pattern as the Food
-Cost Calculator: shared brand tokens, `useTranslations`/`getTranslations`
-for every label, both `messages/vi.json` and `messages/en.json` updated together.
+All `design/stitch-exports/*.html` pages have been ported — there is no
+remaining frontend UI to port from Stitch. What's left is backend: follow
+`docs/superpowers/plans/2026-07-04-coffee-shop-scaffold.md` for the
+DB/RLS/Edge Function tasks (unaffected by the frontend/i18n work), then go
+through every component listed in this file's feature sections and replace
+its mock data with real Supabase queries (+ Realtime where noted). When
+adding any genuinely new page/feature beyond what's already built, follow
+the same pattern used throughout: shared brand tokens (no hardcoded hex),
+`useTranslations`/`getTranslations` for every label with both
+`messages/vi.json` and `messages/en.json` updated together, Base UI's
+`render` prop (not `asChild`) for polymorphic Buttons, and the "disabled +
+tooltip" convention for any action with no backing table yet.

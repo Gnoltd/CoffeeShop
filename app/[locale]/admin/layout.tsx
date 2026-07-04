@@ -1,19 +1,10 @@
-import { getTranslations } from "next-intl/server"
+import { AdminSidebar } from "@/components/admin/admin-sidebar"
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations("Nav")
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <nav className="p-4 border-b flex gap-4">
-        <span>{t("dashboard")}</span>
-        <span>{t("menu")}</span>
-        <span>{t("inventory")}</span>
-        <span>{t("tables")}</span>
-        <span>{t("staff")}</span>
-        <span>{t("foodCost")}</span>
-        <span>{t("settings")}</span>
-      </nav>
-      {children}
+    <div className="flex h-screen overflow-hidden">
+      <AdminSidebar />
+      <main className="flex-1 overflow-y-auto bg-muted/30 p-6">{children}</main>
     </div>
   )
 }

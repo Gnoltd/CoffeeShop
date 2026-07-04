@@ -12,13 +12,14 @@ intentionally works differently).
 
 ## Current status
 
-Next.js app is real, running, and genuinely bilingual (every route
-locale-prefixed, working "VI | EN" toggle), with the real brand theme wired
-in. Real (non-placeholder) features so far: Food Cost Calculator
-(`/admin/food-cost`), the full customer ordering flow (Menu, Cart, Checkout,
-Order Tracking), and both staff pages (POS, Kitchen Display) — all
-interactive with mock data. Admin pages (besides Food Cost) are still
-translated placeholder headings. No Supabase database yet.
+**All FE pages from the original design are now real, interactive UI** —
+none are translated-placeholder-only anymore. Next.js app is bilingual
+(every route locale-prefixed, working "VI | EN" toggle) with the real brand
+theme wired in. Every page uses mock data (no Supabase yet); several known,
+documented gaps remain (see each section below) rather than fake/hidden
+functionality. This closes out the FE priority list agreed earlier —
+remaining work is backend (DB/RLS/Edge Functions) and wiring real data in
+to replace the mocks.
 
 ## Completed
 
@@ -216,26 +217,82 @@ brand name + POS/Kitchen Display links with active state) used by both pages.
   available to click-test an authenticated session, and no live Supabase to
   authenticate against yet.
 
-## Next steps (FE priority order, confirmed with user)
+## Admin pages (FE priority #4, done: Dashboard, Menu, Inventory, Tables, Staff, Settings)
 
-1. Port remaining Stitch pages: **admin** (Dashboard, Menu, Inventory,
-   Tables, Staff, Settings) — same template as customer/staff: mock data,
-   real interactivity where sensible, both message files updated together,
-   `render` prop (not `asChild`) for polymorphic Buttons.
-2. Execute the DB schema/RLS/trigger/Edge Function tasks from the implementation
-   plan (Tasks 3-11) — fully unaffected by the frontend/i18n work, can happen
-   in parallel with #1. Once `menu_items`/`orders`/etc. exist, replace
-   `lib/mock-data/menu.ts` and the Order Tracking / Kitchen Display mocks with
-   real Supabase queries (+ Realtime for the latter two).
-3. Wire real Supabase env vars once local Supabase is running (`npx supabase start`)
+Ported from `design/stitch-exports/12-admin-dashboard.html` through
+`17-admin-settings.html`. All six share one new left-sidebar shell
+(`components/admin/admin-sidebar.tsx`, replacing the old plain top-nav
+`admin/layout.tsx`) — brand logo + nav links with active state for all 7
+admin destinations (Dashboard/Menu/Inventory/Tables/Staff/Food Cost/Settings).
+Dropped the mockups' fake admin-profile header (photo/name/notifications)
+for the same reason as staff: no real auth data yet. Confirmed the existing
+Food Cost Calculator still renders correctly inside this new sidebar shell
+(regression check) since it was built before this layout change.
+
+- **Dashboard** (`components/admin/dashboard-view.tsx`): KPI cards (revenue,
+  orders, loyalty issued, low-stock count), a 7-day revenue bar chart, best
+  sellers list, and a low-stock table with a "Restock" button — all fixed
+  mock numbers matching the Stitch example values (5.420.000đ revenue, 142
+  orders, etc.), no analytics query yet.
+- **Menu Management** (`components/admin/menu-management.tsx`): reuses
+  `lib/mock-data/menu.ts` again. Search + category filter, availability
+  toggle (real local state), delete (real — removes the row locally). "Add
+  New Item" is present but disabled with a tooltip explaining why, rather
+  than faking a form or silently doing nothing — same honesty standard as
+  POS's missing modifier picker. No separate per-row "Edit" for the same reason.
+- **Inventory** (`components/admin/inventory-management.tsx`): ingredients
+  table with stock/threshold/status (computed live from the two numbers,
+  not a stored flag), and a working "Restock" button that actually adds
+  stock locally and flips the status badge — no `inventory_logs` audit
+  trail yet since there's no DB.
+- **Tables** (`components/admin/tables-management.tsx`): grid of table
+  cards with a QR-icon placeholder (no real QR image — no `qr_code_token`
+  from a `tables` table yet), a working "Regenerate Code" that swaps in a
+  new random mock token, and a disabled "Download QR" (nothing real to
+  download) / disabled "Add Table" (same reasoning as Menu's Add button).
+- **Staff Accounts** (`components/admin/staff-accounts.tsx`): table with
+  role badges (Admin/Manager/Staff, color-coded) and a working
+  activate/deactivate toggle (local state) — "Add Staff" disabled, same
+  reasoning as above (no `profiles` table to write to).
+- **Settings** (`components/admin/settings-view.tsx`): shop info + loyalty
+  rate form (defaults match the agreed real rates: 10,000 VND = 1 point,
+  100 points = 10,000 VND off), "Save Changes" shows a real local
+  confirmation but doesn't persist anywhere yet.
+- Consistent pattern across all "not implemented yet" actions in this
+  batch: visually present but `disabled` with an explanatory `title`
+  tooltip, never a silently-dead button pretending to work.
+- All six routes remain behind the existing `/admin/*` role gate
+  (manager|admin, with `/admin/staff` and `/admin/settings` admin-only) —
+  verified the gate still works for every admin route after the layout
+  change, same rendering-verification caveat as customer/staff pages (no
+  live Supabase session, no browser automation tool here).
+
+## Next steps
+
+The originally agreed FE priority order (theme → customer → staff → admin)
+is now **fully done**. Remaining work is backend and polish, roughly in
+this order:
+
+1. Execute the DB schema/RLS/trigger/Edge Function tasks from the
+   implementation plan (Tasks 3-11) — fully unaffected by the frontend/i18n
+   work. Once `menu_items`/`ingredients`/`orders`/`profiles`/`tables`/etc.
+   exist, replace every mock data source with real Supabase queries:
+   `lib/mock-data/menu.ts` (Menu, POS, Admin Menu), the Order Tracking and
+   Kitchen Display mocks (+ Realtime for both), Admin Dashboard's stats,
+   Admin Inventory's ingredients, Admin Tables' QR tokens, Admin Staff's
+   accounts, and Admin Settings' shop/loyalty rates.
+2. Wire real Supabase env vars once local Supabase is running (`npx supabase start`)
    so middleware actually resolves roles instead of falling back to anonymous —
    this also unblocks direct (not just indirect) verification of bilingual
-   rendering and interactivity on auth-gated pages (POS, Kitchen Display, admin).
-4. Business logic (Stripe/VNPay integration, real order placement, Realtime wiring
-   for order status and the Kitchen Display queue).
-5. Revisit POS to add size/modifier selection for items that have it (currently
-   adds at base price only — see "Staff pages" above).
-6. Add Vitest/RTL test setup (skipped so far) — including a regression test for
-   the force-dynamic/locale-caching bug so it can't silently reappear.
-7. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16 deprecation
-   warning, non-blocking).
+   rendering and interactivity on every auth-gated page.
+3. Business logic (Stripe/VNPay integration, real order placement, Realtime
+   wiring for order status and the Kitchen Display queue).
+4. Wire up the disabled "not implemented yet" buttons once their backing
+   tables exist: Admin Menu's "Add New Item" + per-row Edit, Admin Tables'
+   "Add Table" + real QR image generation/download, Admin Staff's
+   "Add Staff". Also revisit POS to add size/modifier selection (currently
+   adds at base price only).
+5. Add Vitest/RTL test setup (skipped so far) — including a regression test
+   for the force-dynamic/locale-caching bug so it can't silently reappear.
+6. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16
+   deprecation warning, non-blocking).

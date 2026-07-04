@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { TablesManagement } from "@/components/admin/tables-management"
 
 export default async function TablesPage() {
   const t = await getTranslations("Admin")
-  return <main className="p-8"><h1>{t("tablesTitle")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("tablesTitle")}</h1>
+      <TablesManagement />
+    </>
+  )
 }

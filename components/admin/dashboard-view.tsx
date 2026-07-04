@@ -1,0 +1,168 @@
+"use client"
+
+import { useTranslations } from "next-intl"
+import { Banknote, ShoppingBag, Gift, TriangleAlert, Coffee } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { formatVND } from "@/lib/format"
+import { cn } from "@/lib/utils"
+
+/**
+ * No orders/analytics tables yet — all figures here are fixed mock data
+ * matching the approved Stitch mockup's example numbers. Becomes a real
+ * aggregation query once Supabase's orders/loyalty_transactions exist.
+ */
+const MOCK_REVENUE_TODAY = 5420000
+const MOCK_ORDERS_TODAY = 142
+const MOCK_LOYALTY_ISSUED = 850
+
+const MOCK_REVENUE_BARS = [40, 55, 45, 70, 60, 85, 75] // percent height, Mon-Sun
+const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+
+const MOCK_BEST_SELLERS = [
+  { nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", sold: 248 },
+  { nameVi: "Bánh Mì Que", nameEn: "Crispy Breadsticks", sold: 195 },
+  { nameVi: "Trà Đào Cam Sả", nameEn: "Peach Tea", sold: 162 },
+]
+
+const MOCK_LOW_STOCK = [
+  { nameVi: "Hạt Cà Phê Robusta", nameEn: "Coffee Beans", stock: "5.2 kg" },
+  { nameVi: "Sữa Đặc", nameEn: "Condensed Milk", stock: "12 lon / cans" },
+  { nameVi: "Lá Trà Đen", nameEn: "Black Tea Leaves", stock: "1.5 kg" },
+]
+
+export function DashboardView({ locale }: { locale: string }) {
+  const t = useTranslations("Dashboard")
+
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+      <div>
+        <h2 className="text-2xl font-bold text-card-foreground">{t("overview")}</h2>
+        <p className="text-muted-foreground">{t("welcomeMessage")}</p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <Banknote className="h-5 w-5" />
+          </div>
+          <p className="mb-1 text-sm text-muted-foreground">{t("todaysRevenue")}</p>
+          <h3 className="text-xl font-bold text-card-foreground">{formatVND(MOCK_REVENUE_TODAY)}</h3>
+        </div>
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/15 text-secondary">
+            <ShoppingBag className="h-5 w-5" />
+          </div>
+          <p className="mb-1 text-sm text-muted-foreground">{t("ordersToday")}</p>
+          <h3 className="text-xl font-bold text-card-foreground">{MOCK_ORDERS_TODAY}</h3>
+        </div>
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent/30 text-accent-foreground">
+            <Gift className="h-5 w-5" />
+          </div>
+          <p className="mb-1 text-sm text-muted-foreground">{t("loyaltyIssued")}</p>
+          <h3 className="text-xl font-bold text-card-foreground">{MOCK_LOYALTY_ISSUED}</h3>
+        </div>
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 shadow-sm">
+          <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+            <TriangleAlert className="h-5 w-5" />
+          </div>
+          <p className="mb-1 text-sm text-destructive">{t("lowStockAlerts")}</p>
+          <h3 className="text-xl font-bold text-destructive">{MOCK_LOW_STOCK.length}</h3>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="rounded-xl border bg-card p-5 shadow-sm lg:col-span-2">
+          <div className="mb-4 flex items-center justify-between">
+            <h4 className="font-bold text-card-foreground">{t("revenuePerformance")}</h4>
+            <span className="rounded-lg bg-muted px-3 py-1 text-xs font-bold text-muted-foreground">
+              {t("last7Days")}
+            </span>
+          </div>
+          <div className="flex h-48 items-end justify-between gap-2">
+            {MOCK_REVENUE_BARS.map((height, index) => (
+              <div
+                key={index}
+                className={cn(
+                  "flex-1 rounded-t-lg transition-colors",
+                  index === MOCK_REVENUE_BARS.length - 1 ? "bg-primary" : "bg-primary/20 hover:bg-primary/40"
+                )}
+                style={{ height: `${height}%` }}
+              />
+            ))}
+          </div>
+          <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            {WEEKDAY_LABELS.map((day) => (
+              <span key={day}>{day}</span>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-card p-5 shadow-sm">
+          <h4 className="mb-4 font-bold text-card-foreground">{t("bestSellers")}</h4>
+          <div className="space-y-3">
+            {MOCK_BEST_SELLERS.map((item) => (
+              <div key={item.nameEn} className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <Coffee className="h-5 w-5" />
+                </div>
+                <p className="flex-1 truncate text-sm font-bold text-card-foreground">
+                  {locale === "vi" ? item.nameVi : item.nameEn}
+                </p>
+                <div className="text-right">
+                  <p className="font-bold text-primary">{item.sold}</p>
+                  <p className="text-[10px] uppercase text-muted-foreground">{t("sold")}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h4 className="flex items-center gap-2 font-bold text-card-foreground">
+            <TriangleAlert className="h-4 w-4 text-destructive" />
+            {t("inventoryStatus")}
+          </h4>
+          <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-bold text-destructive">
+            {t("itemsLowInStock", { count: MOCK_LOW_STOCK.length })}
+          </span>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="px-3 pb-3 font-medium">{t("product")}</th>
+                <th className="px-3 pb-3 text-center font-medium">{t("stock")}</th>
+                <th className="px-3 pb-3 font-medium">{t("status")}</th>
+                <th className="px-3 pb-3 text-right font-medium">{t("action")}</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {MOCK_LOW_STOCK.map((item) => (
+                <tr key={item.nameEn}>
+                  <td className="px-3 py-3 font-bold text-card-foreground">
+                    {locale === "vi" ? item.nameVi : item.nameEn}
+                  </td>
+                  <td className="px-3 py-3 text-center font-bold text-destructive">{item.stock}</td>
+                  <td className="px-3 py-3">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-destructive">
+                      <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                      {t("critical")}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 text-right">
+                    <Button size="sm" className="h-8">
+                      {t("restock")}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  )
+}
