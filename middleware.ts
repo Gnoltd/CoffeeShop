@@ -1,5 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
+import createIntlMiddleware from "next-intl/middleware"
+import { routing } from "./i18n/routing"
+
+const handleI18nRouting = createIntlMiddleware(routing)
 
 export const ROLE_HOME: Record<string, string> = {
   customer: "/menu",
@@ -33,52 +37,69 @@ export function resolveRedirect(pathname: string, role: string | null): string |
   return null
 }
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request })
+/** Splits a locale-prefixed pathname (e.g. "/vi/staff/pos") into its locale and the rest ("/staff/pos"). */
+export function splitLocaleFromPathname(pathname: string): { locale: string; rest: string } {
+  const segments = pathname.split("/")
+  const locale = segments[1]
+  const rest = "/" + segments.slice(2).join("/")
+  return { locale, rest: rest === "/" ? "/" : rest.replace(/\/+$/, "") || "/" }
+}
 
-  let role: string | null = null
-
+async function resolveRole(request: NextRequest): Promise<string | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  if (supabaseUrl && supabaseAnonKey) {
-    try {
-      const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
-        cookies: {
-          getAll() {
-            return request.cookies.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-            response = NextResponse.next({ request })
-            cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options))
-          },
+  if (!supabaseUrl || !supabaseAnonKey) return null
+
+  try {
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
         },
-      })
+        setAll() {
+          // Cookie writes are handled by the outer response from next-intl's middleware;
+          // this read-only client is only used here to resolve the current user's role.
+        },
+      },
+    })
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
-      if (user) {
-        const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
-        role = profile?.role ?? null
-      }
-    } catch {
-      // Supabase unreachable or misconfigured — fall through and treat the request as anonymous
-      // rather than taking the whole site down.
-      role = null
-    }
+    if (!user) return null
+
+    const { data: profile } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+    return profile?.role ?? null
+  } catch {
+    // Supabase unreachable or misconfigured — fall through and treat the request as anonymous
+    // rather than taking the whole site down.
+    return null
+  }
+}
+
+export async function middleware(request: NextRequest) {
+  // Let next-intl resolve/normalize the locale prefix first (e.g. "/" -> "/vi").
+  const intlResponse = handleI18nRouting(request)
+
+  // If next-intl already decided to redirect (locale prefix was missing/wrong),
+  // let that happen first — our auth check will run again on the follow-up request.
+  if (intlResponse.status === 307 || intlResponse.status === 308) {
+    return intlResponse
   }
 
-  const redirectPath = resolveRedirect(request.nextUrl.pathname, role)
+  const { locale, rest } = splitLocaleFromPathname(request.nextUrl.pathname)
+  const role = await resolveRole(request)
+
+  const redirectPath = resolveRedirect(rest, role)
   if (redirectPath) {
-    return NextResponse.redirect(new URL(redirectPath, request.url))
+    return NextResponse.redirect(new URL(`/${locale}${redirectPath}`, request.url))
   }
 
-  return response
+  return intlResponse
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
+  matcher: ["/((?!api|_next|_vercel|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)"],
 }

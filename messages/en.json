@@ -1,0 +1,68 @@
+{
+  "Nav": {
+    "menu": "Menu",
+    "cart": "Cart",
+    "orders": "Orders",
+    "profile": "Profile",
+    "loyalty": "Loyalty",
+    "pos": "POS",
+    "kitchenDisplay": "Kitchen Display",
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "tables": "Tables",
+    "staff": "Staff",
+    "settings": "Settings",
+    "foodCost": "Food Cost"
+  },
+  "Landing": {
+    "title": "Welcome to the Coffee Shop"
+  },
+  "Auth": {
+    "login": "Log In",
+    "signup": "Sign Up"
+  },
+  "Customer": {
+    "menuTitle": "Menu",
+    "cartTitle": "Cart",
+    "checkoutTitle": "Checkout",
+    "orderHistoryTitle": "Order History",
+    "orderTrackingTitle": "Order Tracking",
+    "orderIdLabel": "Order ID",
+    "tableOrderTitle": "Dine-in Order",
+    "tableTokenLabel": "Table token",
+    "profileTitle": "Profile",
+    "loyaltyTitle": "Loyalty Points"
+  },
+  "Staff": {
+    "posTitle": "POS",
+    "kitchenDisplayTitle": "Kitchen Display"
+  },
+  "Admin": {
+    "dashboardTitle": "Dashboard",
+    "menuTitle": "Manage Menu",
+    "inventoryTitle": "Inventory",
+    "tablesTitle": "Tables",
+    "staffTitle": "Staff Accounts",
+    "settingsTitle": "Settings"
+  },
+  "FoodCost": {
+    "title": "Food Cost Percentage Calculator",
+    "subtitle": "Formula: (Beginning Inventory + Purchases - Ending Inventory) / Food Sales x 100",
+    "beginningInventory": "Beginning Inventory",
+    "purchases": "Purchases",
+    "endingInventory": "Ending Inventory",
+    "foodSales": "Food Sales",
+    "calculate": "Calculate",
+    "clear": "Clear",
+    "resultsTitle": "Results",
+    "foodCostUsed": "Food Cost Used",
+    "foodCostPercent": "Food Cost %",
+    "status": "Status",
+    "statusGood": "Good",
+    "statusNormal": "Normal",
+    "statusNeedsImprovement": "Needs Improvement",
+    "validationError": "Please enter a valid positive number for every field.",
+    "salesRequiredError": "Food sales must be greater than 0.",
+    "placeholder": "Enter amount (VND)"
+  }
+}

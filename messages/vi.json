@@ -1,0 +1,68 @@
+{
+  "Nav": {
+    "menu": "Thực Đơn",
+    "cart": "Giỏ Hàng",
+    "orders": "Đơn Hàng",
+    "profile": "Cá Nhân",
+    "loyalty": "Tích Điểm",
+    "pos": "Bán Hàng",
+    "kitchenDisplay": "Màn Hình Bếp",
+    "dashboard": "Tổng Quan",
+    "inventory": "Kho Hàng",
+    "tables": "Bàn",
+    "staff": "Nhân Viên",
+    "settings": "Cài Đặt",
+    "foodCost": "Chi Phí Thực Phẩm"
+  },
+  "Landing": {
+    "title": "Chào Mừng Đến Coffee Shop"
+  },
+  "Auth": {
+    "login": "Đăng Nhập",
+    "signup": "Đăng Ký"
+  },
+  "Customer": {
+    "menuTitle": "Thực Đơn",
+    "cartTitle": "Giỏ Hàng",
+    "checkoutTitle": "Thanh Toán",
+    "orderHistoryTitle": "Lịch Sử Đơn Hàng",
+    "orderTrackingTitle": "Theo Dõi Đơn Hàng",
+    "orderIdLabel": "Mã Đơn Hàng",
+    "tableOrderTitle": "Đặt Món Tại Bàn",
+    "tableTokenLabel": "Mã Bàn",
+    "profileTitle": "Cá Nhân",
+    "loyaltyTitle": "Điểm Tích Lũy"
+  },
+  "Staff": {
+    "posTitle": "Bán Hàng",
+    "kitchenDisplayTitle": "Màn Hình Bếp"
+  },
+  "Admin": {
+    "dashboardTitle": "Tổng Quan",
+    "menuTitle": "Quản Lý Thực Đơn",
+    "inventoryTitle": "Kho Hàng",
+    "tablesTitle": "Quản Lý Bàn",
+    "staffTitle": "Nhân Viên",
+    "settingsTitle": "Cài Đặt"
+  },
+  "FoodCost": {
+    "title": "Tính Tỷ Lệ Chi Phí Thực Phẩm",
+    "subtitle": "Công thức: (Tồn đầu kỳ + Mua hàng - Tồn cuối kỳ) / Doanh thu món ăn × 100",
+    "beginningInventory": "Tồn Kho Đầu Kỳ",
+    "purchases": "Mua Hàng Trong Kỳ",
+    "endingInventory": "Tồn Kho Cuối Kỳ",
+    "foodSales": "Doanh Thu Món Ăn",
+    "calculate": "Tính Toán",
+    "clear": "Xóa",
+    "resultsTitle": "Kết Quả",
+    "foodCostUsed": "Chi Phí Thực Phẩm",
+    "foodCostPercent": "Tỷ Lệ Chi Phí",
+    "status": "Đánh Giá",
+    "statusGood": "Tốt",
+    "statusNormal": "Bình Thường",
+    "statusNeedsImprovement": "Cần Cải Thiện",
+    "validationError": "Vui lòng nhập số dương hợp lệ cho tất cả các trường.",
+    "salesRequiredError": "Doanh thu món ăn phải lớn hơn 0.",
+    "placeholder": "Nhập số tiền (VNĐ)"
+  }
+}
