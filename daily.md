@@ -1,41 +1,44 @@
-# Today: Table identity flow wired end-to-end (rename → QR → checkout → order tracking)
+# Today: Landing, Auth, Order History, Loyalty, Profile — last 6 placeholder pages closed out
 
 ## Task
 
-Answered and implemented the user's question: renaming a table in Admin
-Tables now flows all the way through to what a customer sees after
-scanning that table's QR code. Visualized the two new screens in Stitch
-first (Table QR Landing, Admin Tables rename state), got approval, then
-built the real connected implementation.
+The user caught that Order History, Loyalty, and Profile "just show a word,
+no function" while previewing the app — turned out those three, plus
+Landing, Login, and Signup, were still the original create-next-app
+placeholders despite earlier notes claiming every page was real. Checked
+Stitch for existing mockups (found 5 of 6 already designed but unported;
+generated a new one for Order History), reported the findings, then built
+all 6 for real.
 
 ## Context
 
-- Full details: `continuity.md` ("Table identity flow" section), `CLAUDE.md`
-  (same section name)
-- New: `hooks/useTables.tsx`, `components/customer/table-landing.tsx`
-- Rewritten: `components/admin/tables-management.tsx`,
-  `app/[locale]/(customer)/table/[qrToken]/page.tsx`
-- Updated: `components/customer/checkout-view.tsx`,
-  `components/customer/order-tracking.tsx`,
-  `app/[locale]/(customer)/orders/[orderId]/page.tsx`,
-  `app/[locale]/layout.tsx` (mounts `TablesProvider`),
-  `messages/vi.json` + `messages/en.json`
+- Full details: `continuity.md` ("Landing, Auth & remaining customer
+  pages" section), `CLAUDE.md` (same section name)
+- New: `components/marketing/landing-view.tsx`,
+  `components/customer/{order-history,loyalty-view,profile-view}.tsx`,
+  `components/auth/{login-form,signup-form,google-icon}.tsx`
+- Structural: `CartProvider` promoted to the root layout so
+  `(marketing)`/`(auth)` route groups can reuse `CustomerHeader`/`BottomNav`
+- Updated: `messages/vi.json` + `messages/en.json` (new namespaces:
+  `OrderHistory`, `Loyalty`, `Profile`; expanded `Landing`, `Auth`)
 
 ## Done when
 
-- `npm run build` succeeds, still 20 routes — done
-- `/vi/table/table-1` and `/en/table/table-2` render the real landing page;
-  an unknown token shows the "Invalid Table Code" state — done, verified
-  with curl (SSR shell only — the resolve step is client-side)
-- Checkout forwards the real table number to Order Tracking via `?table=`,
-  and Order Tracking displays it — done, verified with curl
-  (`?table=7` → "Bàn số 7"; no param → mock fallback "Bàn số 04")
-- Anonymous visitors still redirect from `/admin/*` to `/login` (regression
-  check, unaffected by this feature) — done, verified with curl
-- Admin Tables rename is real (local/localStorage state via `useTables()`),
-  not click-tested in a real browser — no browser automation tool available
-  in this environment, same caveat as every other page built this session
-- Next session starts on: backend (Supabase DB schema/RLS/Edge Functions
-  per the implementation plan), then replacing every mock data source
-  listed in continuity.md with real queries — the table flow's
-  `localStorage`-backed hook becomes a real `tables` table + Realtime then
+- `npm run build` succeeds, no type errors — done
+- curl confirms real bilingual content (not the old placeholder heading) on
+  `/`, `/login`, `/signup`, `/orders`, `/loyalty`, `/profile` in both
+  locales — done
+- No regression on `/admin/*` `/staff/*` anonymous-redirect gate — done
+- Login/Signup submit + Google buttons are disabled+tooltip (explicit
+  decision with the user — no Supabase Auth yet, don't fake a login) — done
+- Not click-tested in a real browser — no browser automation tool available
+  in this environment, same caveat as every other page this project
+
+## Next session
+
+Genuinely nothing left on the frontend now — every route in the app is
+real, interactive UI. Backend is next: Supabase DB schema/RLS/Edge
+Functions per the implementation plan, then replace every mock data source
+listed in continuity.md with real queries (+ Realtime where noted), then
+re-enable the disabled Login/Signup/Admin-Add/etc. buttons as their real
+tables/auth land.

@@ -18,11 +18,41 @@
     "foodCost": "Food Cost"
   },
   "Landing": {
-    "title": "Welcome to PhaDinCoffee"
+    "title": "Welcome to PhaDinCoffee",
+    "heroHeadline": "Traditional coffee flavor in the heart of the modern city",
+    "heroSubheadline": "Authentic taste, modern pulse",
+    "orderNow": "Order Now",
+    "scanQr": "Scan QR at Table",
+    "promoLabel": "Promotion",
+    "promoTitle": "New Member",
+    "promoDescription": "Get 20% off your first order at PhaDinCoffee.",
+    "promoBadge": "20% OFF",
+    "bestSellers": "Best Sellers",
+    "viewAll": "View All",
+    "categories": "Categories"
   },
   "Auth": {
     "login": "Log In",
-    "signup": "Sign Up"
+    "signup": "Sign Up",
+    "welcomeBack": "Welcome back to PhaDinCoffee",
+    "signupWelcome": "Welcome to our traditional Vietnamese coffee space.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Enter your email",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter your password",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
+    "forgotPassword": "Forgot password?",
+    "continueWithGoogle": "Continue with Google",
+    "or": "or",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "fullNameLabel": "Full Name",
+    "fullNamePlaceholder": "Nguyễn Văn An",
+    "phoneLabel": "Phone Number",
+    "phonePlaceholder": "+84 000 000 000",
+    "termsText": "By signing up, you agree to our Terms & Policy.",
+    "createAccount": "Create Account"
   },
   "Customer": {
     "menuTitle": "Menu",
@@ -35,6 +65,23 @@
     "tableTokenLabel": "Table token",
     "profileTitle": "Profile",
     "loyaltyTitle": "Loyalty Points"
+  },
+  "Profile": {
+    "memberIdLabel": "Member ID",
+    "fullName": "Full Name",
+    "phoneNumber": "Phone Number",
+    "email": "Email",
+    "menuOrderHistory": "My Orders",
+    "menuLoyalty": "Loyalty Points",
+    "menuAddresses": "Addresses",
+    "menuLanguage": "Language",
+    "menuSettings": "Settings",
+    "menuLogout": "Log Out",
+    "languageVi": "Vietnamese",
+    "languageEn": "English",
+    "save": "Save",
+    "cancel": "Cancel",
+    "versionFooter": "PhaDinCoffee — demo build"
   },
   "Staff": {
     "posTitle": "POS",
@@ -93,6 +140,17 @@
     "emptyCart": "Your cart is empty — add items before checking out.",
     "browseMenu": "Browse Menu"
   },
+  "OrderHistory": {
+    "filterAll": "All",
+    "filterActive": "Active",
+    "filterCompleted": "Completed",
+    "itemCount": "{count, plural, one {# item} other {# items}}",
+    "statusPreparing": "Preparing",
+    "statusReady": "Ready",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "empty": "No orders yet."
+  },
   "OrderTracking": {
     "orderId": "Order ID",
     "statusPreparing": "Preparing",
@@ -119,6 +177,24 @@
     "invalidTitle": "Invalid Table Code",
     "invalidMessage": "Please scan the QR code on your table again or ask staff for help.",
     "backToMenu": "Back to Menu"
+  },
+  "Loyalty": {
+    "currentBalance": "Current Balance",
+    "pts": "PTS",
+    "earnRateInfo": "Earn 1 point per 10,000 VND spent",
+    "redeemRateInfo": "100 points = 10,000 VND off",
+    "tierName": "Gold Member",
+    "tierProgress": "{points} pts to Diamond",
+    "redeemAction": "Redeem Rewards",
+    "redeemActionSubtitle": "Redeem Rewards",
+    "promoTitle": "Double Points Wednesday",
+    "promoSubtitle": "Double points every Wednesday",
+    "historyTitle": "Points History",
+    "viewAll": "View All",
+    "earned": "Earned",
+    "redeemed": "Redeemed",
+    "birthdayBonus": "Birthday Bonus",
+    "pointsUnit": "pts"
   },
   "Pos": {
     "searchPlaceholder": "Search items...",

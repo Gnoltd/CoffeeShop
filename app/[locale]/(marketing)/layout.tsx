@@ -1,11 +1,12 @@
-import { getTranslations } from "next-intl/server"
+import { CustomerHeader } from "@/components/customer/header"
+import { BottomNav } from "@/components/customer/bottom-nav"
 
-export default async function MarketingLayout({ children }: { children: React.ReactNode }) {
-  const t = await getTranslations("Brand")
+export default function MarketingLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div>
-      <header className="p-4 border-b">{t("name")}</header>
-      {children}
-    </div>
+    <>
+      <CustomerHeader />
+      <div className="min-h-screen pb-20">{children}</div>
+      <BottomNav />
+    </>
   )
 }

@@ -18,11 +18,41 @@
     "foodCost": "Chi Phí Thực Phẩm"
   },
   "Landing": {
-    "title": "Chào Mừng Đến PhaDinCoffee"
+    "title": "Chào Mừng Đến PhaDinCoffee",
+    "heroHeadline": "Hương vị cà phê truyền thống giữa lòng thành phố hiện đại",
+    "heroSubheadline": "Hương vị đích thực, nhịp sống hiện đại",
+    "orderNow": "Đặt Hàng Ngay",
+    "scanQr": "Quét QR Tại Bàn",
+    "promoLabel": "Ưu Đãi",
+    "promoTitle": "Thành Viên Mới",
+    "promoDescription": "Nhận ngay ưu đãi 20% cho lần đầu trải nghiệm tại PhaDinCoffee.",
+    "promoBadge": "Giảm 20%",
+    "bestSellers": "Bán Chạy",
+    "viewAll": "Xem Tất Cả",
+    "categories": "Danh Mục"
   },
   "Auth": {
     "login": "Đăng Nhập",
-    "signup": "Đăng Ký"
+    "signup": "Đăng Ký",
+    "welcomeBack": "Chào mừng bạn trở lại với PhaDinCoffee",
+    "signupWelcome": "Chào mừng bạn đến với không gian cà phê Việt truyền thống.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Nhập email của bạn",
+    "passwordLabel": "Mật Khẩu",
+    "passwordPlaceholder": "Nhập mật khẩu",
+    "showPassword": "Hiện",
+    "hidePassword": "Ẩn",
+    "forgotPassword": "Quên mật khẩu?",
+    "continueWithGoogle": "Tiếp Tục Với Google",
+    "or": "hoặc",
+    "noAccount": "Chưa có tài khoản?",
+    "haveAccount": "Đã có tài khoản?",
+    "fullNameLabel": "Họ và Tên",
+    "fullNamePlaceholder": "Nguyễn Văn An",
+    "phoneLabel": "Số Điện Thoại",
+    "phonePlaceholder": "+84 000 000 000",
+    "termsText": "Bằng cách đăng ký, bạn đồng ý với Điều Khoản & Chính Sách của chúng tôi.",
+    "createAccount": "Tạo Tài Khoản"
   },
   "Customer": {
     "menuTitle": "Thực Đơn",
@@ -35,6 +65,23 @@
     "tableTokenLabel": "Mã Bàn",
     "profileTitle": "Cá Nhân",
     "loyaltyTitle": "Điểm Tích Lũy"
+  },
+  "Profile": {
+    "memberIdLabel": "Mã Thành Viên",
+    "fullName": "Họ và Tên",
+    "phoneNumber": "Số Điện Thoại",
+    "email": "Email",
+    "menuOrderHistory": "Đơn Hàng Của Tôi",
+    "menuLoyalty": "Điểm Tích Lũy",
+    "menuAddresses": "Địa Chỉ",
+    "menuLanguage": "Ngôn Ngữ",
+    "menuSettings": "Cài Đặt",
+    "menuLogout": "Đăng Xuất",
+    "languageVi": "Tiếng Việt",
+    "languageEn": "English",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "versionFooter": "PhaDinCoffee — bản demo"
   },
   "Staff": {
     "posTitle": "Bán Hàng",
@@ -93,6 +140,17 @@
     "emptyCart": "Giỏ hàng trống — hãy thêm món trước khi thanh toán.",
     "browseMenu": "Xem Thực Đơn"
   },
+  "OrderHistory": {
+    "filterAll": "Tất Cả",
+    "filterActive": "Đang Xử Lý",
+    "filterCompleted": "Hoàn Tất",
+    "itemCount": "{count} món",
+    "statusPreparing": "Đang Pha Chế",
+    "statusReady": "Sẵn Sàng",
+    "statusCompleted": "Hoàn Tất",
+    "statusCancelled": "Đã Hủy",
+    "empty": "Không có đơn hàng nào."
+  },
   "OrderTracking": {
     "orderId": "Mã Đơn Hàng",
     "statusPreparing": "Đang Pha Chế",
@@ -119,6 +177,24 @@
     "invalidTitle": "Mã Bàn Không Hợp Lệ",
     "invalidMessage": "Vui lòng quét lại mã QR trên bàn hoặc nhờ nhân viên hỗ trợ.",
     "backToMenu": "Về Thực Đơn"
+  },
+  "Loyalty": {
+    "currentBalance": "Số Dư Hiện Tại",
+    "pts": "ĐIỂM",
+    "earnRateInfo": "Tích 1 điểm mỗi 10.000đ chi tiêu",
+    "redeemRateInfo": "100 điểm = giảm 10.000đ",
+    "tierName": "Thành Viên Vàng",
+    "tierProgress": "Còn {points} điểm để lên Kim Cương",
+    "redeemAction": "Đổi Ưu Đãi",
+    "redeemActionSubtitle": "Đổi Phần Thưởng",
+    "promoTitle": "x2 Điểm Thứ Tư",
+    "promoSubtitle": "Nhân đôi điểm mỗi Thứ Tư",
+    "historyTitle": "Lịch Sử Điểm",
+    "viewAll": "Xem Tất Cả",
+    "earned": "Tích Điểm",
+    "redeemed": "Đổi Điểm",
+    "birthdayBonus": "Thưởng Sinh Nhật",
+    "pointsUnit": "điểm"
   },
   "Pos": {
     "searchPlaceholder": "Tìm kiếm món...",

@@ -30,7 +30,7 @@ export function TableLanding({ qrToken }: { qrToken: string }) {
         </div>
         <h1 className="text-xl font-bold text-card-foreground">{t("invalidTitle")}</h1>
         <p className="text-sm text-muted-foreground">{t("invalidMessage")}</p>
-        <Button className="h-11 w-full rounded-xl" render={<Link href="/menu" />}>
+        <Button className="h-11 w-full rounded-xl" render={<Link href="/menu" />} nativeButton={false}>
           {t("backToMenu")}
         </Button>
       </div>
@@ -47,7 +47,7 @@ export function TableLanding({ qrToken }: { qrToken: string }) {
       </p>
       <h1 className="text-3xl font-bold text-primary">{t("tableName", { number: resolvedTable.number })}</h1>
       <p className="text-sm text-muted-foreground">{t("servedHere")}</p>
-      <Button className="h-12 w-full rounded-xl text-base font-bold" render={<Link href="/menu" />}>
+      <Button className="h-12 w-full rounded-xl text-base font-bold" render={<Link href="/menu" />} nativeButton={false}>
         {t("viewMenu")}
       </Button>
     </div>

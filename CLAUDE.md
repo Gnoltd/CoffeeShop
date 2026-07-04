@@ -9,13 +9,17 @@ implementation plan (DB schema/RLS/Edge Functions) is at
 
 **Real and running:** Next.js app (App Router, TypeScript, Tailwind v4,
 shadcn/ui), bilingual routing (next-intl), role-based middleware, the real
-PhaDinCoffee brand theme (colors/font), and **every page in the design is
-now real, interactive UI with mock data** — Food Cost Calculator, the full
-customer ordering flow (Menu/Cart/Checkout/Order Tracking) with a real
-client-side cart, both staff pages (POS, Kitchen Display), and all six
-admin pages (Dashboard, Menu, Inventory, Tables, Staff, Settings).
-`npm run build`/`npm run dev` work. No page is a translated-heading
-placeholder anymore.
+PhaDinCoffee brand theme (colors/font), and **every page in the app is now
+real, interactive UI with mock data** — Landing, Login/Signup, the full
+customer ordering flow (Menu/Cart/Checkout/Order Tracking/Order
+History/Loyalty/Profile) with a real client-side cart, the table QR
+identity flow, Food Cost Calculator, both staff pages (POS, Kitchen
+Display), and all six admin pages (Dashboard, Menu, Inventory, Tables,
+Staff, Settings). `npm run build`/`npm run dev` work. No page is a
+translated-heading placeholder anymore — Landing, Login, Signup, Order
+History, Loyalty, and Profile were the last six to be ported (see "Landing,
+Auth, and remaining customer pages" below); everything before that in this
+list was ported in earlier sessions.
 
 **Not yet built:** Supabase database (migrations exist only as comment
 stubs), Edge Functions, Stripe/VNPay integration, Realtime — every mock
@@ -169,7 +173,72 @@ matches the Stitch mockups' "Destination Rule" for focused pages).
   (`@base-ui/react/button`), not Radix — there is no `asChild` prop. For
   polymorphic rendering (e.g. a `Button` that navigates), use Base UI's
   `render` prop: `<Button render={<Link href="/x" />}>text</Button>`, not
-  `<Button asChild><Link>...</Link></Button>`.
+  `<Button asChild><Link>...</Link></Button>`. Base UI's `Button` also
+  defaults `nativeButton` to `true`, which expects the rendered element to
+  literally be a `<button>` — since `Link` renders an `<a>`, always pass
+  `nativeButton={false}` alongside `render={<Link .../>}` or it logs a dev
+  warning about lost native button semantics.
+
+## Landing, Auth, and remaining customer pages (`/`, `/login`, `/signup`, `/orders`, `/loyalty`, `/profile`)
+
+The last six pages ported from placeholder to real UI. All six were designed
+in Stitch first: Landing/Profile/Loyalty/Login/Signup already had exports
+(`01-landing.html`, `08-profile.html`, `09-loyalty.html`, `06-login.html`,
+`07-signup.html`) from the original design pass that had never been ported;
+Order History had no prior mockup, so a new screen was generated in the
+same Stitch project/design system (`projects/4654820544595168289`,
+screen `8436df098abc43ea801649f367476650`) before building it for real.
+
+- **Structural change:** `CartProvider` moved from `(customer)/layout.tsx`
+  up to the root `app/[locale]/layout.tsx` (alongside `TablesProvider`), so
+  `components/customer/header.tsx` and `components/customer/bottom-nav.tsx`
+  can be reused outside the `(customer)` route group. `(marketing)/layout.tsx`
+  and `(auth)/layout.tsx` now both render the same shared `CustomerHeader`;
+  `(marketing)` also renders `BottomNav` (matches its Stitch mockup, which
+  shows the same tab bar as the rest of the app). `(auth)` deliberately does
+  **not** render `BottomNav` — matches the Login mockup's explicit "No
+  Bottom Navigation as per Transactional Flow Rules" note, consistent with
+  the existing Checkout/Order Tracking "Destination Rule".
+- **Landing** (`components/marketing/landing-view.tsx`, ported from
+  `01-landing.html`): hero with headline + a real "Order Now" button
+  (→ `/menu`) and a disabled+tooltip "Scan QR at Table" button (no
+  camera-based QR scanning implemented — customers reach `/table/[qrToken]`
+  by literally scanning a printed code with their phone's camera app, not
+  from inside this app), a promo banner, a best-sellers horizontal scroll
+  (reuses `lib/mock-data/menu.ts`), and category chips that link to `/menu`
+  (not pre-filtered — `menu-browser.tsx` has no query-param filtering).
+- **Order History** (`components/customer/order-history.tsx`, no prior
+  mockup): filter pills (All/Active/Completed — Active = preparing/ready,
+  Completed = completed/cancelled), 5 fixed mock orders with color-coded
+  status badges, tapping a card navigates to `/orders/[id]`. Becomes a real
+  Supabase query (+ Realtime for active orders) once `orders` exists.
+- **Loyalty** (`components/customer/loyalty-view.tsx`, ported from
+  `09-loyalty.html`): points hero card using the app's real agreed rates
+  (10,000 VND = 1 point, 100 points = 10,000 VND off — not placeholder
+  numbers), tier progress bar, a disabled+tooltip "Redeem Rewards" card (no
+  rewards catalog table), a promo card, and a mock transaction history list
+  with a disabled+tooltip "View All" (no pagination without a backend).
+- **Profile** (`components/customer/profile-view.tsx`, ported from
+  `08-profile.html`): avatar placeholder with disabled+tooltip edit (no
+  upload backend), three real inline-editable fields (Name/Phone/Email —
+  local state only, same pencil→input→save/cancel pattern as Admin Tables'
+  rename), a menu list linking to the now-real Order History and Loyalty
+  pages, a **functional** Language row (reuses the same locale-switch logic
+  as `components/shared/language-switcher.tsx`), and disabled+tooltip
+  Addresses/Settings/Logout rows (no addresses table, no customer settings
+  page, and no real auth session to log out of, respectively).
+- **Login / Signup** (`components/auth/login-form.tsx` +
+  `signup-form.tsx`, ported from `06-login.html`/`07-signup.html`): real
+  form state and a working show/hide password toggle, but the actual
+  submit buttons (Log In / Create Account) and the Google buttons are
+  **disabled+tooltip** — there is no Supabase Auth wired up yet, so a
+  button that looked like it logged you in without granting any real
+  session would be actively misleading. Re-enable these once Supabase Auth
+  exists. Shared Google "G" icon lives in `components/auth/google-icon.tsx`
+  (used by both forms, avoids duplicating the inline SVG).
+- New translation namespaces: `TableLanding` (from the earlier table-flow
+  work), `OrderHistory`, `Loyalty`, `Profile`; expanded `Landing` and
+  `Auth`. All added to both `messages/vi.json` and `messages/en.json`.
 
 ## Staff pages (`/staff/pos`, `/staff/orders`)
 

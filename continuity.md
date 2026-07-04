@@ -12,8 +12,14 @@ intentionally works differently).
 
 ## Current status
 
-**All FE pages from the original design are now real, interactive UI** —
-none are translated-placeholder-only anymore. Next.js app is bilingual
+**All FE pages from the original design are now genuinely real, interactive
+UI** — none are translated-placeholder-only anymore. This was previously
+claimed done but wasn't quite true: Landing, Login, Signup, Order History,
+Loyalty, and Profile were still placeholder `<h1>`s left over from the
+original scaffold, caught when the user asked "why does Orders/Loyalty/
+Profile just show a word, no function?" — see "Landing, Auth & remaining
+customer pages" below for what was actually built to close that gap. Aside
+from that, the Next.js app is bilingual
 (every route locale-prefixed, working "VI | EN" toggle) with the real brand
 theme wired in. Every page uses mock data (no Supabase yet); several known,
 documented gaps remain (see each section below) rather than fake/hidden
@@ -318,6 +324,48 @@ Landing, Admin Tables rename state) before any real UI was built.
 - Known gap, documented not hidden: regenerating a table's QR token
   doesn't invalidate an already-active session client-side. Becomes moot
   once real `tables` rows + RLS + Realtime exist.
+
+## Landing, Auth & remaining customer pages (done)
+
+Closed the gap the user caught: Landing (`/`), Login, Signup, Order
+History, Loyalty, and Profile were still the original create-next-app
+placeholders (a translated `<h1>` and nothing else) despite earlier notes
+claiming every page was real. Landing/Login/Signup/Profile/Loyalty already
+had unused Stitch mockups from the original design pass
+(`01-landing.html`, `06-login.html`, `07-signup.html`, `08-profile.html`,
+`09-loyalty.html`); Order History had none, so a new screen was generated
+in the same Stitch project/design system first and reported to the user
+before any code was written (per their explicit request).
+
+- Promoted `CartProvider` to the root layout (next to `TablesProvider`) so
+  the shared `CustomerHeader`/`BottomNav` could be reused by the
+  `(marketing)` and `(auth)` route groups too, not just `(customer)`.
+- **Landing** (`components/marketing/landing-view.tsx`): hero, real "Order
+  Now" → `/menu`, disabled+tooltip "Scan QR at Table" (no camera scanning
+  built), promo banner, best-sellers (reuses `lib/mock-data/menu.ts`),
+  category chips linking to `/menu`.
+- **Order History** (`components/customer/order-history.tsx`): working
+  All/Active/Completed filter over 5 mock orders with status badges, tap
+  → `/orders/[id]`.
+- **Loyalty** (`components/customer/loyalty-view.tsx`): points hero using
+  the app's real agreed rates (not placeholder numbers), tier progress,
+  disabled+tooltip redeem action (no rewards catalog), mock transaction
+  history.
+- **Profile** (`components/customer/profile-view.tsx`): real inline-editable
+  Name/Phone/Email (local state, same pattern as Admin Tables' rename),
+  links into the now-real Order History/Loyalty pages, a working Language
+  toggle (reuses `language-switcher.tsx`'s logic), disabled+tooltip
+  Addresses/Settings/Logout.
+- **Login/Signup** (`components/auth/{login-form,signup-form}.tsx`): real
+  form state + working password show/hide, but submit and Google buttons
+  are disabled+tooltip — explicitly decided with the user rather than
+  faking a successful login, since there's no Supabase Auth yet to back it
+  and a fake success wouldn't actually grant a session/role. Re-enable once
+  Supabase Auth is wired up.
+- Verified: `npm run build` clean (still all routes, no type errors); curl
+  checks confirmed real bilingual content on all 6 pages (not the old
+  placeholder heading) and no regression on the `/admin/*` `/staff/*` auth
+  gate.
 
 ## Next steps
 

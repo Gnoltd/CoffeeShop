@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { OrderHistory } from "@/components/customer/order-history"
 
 export default async function OrderHistoryPage() {
   const t = await getTranslations("Customer")
-  return <main className="p-8"><h1>{t("orderHistoryTitle")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("orderHistoryTitle")}</h1>
+      <OrderHistory />
+    </>
+  )
 }

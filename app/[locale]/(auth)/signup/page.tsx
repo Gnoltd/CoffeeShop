@@ -1,6 +1,5 @@
-import { getTranslations } from "next-intl/server"
+import { SignupForm } from "@/components/auth/signup-form"
 
-export default async function SignupPage() {
-  const t = await getTranslations("Auth")
-  return <main><h1>{t("signup")}</h1></main>
+export default function SignupPage() {
+  return <SignupForm />
 }

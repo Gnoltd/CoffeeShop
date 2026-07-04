@@ -24,7 +24,7 @@ export function CartView() {
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-24 text-center">
         <ShoppingBasket className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">{t("empty")}</p>
-        <Button className="h-11" render={<Link href="/menu" />}>
+        <Button className="h-11" render={<Link href="/menu" />} nativeButton={false}>
           {t("browseMenu")}
         </Button>
       </div>
@@ -112,6 +112,7 @@ export function CartView() {
       <Button
         className="mt-6 h-12 w-full gap-2 rounded-xl text-base"
         render={<Link href="/checkout" />}
+        nativeButton={false}
       >
         {t("proceedToCheckout")}
         <ArrowRight className="h-4 w-4" />

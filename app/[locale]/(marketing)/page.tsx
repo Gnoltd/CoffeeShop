@@ -1,6 +1,12 @@
 import { getTranslations } from "next-intl/server"
+import { LandingView } from "@/components/marketing/landing-view"
 
 export default async function LandingPage() {
   const t = await getTranslations("Landing")
-  return <main className="p-8"><h1>{t("title")}</h1></main>
+  return (
+    <>
+      <h1 className="sr-only">{t("title")}</h1>
+      <LandingView />
+    </>
+  )
 }
