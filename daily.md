@@ -1,30 +1,25 @@
-# Today: Bilingual app + Food Cost Calculator
+# Today: Brand rename, next up is FE theming
 
 ## Task
 
-Made the app genuinely bilingual (not just translated copy) with a working
-VI/EN switcher via next-intl, migrated all 20 routes to locale-prefixed
-paths, fixed a real locale-caching bug found during verification, and built
-the first real (non-placeholder) feature: a Food Cost % Calculator for admin.
+Renamed the app from generic "Coffee Shop" to "PhaDinCoffee" (same name in
+both languages — messages, marketing header, page title, `package.json`,
+README, CLAUDE.md; also fixed `package.json`'s leftover `coffeeshop-tmp`
+name from the initial scaffold). Confirmed with the user that bilingual
+means single-language-per-page + toggle, not the dual-language-at-once
+display shown in the earlier Stitch mockups. Agreed FE priority order:
+theme tokens → customer flow pages → staff pages → admin pages.
 
 ## Context
 
-- Spec: `docs/superpowers/specs/2026-07-04-coffee-shop-app-design.md`
-- Plan: `docs/superpowers/plans/2026-07-04-coffee-shop-scaffold.md`
-- Full details of what changed and why: `continuity.md`, `CLAUDE.md`
-  ("Bilingual (i18n)" and "Food Cost Calculator" sections)
+- Full details: `continuity.md` ("Brand rename" and "Next steps" sections), `CLAUDE.md`
+- Design source for the next step: `design/stitch-exports/` (17 exact HTML exports)
 
 ## Done when
 
-- `npm run build` succeeds with 20 locale-prefixed routes — done
-- `/vi/*` and `/en/*` render genuinely different-language content (verified
-  after fixing the route-cache bug, not just before it) — done
-- Anonymous visitors to protected routes redirect to the *same-locale*
-  `/login` (e.g. `/en/admin/dashboard` → `/en/login`) — done, verified with curl
-- Food Cost Calculator matches the sample calculation (125.000.000đ /
-  31.3% / "Bình Thường") and is fully bilingual — verified server-rendered
-  output for both locales; interactive click-through not verified (no
-  browser automation tool available in this environment)
-- `CLAUDE.md` and `continuity.md` reflect the current state, including the
-  two things worth remembering: middleware is required for i18n (not just
-  auth), and don't hardcode role bypasses in middleware even temporarily
+- "PhaDinCoffee" appears consistently in both `messages/vi.json` and
+  `messages/en.json`, plus the marketing header and page `<title>` — done
+- `package.json` name fixed from `coffeeshop-tmp` to `phadincoffee` — done
+- Next session starts on: wiring the Stitch brick-red/brown/cream palette +
+  Be Vietnam Pro font into `app/globals.css`'s Tailwind v4 `@theme` block,
+  before touching any individual page

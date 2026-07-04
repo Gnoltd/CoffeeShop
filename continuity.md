@@ -1,12 +1,14 @@
-# Project: Coffee Shop Management & Customer Portal
+# Project: PhaDinCoffee — Management & Customer Portal
 
 ## Goal
 
-Web app for a single-location coffee shop: customer ordering (pickup +
-dine-in QR), staff POS + Kitchen Display, manager/admin menu/inventory/
-reporting/settings. Full spec: `docs/superpowers/specs/2026-07-04-coffee-shop-app-design.md`.
-Bilingual product (Vietnamese primary / English secondary throughout), with
-a working language switcher, not just translated copy.
+Web app for a single-location coffee shop ("PhaDinCoffee"): customer ordering
+(pickup + dine-in QR), staff POS + Kitchen Display, manager/admin
+menu/inventory/reporting/settings. Full spec: `docs/superpowers/specs/2026-07-04-coffee-shop-app-design.md`.
+Bilingual product: single language per page (VI or EN, default VI), switchable
+via a toggle — not a dual-language-at-once display (confirmed with the user;
+the earlier Stitch mockups showed both languages together, but the real app
+intentionally works differently).
 
 ## Current status
 
@@ -89,18 +91,41 @@ else is still a translated placeholder heading. No Supabase database yet.
   than any separate branding pasted in from a spec — confirmed with the user rather than assumed.
 - Middleware fails open to "anonymous" (not a crash) when Supabase is unreachable/unconfigured
 
-## Next steps
+## Brand rename
 
-1. Execute the DB schema/RLS/trigger/Edge Function tasks from the implementation plan
-   (Tasks 3-11) — fully unaffected by the frontend/i18n work done so far.
-2. Wire real Supabase env vars once local Supabase is running (`npx supabase start`) so
-   middleware actually resolves roles instead of falling back to anonymous — this will also
-   allow direct (not just indirect) verification of bilingual rendering on auth-gated pages.
-3. Port remaining Stitch HTML exports (`design/stitch-exports/`) into real page components,
-   following the Food Cost Calculator as the template: shared brand tokens, translations in
-   both `messages/vi.json` and `messages/en.json`, shadcn components.
-4. Business logic (Stripe/VNPay integration, order placement, Realtime wiring).
-5. Add Vitest/RTL test setup (skipped so far) — including a regression test for the
-   force-dynamic/locale-caching bug so it can't silently reappear.
-6. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16 deprecation warning,
-   non-blocking).
+App renamed from generic "Coffee Shop" to **"PhaDinCoffee"** (same string in both
+locales — it's a proper noun, not translated). Updated: `messages/{vi,en}.json`
+(new `Brand.name` key), marketing header, root layout `<title>`, `package.json`
+`name` (was still the leftover `coffeeshop-tmp` from the initial scaffold —
+fixed as part of this), README, CLAUDE.md. Historical spec/plan docs in
+`docs/superpowers/` were left as-is (they're a record of decisions at the time,
+not live app content). Note: there is a separate, unrelated `PhaDinCoffee`
+project folder on the user's Desktop with its own Vite-based dev servers —
+untouched by this rename, just worth being aware of.
+
+## Next steps (FE priority order, confirmed with user)
+
+1. **Wire Stitch design tokens into the real app theme** — brick red/brown/cream
+   palette + Be Vietnam Pro into `app/globals.css`'s Tailwind v4 `@theme` block
+   (currently still shadcn's default gray theme). Do this before porting pages
+   so every subsequent page is on-brand from the start, not re-themed later.
+2. Port remaining Stitch HTML exports (`design/stitch-exports/`) into real page
+   components, starting with the **customer flow** (Menu → Cart → Checkout →
+   Order Tracking), then **staff** (POS, Kitchen Display), then **admin**
+   (Dashboard, Menu, Inventory, Tables, Staff, Settings) — following the Food
+   Cost Calculator as the template: shared brand tokens, translations in both
+   `messages/vi.json` and `messages/en.json`, shadcn components, lucide-react
+   icons (already installed via shadcn, no separate icon-package decision needed).
+   Pages can use mock/hardcoded data since Supabase doesn't exist yet.
+3. Execute the DB schema/RLS/trigger/Edge Function tasks from the implementation
+   plan (Tasks 3-11) — fully unaffected by the frontend/i18n work, can happen
+   in parallel with #1-2.
+4. Wire real Supabase env vars once local Supabase is running (`npx supabase start`)
+   so middleware actually resolves roles instead of falling back to anonymous —
+   this also unblocks direct (not just indirect) verification of bilingual
+   rendering on auth-gated pages.
+5. Business logic (Stripe/VNPay integration, order placement, Realtime wiring).
+6. Add Vitest/RTL test setup (skipped so far) — including a regression test for
+   the force-dynamic/locale-caching bug so it can't silently reappear.
+7. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16 deprecation
+   warning, non-blocking).

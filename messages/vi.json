@@ -1,4 +1,7 @@
 {
+  "Brand": {
+    "name": "PhaDinCoffee"
+  },
   "Nav": {
     "menu": "Thực Đơn",
     "cart": "Giỏ Hàng",
@@ -15,7 +18,7 @@
     "foodCost": "Chi Phí Thực Phẩm"
   },
   "Landing": {
-    "title": "Chào Mừng Đến Coffee Shop"
+    "title": "Chào Mừng Đến PhaDinCoffee"
   },
   "Auth": {
     "login": "Đăng Nhập",

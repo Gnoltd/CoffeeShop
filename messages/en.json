@@ -1,4 +1,7 @@
 {
+  "Brand": {
+    "name": "PhaDinCoffee"
+  },
   "Nav": {
     "menu": "Menu",
     "cart": "Cart",
@@ -15,7 +18,7 @@
     "foodCost": "Food Cost"
   },
   "Landing": {
-    "title": "Welcome to the Coffee Shop"
+    "title": "Welcome to PhaDinCoffee"
   },
   "Auth": {
     "login": "Log In",

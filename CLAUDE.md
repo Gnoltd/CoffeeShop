@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Structural map of the Coffee Shop app. Full rationale lives in
+Structural map of the PhaDinCoffee app. Full rationale lives in
 `docs/superpowers/specs/2026-07-04-coffee-shop-app-design.md`. A full
 implementation plan (DB schema/RLS/Edge Functions) is at
 `docs/superpowers/plans/2026-07-04-coffee-shop-scaffold.md` — not yet executed.
@@ -39,8 +39,10 @@ Admin = Manager + staff accounts/roles + shop/loyalty settings.
   `messages/{locale}.json` per request). Wired into the build via the
   `next-intl/plugin` wrapper in `next.config.ts`.
 - Translation catalogs: `messages/vi.json`, `messages/en.json`, namespaced
-  by section (`Nav`, `Landing`, `Auth`, `Customer`, `Staff`, `Admin`,
-  `FoodCost`, ...). Add new keys to **both** files.
+  by section (`Brand`, `Nav`, `Landing`, `Auth`, `Customer`, `Staff`, `Admin`,
+  `FoodCost`, ...). Add new keys to **both** files. `Brand.name` holds the
+  app name ("PhaDinCoffee") — identical in both files since it's a proper
+  noun, not translated. Use it instead of hardcoding the name anywhere new.
 - Server components: `getTranslations("Namespace")` from `next-intl/server`.
   Client components: `useTranslations("Namespace")` from `next-intl`.
 - `app/[locale]/layout.tsx` is the true root layout (`<html lang={locale}>`,

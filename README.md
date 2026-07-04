@@ -1,4 +1,4 @@
-# Coffee Shop
+# PhaDinCoffee
 
 Customer ordering (pickup + dine-in QR), staff POS + Kitchen Display, and
 manager/admin tools for a single-location coffee shop. Bilingual

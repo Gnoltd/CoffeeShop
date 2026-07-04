@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Coffee Shop",
+  title: "PhaDinCoffee",
   description: "Order ahead, track your order, and earn loyalty points.",
 };
 
