@@ -230,7 +230,7 @@ export function ProfileView() {
         <button
           type="button"
           disabled
-          title="Not implemented yet — no real auth session to log out of"
+          title="Not implemented yet — no real auth session to log out of. Once Supabase Auth exists: clear the session and return to /menu as a guest, not /login — guest ordering stays available."
           className="flex w-full items-center justify-between p-4 text-left opacity-50"
         >
           <span className="flex items-center gap-3">

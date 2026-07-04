@@ -59,6 +59,11 @@ export function CartView() {
                     </button>
                   </div>
                   {label && <p className="mt-1 text-xs text-muted-foreground">{label}</p>}
+                  {item.note && (
+                    <p className="mt-1 text-xs italic text-muted-foreground">
+                      {t("noteLabel")}: {item.note}
+                    </p>
+                  )}
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex flex-col">

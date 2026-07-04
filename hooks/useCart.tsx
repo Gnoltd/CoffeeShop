@@ -24,6 +24,7 @@ export type CartItem = {
   nameEn: string
   size?: { id: string; label: string; priceDelta: number }
   modifiers: CartModifier[]
+  note?: string
   unitPrice: number
   quantity: number
 }
@@ -49,7 +50,10 @@ function buildCartItemId(item: AddToCartInput): string {
     .map((m) => m.optionId)
     .sort()
     .join(",")
-  return [item.menuItemId, item.size?.id ?? "no-size", modifierKey].join("|")
+  // Note is part of the identity key so two adds of the same drink with
+  // different notes (e.g. "less sugar" vs "extra ice") stay separate lines
+  // instead of silently merging and dropping one note.
+  return [item.menuItemId, item.size?.id ?? "no-size", modifierKey, item.note ?? ""].join("|")
 }
 
 export function CartProvider({ children }: { children: ReactNode }) {

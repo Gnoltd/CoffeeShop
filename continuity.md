@@ -99,6 +99,12 @@ to replace the mocks.
 - New features (like Food Cost Calculator) reuse the app's existing brand/design system rather
   than any separate branding pasted in from a spec — confirmed with the user rather than assumed.
 - Middleware fails open to "anonymous" (not a crash) when Supabase is unreachable/unconfigured
+- **Guest ordering is intentional, not just a missing-auth side effect:** customer routes
+  (`/menu`, `/cart`, `/checkout`, `/orders`, `/profile`, `/loyalty`) are deliberately never
+  role-gated in `middleware.ts` — only `/staff/*` and `/admin/*` require a role. Confirmed with
+  the user when deciding Logout behavior: **Logout clears the session and returns to `/menu` as
+  a guest, not `/login`.** Profile/Loyalty/Order History show a "log in to continue" prompt for
+  guests instead of hard-blocking, rather than forcing every customer page to require an account.
 
 ## Brand rename
 
@@ -366,6 +372,40 @@ before any code was written (per their explicit request).
   checks confirmed real bilingual content on all 6 pages (not the old
   placeholder heading) and no regression on the `/admin/*` `/staff/*` auth
   gate.
+
+## Back button + per-item order notes (done)
+
+Two follow-up fixes from user feedback while previewing:
+
+- **Guest logout decision:** confirmed with the user that Logout should
+  clear the session and return to `/menu` as a guest, not force `/login` —
+  customer routes are deliberately never role-gated (see Key decisions),
+  so guest ordering must keep working after logout. Documented on the
+  (still disabled, no real session yet) Logout button's tooltip in
+  `components/customer/profile-view.tsx` so this isn't re-litigated when
+  Supabase Auth is wired up.
+- **Back button on every customer page:** user first reported no way back
+  out of Order History's drill-down, then broadened it to "all pages."
+  Checked Stitch mockups — Cart/Checkout/Order Tracking/Profile all
+  originally had a back arrow the app never implemented. Root cause on
+  Checkout and Order Tracking specifically was worse: they hide
+  `BottomNav` (Destination Rule) and had zero navigation at all. Fixed by
+  adding an optional `showBack` prop to the shared `CustomerHeader`,
+  rendering a new `components/customer/back-button.tsx` (`router.back()`);
+  only `(customer)/layout.tsx` enables it, so Landing/Login/Signup are
+  unaffected. See CLAUDE.md for the exact scope decision.
+- **Per-item order notes:** customer-requested feature ("suggest less or
+  more sugar"). Added optional `note` to `CartItem`
+  (`hooks/useCart.tsx`), included in the cart-line identity key so two
+  adds of the same drink with different notes don't merge and drop one.
+  Menu's customize panel (`menu-browser.tsx`) now always shows a free-text
+  note field, shown back in both Cart and Checkout summaries. Kitchen
+  Display intentionally NOT touched — it's still fixed mock orders
+  unconnected to the real cart, so there's nothing real to display there
+  yet; becomes relevant once Realtime order data exists.
+- Verified: `npm run build` clean; curl confirmed the back button appears
+  on `/menu`/`/checkout` but not on `/` or `/login`, and the new
+  translation keys are present in the client message payload.
 
 ## Next steps
 

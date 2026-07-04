@@ -55,6 +55,7 @@
     "createAccount": "Tạo Tài Khoản"
   },
   "Customer": {
+    "back": "Quay Lại",
     "menuTitle": "Thực Đơn",
     "cartTitle": "Giỏ Hàng",
     "checkoutTitle": "Thanh Toán",
@@ -100,6 +101,8 @@
     "size": "Kích Cỡ",
     "add": "Thêm",
     "confirm": "Xác Nhận",
+    "noteLabel": "Ghi Chú (không bắt buộc)",
+    "notePlaceholder": "VD: ít đường, nhiều đá...",
     "popular": "Phổ Biến",
     "outOfStock": "Hết Hàng",
     "viewCart": "Xem Giỏ Hàng",
@@ -110,6 +113,7 @@
     "empty": "Giỏ hàng của bạn đang trống.",
     "browseMenu": "Xem Thực Đơn",
     "remove": "Xóa món",
+    "noteLabel": "Ghi chú",
     "decrease": "Giảm số lượng",
     "increase": "Tăng số lượng",
     "subtotal": "Tạm Tính",
@@ -117,6 +121,7 @@
     "proceedToCheckout": "Tiến Hành Thanh Toán"
   },
   "Checkout": {
+    "noteLabel": "Ghi chú",
     "orderType": "Hình Thức Nhận Hàng",
     "pickup": "Mang Đi",
     "dineIn": "Tại Bàn",

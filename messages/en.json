@@ -55,6 +55,7 @@
     "createAccount": "Create Account"
   },
   "Customer": {
+    "back": "Back",
     "menuTitle": "Menu",
     "cartTitle": "Cart",
     "checkoutTitle": "Checkout",
@@ -100,6 +101,8 @@
     "size": "Size",
     "add": "Add",
     "confirm": "Confirm",
+    "noteLabel": "Note (optional)",
+    "notePlaceholder": "e.g. less sugar, extra ice...",
     "popular": "Popular",
     "outOfStock": "Out of Stock",
     "viewCart": "View Cart",
@@ -110,6 +113,7 @@
     "empty": "Your cart is empty.",
     "browseMenu": "Browse Menu",
     "remove": "Remove item",
+    "noteLabel": "Note",
     "decrease": "Decrease quantity",
     "increase": "Increase quantity",
     "subtotal": "Subtotal",
@@ -117,6 +121,7 @@
     "proceedToCheckout": "Proceed to Checkout"
   },
   "Checkout": {
+    "noteLabel": "Note",
     "orderType": "Order Type",
     "pickup": "Pickup",
     "dineIn": "Dine-in",

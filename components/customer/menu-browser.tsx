@@ -43,6 +43,7 @@ export function MenuBrowser() {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(null)
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(null)
   const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>({})
+  const [noteDraft, setNoteDraft] = useState("")
 
   const name = (item: MenuItem) => (locale === "vi" ? item.nameVi : item.nameEn)
   const description = (item: MenuItem) => (locale === "vi" ? item.descriptionVi : item.descriptionEn)
@@ -73,6 +74,7 @@ export function MenuBrowser() {
       if (group.required) defaults[group.id] = group.options[0].id
     })
     setSelectedModifiers(defaults)
+    setNoteDraft("")
   }
 
   function priceFor(item: MenuItem, sizeId: string | null, modifiers: Record<string, string>): number {
@@ -98,12 +100,14 @@ export function MenuBrowser() {
         priceDelta: option.priceDelta,
       }
     })
+    const trimmedNote = noteDraft.trim()
     addItem({
       menuItemId: item.id,
       nameVi: item.nameVi,
       nameEn: item.nameEn,
       size: size ? { id: size.id, label: size.label, priceDelta: size.priceDelta } : undefined,
       modifiers,
+      note: trimmedNote || undefined,
       unitPrice: priceFor(item, selectedSizeId, selectedModifiers),
     })
     setExpandedItemId(null)
@@ -235,6 +239,23 @@ export function MenuBrowser() {
                       </div>
                     </div>
                   ))}
+
+                  <div className="flex flex-col gap-2">
+                    <label
+                      htmlFor={`note-${item.id}`}
+                      className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                    >
+                      {t("noteLabel")}
+                    </label>
+                    <textarea
+                      id={`note-${item.id}`}
+                      value={noteDraft}
+                      onChange={(e) => setNoteDraft(e.target.value)}
+                      placeholder={t("notePlaceholder")}
+                      rows={2}
+                      className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-card-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    />
+                  </div>
 
                   <Button onClick={() => confirmAdd(item)} className="h-11 gap-2 rounded-xl text-base">
                     {t("confirm")}

@@ -169,6 +169,24 @@ matches the Stitch mockups' "Destination Rule" for focused pages).
 - Item "photos" are lucide-react icon placeholders in a colored box, not
   real images — the Stitch exports' image URLs point at Google's internal
   AI-generation service and aren't stable to hardcode into the app.
+- **Per-item order notes:** tapping a menu item's card (not the quick "+")
+  opens the customize panel, which now always includes a free-text note
+  field (e.g. "less sugar", "extra ice") regardless of whether the item has
+  sizes/modifiers — `CartItem.note` in `hooks/useCart.tsx`. Note is part of
+  `buildCartItemId`'s identity key, so adding the same drink twice with
+  different notes creates two separate cart lines instead of merging and
+  silently dropping one note. Shown in both Cart and Checkout's order
+  summary as "Note: {text}". The quick "+" one-tap add path never sets a
+  note (by design — it's the express lane for no-customization items).
+- **Back button:** `components/customer/header.tsx` (`CustomerHeader`)
+  takes an optional `showBack` prop; when true it renders
+  `components/customer/back-button.tsx` (client, `router.back()`) to the
+  left of the brand mark. Only `(customer)/layout.tsx` passes `showBack` —
+  `(marketing)` and `(auth)` layouts call `<CustomerHeader />` with no back
+  button, since Landing/Login/Signup are entry points with nothing
+  sensible to go back to. This also fixed a real dead-end: Checkout and
+  Order Tracking hide `BottomNav` (Destination Rule) and, before this,
+  had no navigation at all once you were on them.
 - **Gotcha:** this project's shadcn `Button` wraps **Base UI**
   (`@base-ui/react/button`), not Radix — there is no `asChild` prop. For
   polymorphic rendering (e.g. a `Button` that navigates), use Base UI's

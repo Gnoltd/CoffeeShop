@@ -136,6 +136,11 @@ export function CheckoutView() {
                 <div>
                   <p className="text-sm font-semibold text-card-foreground">{name}</p>
                   <p className="text-xs text-muted-foreground">x{item.quantity}</p>
+                  {item.note && (
+                    <p className="text-xs italic text-muted-foreground">
+                      {t("noteLabel")}: {item.note}
+                    </p>
+                  )}
                 </div>
                 <span className="text-sm font-bold text-card-foreground">
                   {formatVND(item.unitPrice * item.quantity)}
