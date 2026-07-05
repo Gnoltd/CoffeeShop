@@ -1,10 +1,17 @@
 /**
- * Placeholder reviews for the Product Detail page — no `reviews` table yet.
- * Shared generic content reused across every product rather than inventing
- * per-item reviews for all nine mock menu items; each MenuItem's own
- * `rating`/`reviewCount` (lib/mock-data/menu.ts) is what actually varies
- * per product.
+ * Placeholder reviews for the Product Detail page — no `reviews` table
+ * yet. MOCK_RATING/MOCK_REVIEW_COUNT and this shared review list are both
+ * reused identically across every product, not per-item content.
  */
+
+/**
+ * Rating summary shown on every product — genuinely mock, not per-item.
+ * There's no reviews table to aggregate a real average/count from; this
+ * matches MOCK_REVIEWS below (one shared set of reviews reused across
+ * every product) rather than inventing per-item precision that isn't real.
+ */
+export const MOCK_RATING = 4.5
+export const MOCK_REVIEW_COUNT = 75
 
 export type Review = {
   id: string

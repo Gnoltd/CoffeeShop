@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart, type CartModifier } from "@/hooks/useCart"
 import { StarRating } from "@/components/customer/star-rating"
-import { MOCK_REVIEWS } from "@/lib/mock-data/reviews"
-import type { MenuItem, MenuIcon } from "@/lib/mock-data/menu"
+import { MOCK_REVIEWS, MOCK_RATING, MOCK_REVIEW_COUNT } from "@/lib/mock-data/reviews"
+import type { MenuItem, MenuIcon } from "@/lib/supabase/menu-data"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -58,8 +58,8 @@ export function ProductDetail({ item }: { item: MenuItem }) {
       return {
         groupId,
         optionId,
-        labelVi: option.labelVi,
-        labelEn: option.labelEn,
+        labelVi: option.nameVi,
+        labelEn: option.nameEn,
         priceDelta: option.priceDelta,
       }
     })
@@ -68,7 +68,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
       menuItemId: item.id,
       nameVi: item.nameVi,
       nameEn: item.nameEn,
-      size: size ? { id: size.id, label: size.label, priceDelta: size.priceDelta } : undefined,
+      size: size ? { id: size.id, label: size.name, priceDelta: size.priceDelta } : undefined,
       modifiers,
       note: trimmedNote || undefined,
       unitPrice: price,
@@ -93,18 +93,16 @@ export function ProductDetail({ item }: { item: MenuItem }) {
           <span className="whitespace-nowrap text-xl font-bold text-primary">{formatVND(price)}</span>
         </div>
 
-        {item.rating !== undefined && (
-          <div className="mt-2 flex items-center gap-2">
-            <StarRating rating={item.rating} />
-            <span className="text-sm text-muted-foreground">
-              {item.rating.toFixed(1)} · {tProduct("reviewCount", { count: item.reviewCount ?? 0 })}
-            </span>
-          </div>
-        )}
+        <div className="mt-2 flex items-center gap-2">
+          <StarRating rating={MOCK_RATING} />
+          <span className="text-sm text-muted-foreground">
+            {MOCK_RATING.toFixed(1)} · {tProduct("reviewCount", { count: MOCK_REVIEW_COUNT })}
+          </span>
+        </div>
 
         <p className="mt-3 text-sm text-muted-foreground">{description}</p>
 
-        {item.sizes && (
+        {item.sizes.length > 0 && (
           <section className="mt-6 flex flex-col gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("size")}
@@ -122,7 +120,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                       : "border-border text-card-foreground hover:border-primary/50"
                   )}
                 >
-                  {size.label}
+                  {size.name}
                 </button>
               ))}
             </div>
@@ -132,7 +130,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
         {item.modifierGroups?.map((group) => (
           <section key={group.id} className="mt-6 flex flex-col gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {locale === "vi" ? group.labelVi : group.labelEn}
+              {locale === "vi" ? group.nameVi : group.nameEn}
             </span>
             <div className="grid grid-cols-2 gap-2">
               {group.options.map((option) => {
@@ -149,7 +147,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                         : "border-border text-card-foreground"
                     )}
                   >
-                    <span>{locale === "vi" ? option.labelVi : option.labelEn}</span>
+                    <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
                     {selected && <Check className="h-4 w-4 text-primary" />}
                   </button>
                 )
@@ -178,12 +176,10 @@ export function ProductDetail({ item }: { item: MenuItem }) {
         <section className="mt-8 border-t pt-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-card-foreground">{tProduct("reviewsTitle")}</h2>
-            {item.rating !== undefined && (
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-primary">{item.rating.toFixed(1)}</span>
-                <StarRating rating={item.rating} size="lg" />
-              </div>
-            )}
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-primary">{MOCK_RATING.toFixed(1)}</span>
+              <StarRating rating={MOCK_RATING} size="lg" />
+            </div>
           </div>
           <div className="flex flex-col gap-3">
             {MOCK_REVIEWS.map((review) => (

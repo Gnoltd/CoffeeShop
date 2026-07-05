@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation"
 import { getTranslations } from "next-intl/server"
-import { menuItems } from "@/lib/mock-data/menu"
 import { ProductDetail } from "@/components/customer/product-detail"
+import { createClient } from "@/lib/supabase/server"
+import { getMenuItemById } from "@/lib/supabase/menu-data"
 
 export default async function ProductDetailPage({
   params,
@@ -9,7 +10,8 @@ export default async function ProductDetailPage({
   params: Promise<{ itemId: string }>
 }) {
   const { itemId } = await params
-  const item = menuItems.find((i) => i.id === itemId)
+  const supabase = await createClient()
+  const item = await getMenuItemById(supabase, itemId)
   if (!item) notFound()
 
   const t = await getTranslations("Customer")
