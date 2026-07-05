@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { Coffee, CupSoda, Cookie, Milk, Search, Minus, Plus, Trash2, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
-import { menuCategories, menuItems, type MenuIcon, type MenuItem } from "@/lib/mock-data/menu"
+import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
 import { useTables } from "@/hooks/useTables"
 import { useKitchenOrders, type KdsOrder } from "@/hooks/useKitchenOrders"
 
@@ -33,13 +33,13 @@ type OrderLine = {
 type OrderType = "dine-in" | "takeaway"
 type PaymentMethod = "cash" | "card" | "vnpay"
 
-export function PosTerminal() {
+export function PosTerminal({ categories, items }: { categories: MenuCategory[]; items: MenuItem[] }) {
   const locale = useLocale()
   const t = useTranslations("Pos")
   const { tables } = useTables()
   const { addOrder } = useKitchenOrders()
 
-  const [selectedCategory, setSelectedCategory] = useState(menuCategories[0].id)
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id ?? "")
   const [searchQuery, setSearchQuery] = useState("")
   const [order, setOrder] = useState<OrderLine[]>([])
   const [orderType, setOrderType] = useState<OrderType>("dine-in")
@@ -49,17 +49,17 @@ export function PosTerminal() {
   const selectedTable = tables.find((tbl) => tbl.id === selectedTableId) ?? tables[0]
 
   const name = (item: MenuItem) => (locale === "vi" ? item.nameVi : item.nameEn)
-  const categoryLabel = (c: (typeof menuCategories)[number]) => (locale === "vi" ? c.labelVi : c.labelEn)
+  const categoryLabel = (c: MenuCategory) => (locale === "vi" ? c.nameVi : c.nameEn)
 
   const visibleItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    return menuItems.filter((item) => {
+    return items.filter((item) => {
       const matchesCategory = item.categoryId === selectedCategory
       const matchesQuery =
         query === "" || item.nameVi.toLowerCase().includes(query) || item.nameEn.toLowerCase().includes(query)
       return item.isAvailable && matchesCategory && matchesQuery
     })
-  }, [selectedCategory, searchQuery])
+  }, [items, selectedCategory, searchQuery])
 
   function addToOrder(item: MenuItem) {
     setOrder((prev) => {
@@ -125,7 +125,7 @@ export function PosTerminal() {
         </div>
 
         <div className="flex gap-2 overflow-x-auto px-4 pt-4">
-          {menuCategories.map((category) => (
+          {categories.map((category) => (
             <button
               key={category.id}
               type="button"
