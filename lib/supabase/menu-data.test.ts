@@ -3,6 +3,9 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 import { getCategories } from "./menu-data"
 import { getMenuItems } from "./menu-data"
 import { createMenuItem } from "./menu-data"
+import { getModifierGroups } from "./menu-data"
+import { createModifierGroup } from "./menu-data"
+import { setItemModifierGroups } from "./menu-data"
 
 function fakeSupabase(rows: unknown[]) {
   return {
@@ -143,5 +146,129 @@ describe("createMenuItem", () => {
     })
     expect(result.id).toBe("item-new")
     expect(result.nameEn).toBe("Peach Tea")
+  })
+})
+
+describe("getModifierGroups", () => {
+  it("maps snake_case DB rows (with nested modifiers) to camelCase MenuModifierGroup", async () => {
+    const row = {
+      id: "grp-extra-shot",
+      name_vi: "Thêm Shot",
+      name_en: "Extra Shot",
+      is_required: false,
+      modifiers: [{ id: "mod-extra-shot", name_vi: "Thêm Shot", name_en: "Extra Shot", price_delta: 10000 }],
+    }
+    const supabase = {
+      from: () => ({
+        select: () => ({
+          order: () => Promise.resolve({ data: [row], error: null }),
+        }),
+      }),
+    } as unknown as SupabaseClient
+
+    const result = await getModifierGroups(supabase)
+
+    expect(result).toEqual([
+      {
+        id: "grp-extra-shot",
+        nameVi: "Thêm Shot",
+        nameEn: "Extra Shot",
+        required: false,
+        options: [{ id: "mod-extra-shot", nameVi: "Thêm Shot", nameEn: "Extra Shot", priceDelta: 10000 }],
+      },
+    ])
+  })
+})
+
+describe("createModifierGroup", () => {
+  it("inserts a non-required, single-option modifier_group and its one modifier", async () => {
+    const groupInsertSpy = vi.fn(() => ({
+      select: () => ({
+        single: () =>
+          Promise.resolve({
+            data: { id: "grp-new", name_vi: "Thêm Shot", name_en: "Extra Shot", is_required: false },
+            error: null,
+          }),
+      }),
+    }))
+    const modifierInsertSpy = vi.fn(() => ({
+      select: () => ({
+        single: () =>
+          Promise.resolve({
+            data: { id: "mod-new", name_vi: "Thêm Shot", name_en: "Extra Shot", price_delta: 10000 },
+            error: null,
+          }),
+      }),
+    }))
+    const supabase = {
+      from: (table: string) => {
+        if (table === "modifier_groups") return { insert: groupInsertSpy }
+        if (table === "modifiers") return { insert: modifierInsertSpy }
+        throw new Error(`unexpected table ${table}`)
+      },
+    } as unknown as SupabaseClient
+
+    const result = await createModifierGroup(supabase, {
+      nameVi: "Thêm Shot",
+      nameEn: "Extra Shot",
+      priceDelta: 10000,
+    })
+
+    expect(groupInsertSpy).toHaveBeenCalledWith({
+      name_vi: "Thêm Shot",
+      name_en: "Extra Shot",
+      is_required: false,
+      max_selections: 1,
+    })
+    expect(modifierInsertSpy).toHaveBeenCalledWith({
+      modifier_group_id: "grp-new",
+      name_vi: "Thêm Shot",
+      name_en: "Extra Shot",
+      price_delta: 10000,
+    })
+    expect(result).toEqual({
+      id: "grp-new",
+      nameVi: "Thêm Shot",
+      nameEn: "Extra Shot",
+      required: false,
+      options: [{ id: "mod-new", nameVi: "Thêm Shot", nameEn: "Extra Shot", priceDelta: 10000 }],
+    })
+  })
+})
+
+describe("setItemModifierGroups", () => {
+  it("deletes existing links then inserts one row per group id", async () => {
+    const deleteEqSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const insertSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const supabase = {
+      from: () => ({
+        delete: () => ({ eq: deleteEqSpy }),
+        insert: insertSpy,
+      }),
+    } as unknown as SupabaseClient
+
+    await setItemModifierGroups(supabase, "item-1", ["grp-a", "grp-b"])
+
+    expect(deleteEqSpy).toHaveBeenCalledWith("menu_item_id", "item-1")
+    expect(insertSpy).toHaveBeenCalledWith([
+      { menu_item_id: "item-1", modifier_group_id: "grp-a" },
+      { menu_item_id: "item-1", modifier_group_id: "grp-b" },
+    ])
+  })
+
+  it("skips the insert call when groupIds is empty", async () => {
+    const deleteEqSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const insertSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const supabase = {
+      from: () => ({
+        delete: () => ({ eq: deleteEqSpy }),
+        insert: insertSpy,
+      }),
+    } as unknown as SupabaseClient
+
+    await setItemModifierGroups(supabase, "item-1", [])
+
+    expect(deleteEqSpy).toHaveBeenCalledWith("menu_item_id", "item-1")
+    expect(insertSpy).not.toHaveBeenCalled()
   })
 })

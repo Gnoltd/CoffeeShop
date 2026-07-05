@@ -223,3 +223,87 @@ export async function deleteMenuItem(supabase: SupabaseClient, id: string): Prom
   const { error } = await supabase.from("menu_items").delete().eq("id", id)
   if (error) throw error
 }
+
+export async function getModifierGroups(supabase: SupabaseClient): Promise<MenuModifierGroup[]> {
+  const { data, error } = await supabase
+    .from("modifier_groups")
+    .select("id, name_vi, name_en, is_required, modifiers ( id, name_vi, name_en, price_delta )")
+    .order("name_en")
+  if (error) throw error
+  return ((data ?? []) as unknown as ModifierGroupRow[]).map((row) => ({
+    id: row.id,
+    nameVi: row.name_vi,
+    nameEn: row.name_en,
+    required: row.is_required,
+    options: (row.modifiers ?? []).map((m) => ({
+      id: m.id,
+      nameVi: m.name_vi,
+      nameEn: m.name_en,
+      priceDelta: m.price_delta,
+    })),
+  }))
+}
+
+export type ModifierGroupInput = {
+  nameVi: string
+  nameEn: string
+  priceDelta: number
+}
+
+export async function createModifierGroup(
+  supabase: SupabaseClient,
+  input: ModifierGroupInput
+): Promise<MenuModifierGroup> {
+  const { data: groupRow, error: groupError } = await supabase
+    .from("modifier_groups")
+    .insert({ name_vi: input.nameVi, name_en: input.nameEn, is_required: false, max_selections: 1 })
+    .select("id, name_vi, name_en, is_required")
+    .single()
+  if (groupError) throw groupError
+
+  const { data: modifierRow, error: modifierError } = await supabase
+    .from("modifiers")
+    .insert({
+      modifier_group_id: groupRow.id,
+      name_vi: input.nameVi,
+      name_en: input.nameEn,
+      price_delta: input.priceDelta,
+    })
+    .select("id, name_vi, name_en, price_delta")
+    .single()
+  if (modifierError) throw modifierError
+
+  return {
+    id: groupRow.id,
+    nameVi: groupRow.name_vi,
+    nameEn: groupRow.name_en,
+    required: groupRow.is_required,
+    options: [
+      {
+        id: modifierRow.id,
+        nameVi: modifierRow.name_vi,
+        nameEn: modifierRow.name_en,
+        priceDelta: modifierRow.price_delta,
+      },
+    ],
+  }
+}
+
+export async function setItemModifierGroups(
+  supabase: SupabaseClient,
+  itemId: string,
+  groupIds: string[]
+): Promise<void> {
+  const { error: deleteError } = await supabase
+    .from("menu_item_modifier_groups")
+    .delete()
+    .eq("menu_item_id", itemId)
+  if (deleteError) throw deleteError
+
+  if (groupIds.length === 0) return
+
+  const { error: insertError } = await supabase
+    .from("menu_item_modifier_groups")
+    .insert(groupIds.map((groupId) => ({ menu_item_id: itemId, modifier_group_id: groupId })))
+  if (insertError) throw insertError
+}
