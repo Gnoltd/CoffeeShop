@@ -444,6 +444,42 @@ before any code was written.
   a sample reviewer name), an unknown item id 404s, and the admin bypass
   session still reaches the new Add Item button.
 
+## Kitchen Display full layout parity (done)
+
+User asked whether KDS can connect to real orders (not yet — see below)
+and to check it against the actual Stitch mockup (`11-staff-kitchen-display.html`)
+feature-by-feature: it was missing a whole Bottom Stats Bar (Current Load,
+Queue, Wait Time, live clock) plus a left sidebar and richer top bar that
+had been deliberately dropped earlier for having no real data behind them.
+Asked the user whether to add just the (fully computable, no-backend-needed)
+stats bar or go for full 1:1 layout match including the sidebar — they
+chose full match, accepting that a couple of pieces (Terminal name, nav
+items) are decorative/non-functional like other Stitch chrome.
+
+- **Real orders, now or later:** confirmed with the user — not now, no
+  `orders` table exists. Architecturally ready for later though: the board
+  just filters one array by `status`, and `advance()` is the single choke
+  point that changes it, so swapping `INITIAL_ORDERS` for a Realtime query
+  and `advance()` for a real `UPDATE` is a contained change, not a rewrite.
+- Split `kitchen-display.tsx` into `kitchen-top-bar.tsx` +
+  `kitchen-sidebar.tsx` + `kitchen-board.tsx` + `kitchen-stats-footer.tsx`,
+  orchestrated by a slimmed-down `kitchen-display.tsx` that owns the
+  shared `orders`/`now` state plus **newly real** `completedCount` and
+  average-completion-time tracking (increments for real when "Complete" is
+  tapped — starts at 0, not a fake "42" like the mockup's static example).
+- Bottom Stats Bar is **entirely real, computed data**: Current Load
+  level + bar, Queue count, and Wait Time are all derived from the live
+  `orders` array (no backend needed for any of it) — only the sidebar's
+  Terminal name/label and the top bar's station name are pure decoration,
+  same honesty split as everywhere else in the app.
+- Structural side effect: `StaffNav` moved out of the shared
+  `app/[locale]/staff/layout.tsx` into the POS page specifically, since
+  Kitchen Display now has its own full top bar and would otherwise show
+  two stacked navs. POS is visually unaffected.
+- Verified: `npm run build` clean; curl confirmed the new sidebar/top
+  bar/stats-bar text renders in both locales and the `/staff/*` auth gate
+  and POS's own nav are unaffected.
+
 ## Next steps
 
 The originally agreed FE priority order (theme → customer → staff → admin)

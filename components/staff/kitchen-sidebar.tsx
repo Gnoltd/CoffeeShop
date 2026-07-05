@@ -1,0 +1,67 @@
+"use client"
+
+import { useTranslations } from "next-intl"
+import { CookingPot, Gauge, History, Boxes } from "lucide-react"
+
+export function KitchenSidebar({
+  completedCount,
+  avgTimeLabel,
+}: {
+  completedCount: number
+  avgTimeLabel: string
+}) {
+  const t = useTranslations("KitchenDisplay")
+
+  return (
+    <aside className="flex w-64 shrink-0 flex-col border-r bg-muted/40 py-4">
+      <div className="flex items-center gap-3 px-6 pb-4">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary">
+          <CookingPot className="h-5 w-5" />
+        </div>
+        <div>
+          <p className="text-sm font-bold text-card-foreground">{t("terminalName")}</p>
+          <p className="text-xs text-muted-foreground">{t("terminalSubtitle")}</p>
+        </div>
+      </div>
+
+      <nav className="flex-1 space-y-1 px-2">
+        <div className="flex items-center gap-3 rounded-lg bg-secondary/20 px-4 py-3 font-bold text-secondary">
+          <Gauge className="h-4 w-4" />
+          {t("liveOrders")}
+        </div>
+        <button
+          type="button"
+          disabled
+          title="Not implemented yet — no staff-facing order history route"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground opacity-60"
+        >
+          <History className="h-4 w-4" />
+          {t("orderHistoryNav")}
+        </button>
+        <button
+          type="button"
+          disabled
+          title="Not implemented yet — Inventory is manager/admin-only"
+          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground opacity-60"
+        >
+          <Boxes className="h-4 w-4" />
+          {t("inventoryNav")}
+        </button>
+      </nav>
+
+      <div className="mx-2 mt-auto rounded-xl border bg-card p-4">
+        <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          {t("shiftStats")}
+        </p>
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{t("completedLabel")}:</span>
+          <span className="font-bold text-card-foreground">{completedCount}</span>
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">{t("avgTimeLabel")}:</span>
+          <span className="font-bold text-card-foreground">{avgTimeLabel}</span>
+        </div>
+      </div>
+    </aside>
+  )
+}

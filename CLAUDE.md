@@ -287,9 +287,11 @@ screen `8436df098abc43ea801649f367476650`) before building it for real.
 ## Staff pages (`/staff/pos`, `/staff/orders`)
 
 Real, interactive pages ported from `design/stitch-exports/10-staff-pos.html`
-and `11-staff-kitchen-display.html`, simplified to drop chrome that needs
-real auth data (staff photo/name, shift stats) we don't have yet. Shared nav:
-`components/staff/staff-nav.tsx` (brand name + POS/Kitchen Display links).
+and `11-staff-kitchen-display.html`. `components/staff/staff-nav.tsx`
+(brand name + POS/Kitchen Display links) is rendered by the POS page only
+— Kitchen Display has its own full-fidelity shell instead (see below), so
+`app/[locale]/staff/layout.tsx` no longer renders a nav itself; each staff
+page is responsible for its own top-level chrome.
 
 - **POS** (`components/staff/pos-terminal.tsx`) reuses `lib/mock-data/menu.ts`
   (same menu source as the customer app). Tapping an item adds it at base
@@ -297,11 +299,37 @@ real auth data (staff photo/name, shift stats) we don't have yet. Shared nav:
   customer Menu page; that's a known gap, not an oversight, tracked in
   continuity.md. Local component state only (not `useCart` — POS is a
   separate staff-side transaction, not a shared persisted cart).
-- **Kitchen Display** (`components/staff/kitchen-display.tsx`) is a 3-column
-  board (New/Preparing/Ready) with a real ticking elapsed-time counter per
-  order (`setInterval`). Advancing an order is local state only — becomes a
-  Realtime subscription on `orders` once that table exists (design spec
-  Section 3d).
+- **Kitchen Display** — split across several files under `components/staff/`,
+  orchestrated by `kitchen-display.tsx`:
+  - `kitchen-board.tsx` — the 3-column board (New/Preparing/Ready), a real
+    ticking elapsed-time counter per order (`setInterval`), column header
+    icons, per-status timer captions ("Elapsed Time"/"Preparing Time"),
+    a "SIGNATURE ITEM" tag example, and Ready-column-specific styling
+    (tinted card header, strikethrough items, "Done" instead of a timer).
+    Exports `INITIAL_ORDERS`/`NEXT_STATUS`/types so the orchestrator and
+    footer can share them.
+  - `kitchen-top-bar.tsx` — brand + a static "Barista Station 1" label +
+    a "System Online" indicator + disabled+tooltip notification/settings
+    icons (no notification system or staff settings page exist).
+  - `kitchen-sidebar.tsx` — Terminal name/label (decorative, matches the
+    Stitch mockup 1:1) + inert "Live Orders" (current page) / disabled+tooltip
+    "Order History" (no staff-facing route) / "Inventory" (manager/admin-only,
+    a staff-role user can't reach `/admin/inventory`) nav items + a **real**
+    Shift Stats box: `completedCount` and average completion time are
+    genuinely tracked in `kitchen-display.tsx`'s state as orders get
+    completed this session (not a static mock number — starts at 0/`--:--`).
+  - `kitchen-stats-footer.tsx` — **all real, computed from the current
+    order list**, not mock: Current Load (Light/Moderate/Busy, thresholded
+    on the count of non-ready orders) with a proportional bar, Queue (that
+    same active-order count), Wait Time (average elapsed time across
+    active orders, in minutes), and a live clock reusing the same ticking
+    `now` state as the elapsed-time counters.
+  - Advancing an order (`advance()` in `kitchen-display.tsx`) is local
+    state only for now — becomes a Realtime subscription + a real
+    `UPDATE orders SET status=...` once the `orders` table exists (design
+    spec Section 3d). The board/footer/sidebar don't need to change when
+    that happens — they already just consume whatever `orders` array they're
+    given.
 - Both routes are still gated by the existing `/staff/*` middleware rule
   (staff|manager|admin) — confirmed the gate itself wasn't broken by these
   changes, but couldn't verify the pages' own rendering against a real
