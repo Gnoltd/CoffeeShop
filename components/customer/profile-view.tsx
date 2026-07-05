@@ -15,10 +15,13 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  LayoutDashboard,
 } from "lucide-react"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { formatNumber } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { ROLE_HOME } from "@/lib/roles"
 
 /** Matches loyalty-view.tsx's mock balance — no real profile/loyalty tables yet. */
 const MOCK_POINTS_BALANCE = 1250
@@ -37,12 +40,13 @@ const FIELD_LABEL_KEYS: Record<Field, "fullName" | "phoneNumber" | "email"> = {
   email: "email",
 }
 
-export function ProfileView() {
+export function ProfileView({ role = null }: { role?: string | null }) {
   const t = useTranslations("Profile")
   const locale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
   const params = useParams()
+  const isStaffRole = role === "staff" || role === "manager" || role === "admin"
 
   const [profile, setProfile] = useState(INITIAL_PROFILE)
   const [editingField, setEditingField] = useState<Field | null>(null)
@@ -102,6 +106,31 @@ export function ProfileView() {
           <p className="text-sm text-muted-foreground">{t("memberIdLabel")}: #PDC-8829</p>
         </div>
       </section>
+
+      {role && isStaffRole && (
+        <section className="mb-6 rounded-2xl border-2 border-secondary/30 bg-secondary/10 p-4 shadow-sm">
+          <div className="mb-3 flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary">
+              <LayoutDashboard className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="font-semibold text-card-foreground">
+                {role === "staff" ? t("staffAccessHeadlineStaff") : t("staffAccessHeadlineAdmin")}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {role === "staff" ? t("staffAccessSubtextStaff") : t("staffAccessSubtextAdmin")}
+              </p>
+            </div>
+          </div>
+          <Button
+            className="h-11 w-full rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            render={<Link href={ROLE_HOME[role]} />}
+            nativeButton={false}
+          >
+            {role === "staff" ? t("staffAccessButtonStaff") : t("staffAccessButtonAdmin")}
+          </Button>
+        </section>
+      )}
 
       <section className="mb-6 space-y-3">
         {(["name", "phone", "email"] as Field[]).map((field) => {
