@@ -57,7 +57,9 @@ describe("getMenuItems", () => {
     }
     const supabase = {
       from: () => ({
-        select: () => Promise.resolve({ data: [row], error: null }),
+        select: () => ({
+          order: () => Promise.resolve({ data: [row], error: null }),
+        }),
       }),
     } as unknown as SupabaseClient
 

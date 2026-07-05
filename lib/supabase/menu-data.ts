@@ -164,7 +164,7 @@ function mapMenuItemRow(row: MenuItemRow): MenuItem {
 }
 
 export async function getMenuItems(supabase: SupabaseClient): Promise<MenuItem[]> {
-  const { data, error } = await supabase.from("menu_items").select(MENU_ITEM_SELECT)
+  const { data, error } = await supabase.from("menu_items").select(MENU_ITEM_SELECT).order("name_en")
   if (error) throw error
   return ((data ?? []) as unknown as MenuItemRow[]).map(mapMenuItemRow)
 }

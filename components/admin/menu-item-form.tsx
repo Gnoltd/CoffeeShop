@@ -82,7 +82,10 @@ export function MenuItemForm({
       icon,
       isAvailable,
       isPopular,
-      imageUrl: imagePreviewUrl,
+      // A blob: URL is per-tab/ephemeral (URL.createObjectURL) — never
+      // persist it to the real DB. Only pass through a real, persistable
+      // URL (inherited initialItem.imageUrl) or null.
+      imageUrl: imagePreviewUrl?.startsWith("blob:") ? null : imagePreviewUrl,
     })
   }
 
