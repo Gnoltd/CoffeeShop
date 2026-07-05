@@ -324,9 +324,13 @@
     "removeImage": "Xóa ảnh",
     "currentPhoto": "Ảnh hiện tại",
     "availableToggle": "Đang Bán",
+    "iconLabel": "Biểu Tượng",
+    "popularToggle": "Nổi Bật",
     "cancel": "Hủy",
     "save": "Lưu Món",
     "requiredFieldsError": "Vui lòng nhập đầy đủ tên, giá và danh mục.",
+    "saveError": "Lưu món thất bại. Vui lòng thử lại.",
+    "deleteError": "Xóa món thất bại. Vui lòng thử lại.",
     "showingItems": "Hiển thị {start}-{end} trong {total} món",
     "previous": "Trước",
     "next": "Sau"

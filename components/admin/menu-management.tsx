@@ -7,7 +7,16 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
-import { menuCategories, menuItems as initialMenuItems, type MenuIcon, type MenuItem } from "@/lib/mock-data/menu"
+import { createClient } from "@/lib/supabase/client"
+import {
+  createMenuItem,
+  deleteMenuItem,
+  updateMenuItem,
+  type MenuCategory,
+  type MenuIcon,
+  type MenuItem,
+  type MenuItemInput,
+} from "@/lib/supabase/menu-data"
 import { MenuItemForm } from "@/components/admin/menu-item-form"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
@@ -17,34 +26,34 @@ const ICONS: Record<MenuIcon, typeof Coffee> = {
   milk: Milk,
 }
 
-const CATEGORY_BADGE_STYLES: Record<string, string> = {
-  coffee: "bg-accent/30 text-accent-foreground",
-  tea: "bg-secondary/15 text-secondary",
-  pastries: "bg-primary/10 text-primary",
-  blended: "bg-muted text-muted-foreground",
-}
+const CATEGORY_BADGE_STYLE = "bg-accent/30 text-accent-foreground"
 
 const PAGE_SIZE = 5
 
 type FormMode = { type: "add" } | { type: "edit"; item: MenuItem } | null
 
-export function MenuManagement() {
+export function MenuManagement({
+  categories,
+  initialItems,
+}: {
+  categories: MenuCategory[]
+  initialItems: MenuItem[]
+}) {
   const locale = useLocale()
   const t = useTranslations("AdminMenu")
+  const supabase = createClient()
 
-  const [items, setItems] = useState(initialMenuItems)
-  const [availability, setAvailability] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(initialMenuItems.map((item) => [item.id, item.isAvailable]))
-  )
+  const [items, setItems] = useState(initialItems)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [formMode, setFormMode] = useState<FormMode>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [error, setError] = useState<string | null>(null)
 
   const categoryLabel = (id: string) => {
-    const category = menuCategories.find((c) => c.id === id)
+    const category = categories.find((c) => c.id === id)
     if (!category) return id
-    return locale === "vi" ? category.labelVi : category.labelEn
+    return locale === "vi" ? category.nameVi : category.nameEn
   }
 
   const visibleItems = useMemo(() => {
@@ -65,22 +74,50 @@ export function MenuManagement() {
   const pageStart = (currentPage - 1) * PAGE_SIZE
   const pagedItems = visibleItems.slice(pageStart, pageStart + PAGE_SIZE)
 
-  function toggleAvailability(id: string) {
-    setAvailability((prev) => ({ ...prev, [id]: !prev[id] }))
+  async function toggleAvailability(item: MenuItem) {
+    setError(null)
+    try {
+      const updated = await updateMenuItem(supabase, item.id, {
+        categoryId: item.categoryId,
+        nameVi: item.nameVi,
+        nameEn: item.nameEn,
+        descriptionVi: item.descriptionVi,
+        descriptionEn: item.descriptionEn,
+        basePrice: item.basePrice,
+        icon: item.icon,
+        isAvailable: !item.isAvailable,
+        isPopular: item.isPopular,
+        imageUrl: item.imageUrl,
+      })
+      setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)))
+    } catch {
+      setError(t("saveError"))
+    }
   }
 
-  function removeItem(id: string) {
-    setItems((prev) => prev.filter((item) => item.id !== id))
+  async function removeItem(id: string) {
+    setError(null)
+    try {
+      await deleteMenuItem(supabase, id)
+      setItems((prev) => prev.filter((item) => item.id !== id))
+    } catch {
+      setError(t("deleteError"))
+    }
   }
 
-  function saveItem(item: MenuItem) {
-    setItems((prev) =>
-      prev.some((existing) => existing.id === item.id)
-        ? prev.map((existing) => (existing.id === item.id ? item : existing))
-        : [item, ...prev]
-    )
-    setAvailability((prev) => ({ ...prev, [item.id]: item.isAvailable }))
-    setFormMode(null)
+  async function saveItem(input: MenuItemInput, editingId: string | null) {
+    setError(null)
+    try {
+      const saved = editingId
+        ? await updateMenuItem(supabase, editingId, input)
+        : await createMenuItem(supabase, input)
+      setItems((prev) =>
+        editingId ? prev.map((item) => (item.id === editingId ? saved : item)) : [saved, ...prev]
+      )
+      setFormMode(null)
+    } catch {
+      setError(t("saveError"))
+    }
   }
 
   return (
@@ -96,11 +133,16 @@ export function MenuManagement() {
         </Button>
       </div>
 
+      {error && (
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+      )}
+
       {formMode && (
         <MenuItemForm
+          categories={categories}
           initialItem={formMode.type === "edit" ? formMode.item : undefined}
           onCancel={() => setFormMode(null)}
-          onSave={saveItem}
+          onSave={(input) => saveItem(input, formMode?.type === "edit" ? formMode.item.id : null)}
         />
       )}
 
@@ -127,7 +169,7 @@ export function MenuManagement() {
           >
             {t("allCategories")}
           </button>
-          {menuCategories.map((category) => (
+          {categories.map((category) => (
             <button
               key={category.id}
               type="button"
@@ -139,7 +181,7 @@ export function MenuManagement() {
                   : "bg-muted text-muted-foreground hover:bg-accent/30"
               )}
             >
-              {locale === "vi" ? category.labelVi : category.labelEn}
+              {locale === "vi" ? category.nameVi : category.nameEn}
             </button>
           ))}
         </div>
@@ -159,7 +201,7 @@ export function MenuManagement() {
           <tbody className="divide-y">
             {pagedItems.map((item) => {
               const Icon = ICONS[item.icon]
-              const isAvailable = availability[item.id]
+              const isAvailable = item.isAvailable
               return (
                 <tr key={item.id}>
                   <td className="px-4 py-3">
@@ -187,12 +229,7 @@ export function MenuManagement() {
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span
-                      className={cn(
-                        "rounded-full px-2.5 py-1 text-xs font-medium",
-                        CATEGORY_BADGE_STYLES[item.categoryId] ?? "bg-muted text-muted-foreground"
-                      )}
-                    >
+                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", CATEGORY_BADGE_STYLE)}>
                       {categoryLabel(item.categoryId)}
                     </span>
                   </td>
@@ -202,7 +239,7 @@ export function MenuManagement() {
                       type="button"
                       role="switch"
                       aria-checked={isAvailable}
-                      onClick={() => toggleAvailability(item.id)}
+                      onClick={() => toggleAvailability(item)}
                       className={cn(
                         "relative h-6 w-11 rounded-full transition-colors",
                         isAvailable ? "bg-primary" : "bg-muted-foreground/30"

@@ -6,27 +6,20 @@ import { UploadCloud, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import { menuCategories, type MenuIcon, type MenuItem } from "@/lib/mock-data/menu"
+import type { MenuCategory, MenuIcon, MenuItem, MenuItemInput } from "@/lib/supabase/menu-data"
 
-const CATEGORY_ICONS: Record<string, MenuIcon> = {
-  coffee: "coffee",
-  tea: "cup-soda",
-  pastries: "cookie",
-  blended: "cup-soda",
-}
-
-function iconForCategory(categoryId: string): MenuIcon {
-  return CATEGORY_ICONS[categoryId] ?? "coffee"
-}
+const ICON_OPTIONS: MenuIcon[] = ["coffee", "cup-soda", "cookie", "milk"]
 
 export function MenuItemForm({
+  categories,
   initialItem,
   onCancel,
   onSave,
 }: {
+  categories: MenuCategory[]
   initialItem?: MenuItem
   onCancel: () => void
-  onSave: (item: MenuItem) => void
+  onSave: (input: MenuItemInput) => void
 }) {
   const t = useTranslations("AdminMenu")
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -34,11 +27,13 @@ export function MenuItemForm({
 
   const [nameVi, setNameVi] = useState(initialItem?.nameVi ?? "")
   const [nameEn, setNameEn] = useState(initialItem?.nameEn ?? "")
-  const [categoryId, setCategoryId] = useState(initialItem?.categoryId ?? menuCategories[0].id)
+  const [categoryId, setCategoryId] = useState(initialItem?.categoryId ?? categories[0]?.id ?? "")
   const [price, setPrice] = useState(initialItem ? String(initialItem.basePrice) : "")
   const [descriptionVi, setDescriptionVi] = useState(initialItem?.descriptionVi ?? "")
   const [descriptionEn, setDescriptionEn] = useState(initialItem?.descriptionEn ?? "")
+  const [icon, setIcon] = useState<MenuIcon>(initialItem?.icon ?? "coffee")
   const [isAvailable, setIsAvailable] = useState(initialItem?.isAvailable ?? true)
+  const [isPopular, setIsPopular] = useState(initialItem?.isPopular ?? false)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialItem?.imageUrl ?? null)
   // Tracks whether *this form* created the current preview URL via
@@ -78,16 +73,16 @@ export function MenuItemForm({
     }
 
     onSave({
-      id: initialItem?.id ?? `custom-${Date.now()}`,
       categoryId,
       nameVi: nameVi.trim(),
       nameEn: nameEn.trim(),
       descriptionVi: descriptionVi.trim(),
       descriptionEn: descriptionEn.trim(),
       basePrice: parsedPrice,
-      icon: iconForCategory(categoryId),
+      icon,
       isAvailable,
-      imageUrl: imagePreviewUrl ?? undefined,
+      isPopular,
+      imageUrl: imagePreviewUrl,
     })
   }
 
@@ -132,9 +127,9 @@ export function MenuItemForm({
                 onChange={(e) => setCategoryId(e.target.value)}
                 className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
               >
-                {menuCategories.map((category) => (
+                {categories.map((category) => (
                   <option key={category.id} value={category.id}>
-                    {category.labelVi} / {category.labelEn}
+                    {category.nameVi} / {category.nameEn}
                   </option>
                 ))}
               </select>
@@ -245,6 +240,50 @@ export function MenuItemForm({
                 className={cn(
                   "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
                   isAvailable ? "translate-x-5" : "translate-x-0"
+                )}
+              />
+            </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("iconLabel")}</label>
+            <div className="flex gap-2">
+              {ICON_OPTIONS.map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setIcon(option)}
+                  aria-pressed={icon === option}
+                  className={cn(
+                    "flex h-10 w-10 items-center justify-center rounded-lg border-2 transition-colors",
+                    icon === option ? "border-primary bg-primary/10 text-primary" : "border-input text-muted-foreground"
+                  )}
+                >
+                  {option === "coffee" && <span className="text-lg">☕</span>}
+                  {option === "cup-soda" && <span className="text-lg">🥤</span>}
+                  {option === "cookie" && <span className="text-lg">🍪</span>}
+                  {option === "milk" && <span className="text-lg">🥛</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <span className="text-sm font-medium text-card-foreground">{t("popularToggle")}</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={isPopular}
+              onClick={() => setIsPopular((prev) => !prev)}
+              className={cn(
+                "relative h-6 w-11 rounded-full transition-colors",
+                isPopular ? "bg-primary" : "bg-muted-foreground/30"
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                  isPopular ? "translate-x-5" : "translate-x-0"
                 )}
               />
             </button>

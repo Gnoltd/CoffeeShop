@@ -324,9 +324,13 @@
     "removeImage": "Remove image",
     "currentPhoto": "Current photo",
     "availableToggle": "Available for sale",
+    "iconLabel": "Icon",
+    "popularToggle": "Featured / Best Seller",
     "cancel": "Cancel",
     "save": "Save Item",
     "requiredFieldsError": "Please fill in name, price, and category.",
+    "saveError": "Failed to save item. Try again.",
+    "deleteError": "Failed to delete item. Try again.",
     "showingItems": "Showing {start}-{end} of {total} items",
     "previous": "Previous",
     "next": "Next"
