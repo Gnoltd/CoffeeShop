@@ -63,7 +63,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
 
   function quickAdd(item: MenuItem) {
     if (!item.isAvailable) return
-    if (item.sizes || item.modifierGroups) {
+    if (item.sizes.length > 0 || item.modifierGroups.length > 0) {
       openItem(item)
       return
     }
