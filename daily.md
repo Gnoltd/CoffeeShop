@@ -1,126 +1,170 @@
-# Today: Backend is live — migrations applied, admin account created, real auth wired up
+# Today: Menu data migration shipped end-to-end, app deployed live on Vercel, Profile auth-gate work started
 
 ## Task
 
-Continued backend setup from the previous session's handoff (this file).
-Ran the 7 migrations against the live Supabase project, created a real
-admin account, then — per user's choice at the resulting decision point —
-wired up real Supabase Auth for Login/Signup/Logout instead of starting on
-menu data.
+Picked up from the previous session's handoff (this file): executed the
+already-written `docs/superpowers/plans/2026-07-05-menu-data-migration.md`
+plan (10 tasks) via the subagent-driven-development skill. After it
+shipped, the user asked to deploy to Vercel and stop verifying against
+localhost. That surfaced a real bug in Profile (no auth-awareness) plus a
+feature request (role-based navigation), which is now mid-brainstorm and
+blocked on a Stitch MCP connection the user is setting up.
 
 ## Done this session
 
-- **Confirmed `mcp__supabase__*` tools work** in this fresh session (the
-  prior session's blocker). `list_tables`/`list_migrations` against
-  `qhiypdqnrnzndxdwqxbx` both came back empty, confirming a clean slate.
-- **Applied all 7 migrations in order** via `mcp__supabase__apply_migration`
-  (`0001_identity_and_roles` → `0007_handle_order_paid`). No errors.
-  pgcrypto was already installed on the project — the anticipated
-  `create extension` step for `gen_random_uuid()`/`gen_random_bytes()`
-  wasn't actually needed.
-- **Verified schema**: `list_tables` shows all 19 expected tables in
-  `public`, every one with `rls_enabled: true`. `get_advisors(security)`
-  flagged the RLS helper functions (`current_user_role()` etc.) as
-  callable via RPC by anon/authenticated — expected/standard for this
-  pattern (revoking EXECUTE would break the RLS policies that call them),
-  left as-is.
-- **Created a real admin account**: `admin@phadincoffee.dev`
-  (password shared with the user out-of-band, not recorded here),
-  `profiles.role = 'admin'`. The public `/auth/v1/signup`
-  endpoint hit Supabase's shared email rate limit before creating anything
-  (confirmed via `select * from auth.users` — empty after the 429), so the
-  user was created by inserting directly into `auth.users`/`auth.identities`
-  via SQL (`pgcrypto`'s `crypt()`/`gen_salt('bf')` for the password hash,
-  `email_confirmed_at` pre-set). Promoting to admin required temporarily
-  disabling `profiles`' own `on_profile_role_change` trigger (it blocks the
-  very first admin bootstrap too, since there's no admin yet to authorize
-  the change) — re-enabled immediately after. **Verified the account
-  actually authenticates** with a live call to
-  `/auth/v1/token?grant_type=password` (output filtered through `node` to
-  confirm `has_access_token`/`email_confirmed` without printing the raw
-  token into the transcript).
-- **Wired up real Supabase Auth for Login/Signup/Logout** (user chose this
-  over starting on menu data, since it directly unblocks testing the new
-  admin account against `/admin/*` and `/staff/*` gating):
-  - `lib/roles.ts` — new shared `ROLE_HOME` map, extracted out of
-    `middleware.ts` so both the middleware and the client-side login
-    redirect use the same source of truth.
-  - `components/auth/login-form.tsx` — real `signInWithPassword`, loads
-    the user's `profiles.role` after sign-in and redirects to
-    `ROLE_HOME[role]`, shows real Supabase error messages, loading state
-    on the submit button.
-  - `components/auth/signup-form.tsx` — real `signUp` with
-    `full_name`/`phone` passed as `options.data`. This project requires
-    email confirmation, so `data.session` comes back null on a normal
-    signup — the form shows a new "check your email" screen instead of
-    redirecting. Only writes `profiles.full_name`/`phone` and redirects
-    immediately in the (here, untested) autoconfirm case.
-  - `components/customer/profile-view.tsx` — Logout row is real now
-    (`supabase.auth.signOut()` → redirect to `/menu` as a guest, not
-    `/login`) — a previous session had already left an exact-spec comment
-    for this on the disabled button, just needed Supabase Auth to exist.
-  - New `Auth` message keys in both `messages/en.json` and `messages/vi.json`:
-    `loggingIn`, `creatingAccount`, `loginError`, `signupError`,
-    `checkEmailTitle`, `checkEmailBody`.
-  - `npx tsc --noEmit` and `npm run build` both pass clean.
-- **Updated `CLAUDE.md`** to match: Database section now says applied (not
-  stubs), Login/Signup/Logout section rewritten to describe the real
-  wiring and the email-rate-limit gap, "Current reality vs. planned" and
-  "Building the rest" updated.
+- **Executed the full 10-task menu-data-migration plan**, one
+  implementer + reviewer cycle per task, working directly on `main` (user
+  declined worktree isolation):
+  1. Migration `0008` — bilingual `name_vi`/`name_en`/description columns
+     + `icon`/`is_popular` on `categories`/`menu_items`/`modifier_groups`/
+     `modifiers`.
+  2. Migration `0009` — seeded the real 9-item menu (4 categories, 15
+     sizes, 1 modifier group/2 modifiers) ported from
+     `lib/mock-data/menu.ts`. Verified PostgreSQL executes an unreferenced
+     writable CTE (`INSERT ... RETURNING` followed by a bare `select 1`)
+     before trusting this pattern against production.
+  3-4. `lib/supabase/menu-data.ts` — DI'd query module (`SupabaseClient`
+     first arg), TDD'd with Vitest: `getCategories`/`getMenuItems`/
+     `getMenuItemById`/`createMenuItem`/`updateMenuItem`/`deleteMenuItem`.
+  5-8. Wired Landing, Menu Browser, Product Detail, POS Terminal to the
+     real data.
+  9. Wired Admin Menu Management to real client-side CRUD (first task
+     using `lib/supabase/client.ts`'s sync browser client) — added an icon
+     picker + Popular toggle to the item form.
+  10. Deleted `lib/mock-data/menu.ts`, updated CLAUDE.md, full
+     build/typecheck/lint/test + real-browser (Playwright) manual pass.
+  - **Real bug found and fixed** (Task 6's review): `item.sizes ||
+    item.modifierGroups` always evaluated true once these became
+    always-present arrays on the real type (empty array is truthy) —
+    broke one-tap quick-add for every item. Fixed to `.length > 0` in
+    Menu Browser, proactively also fixed in Product Detail (same pattern,
+    same file class).
+  - **Final whole-branch review** (opus, all 11 commits) found two more
+    real issues, both fixed with user approval: Admin's image-upload form
+    was about to persist ephemeral `blob:` URLs into the real
+    `menu_items.image_url` column (the plan's own code specified this —
+    nobody caught it until writes became real); `getMenuItems` had no
+    `ORDER BY`, making item display order nondeterministic. Both fixed in
+    one follow-up commit.
+  - Mid-task 9, discovered `admin@phadincoffee.dev`'s password (stored in
+    `.env.local`) no longer authenticated. **Reset it via SQL with the
+    user's explicit authorization** (same bootstrap method used to create
+    the account originally), then completed the live-browser CRUD
+    verification that had been blocked.
+  - One disclosed, intentionally-unreverted side effect: "Iced Milk
+    Coffee"'s `base_price` is now 31000 (seeded at 29000) from the
+    verification pass's price-edit test step, which didn't call for a
+    revert. User's choice to leave it.
+  - `npx eslint .` has 5 pre-existing `react-hooks/set-state-in-effect`
+    errors, confirmed via git blame to predate this entire plan (not
+    introduced by any of today's commits) — flagged, not fixed, out of
+    scope.
+- **Pushed to GitHub for the first time**: `origin` (`Gnoltd/CoffeeShop`)
+  had no commits at all before today. `main` now tracks `origin/main`,
+  12 commits pushed.
+- **Deployed to Vercel**: linked as project `phadincoffee` under
+  `gnoltd-s-projects`, auto-connected to the GitHub repo (every push to
+  `main` now auto-deploys). Live at `https://phadincoffee.vercel.app`,
+  verified the locale-redirect middleware works there (`/` → `/vi`, 307).
+- **Synced env vars to Vercel** (Production/Preview/Development):
+  `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (in
+  active use), `NEXT_PUBLIC_SITE_URL`/`VNPAY_RETURN_URL` (real domain for
+  prod/preview, localhost for dev — not read by any code yet), and
+  `SUPABASE_SECRET_KEY`/`STRIPE_SECRET_KEY`/`VNPAY_TMN_CODE`/
+  `VNPAY_HASH_SECRET` (real values the user filled into `.env.local`
+  mid-session, synced ahead of any code that reads them).
+  `STRIPE_WEBHOOK_SECRET` stays empty — no webhook endpoint exists yet to
+  generate one against. User manually added the Supabase Auth "URL
+  Configuration" redirect allow-list entries for the live domain
+  (Dashboard-only setting, no MCP tool exposes it).
+- **User confirmed a standing preference: verify against the live Vercel
+  URL from now on, not localhost** — saved to memory
+  (`feedback_deploy_not_local.md`). Local `build`/`tsc`/`eslint`/`test`
+  are still fine for fast feedback; it's manual/browser verification that
+  should target the live site.
+- **User confirmed a standing preference: follow existing Stitch exports
+  exactly for any UI work** — saved to memory
+  (`feedback_design_follow_stitch.md`) — don't improvise new layouts.
+- **Real bug surfaced by the user clicking around the live site**:
+  `components/customer/profile-view.tsx` has zero auth-awareness. It
+  always renders hardcoded mock data (`INITIAL_PROFILE` — a fake name/
+  phone/email) regardless of login state, never checks the session, and
+  never redirects a logged-out visitor. There's also no "Log In" entry
+  point anywhere in the customer-facing pages, and no way for a logged-in
+  staff/manager/admin browsing the customer side to get back to their own
+  area. Started brainstorming a fix (see below).
+- **CLAUDE.md and continuity.md updated** to reflect all of the above
+  (deployment section added to CLAUDE.md, Profile's known-gap documented,
+  continuity.md marked stale with a pointer to CLAUDE.md/this file).
 
-## Known gaps / things the next session should know
+## In-progress brainstorm: Profile auth-gate + role-based navigation
 
-- **Email confirmation is effectively broken for new signups right now**:
-  this hosted Supabase project's shared email sender is rate-limited hard
-  enough that one real signup attempt during today's setup got
-  `over_email_send_rate_limit`. A real customer signing up today would
-  likely never receive their confirmation email. Fixing this needs a
-  custom SMTP provider configured in the Supabase dashboard (Auth →
-  Settings) — not something available through any MCP tool here. Worth
-  doing before this app is shown to anyone outside of the admin test
-  account.
-- **No browser automation tool in this environment** (checked for
-  `chromium-cli`/Playwright — neither installed). Login/Signup/Logout were
-  verified by (a) `npm run build`/`tsc` passing, and (b) a direct curl to
-  Supabase's own `/auth/v1/token` endpoint confirming the admin account's
-  password hash is correct and the account is confirmed — but the actual
-  Next.js cookie/session wiring in a real browser (does clicking "Log In"
-  in the UI actually land an admin on `/admin/dashboard`?) has not been
-  visually confirmed. If a browser tool becomes available, that's the
-  first thing to check.
-- Google OAuth buttons on both forms are still disabled+tooltip — no
-  OAuth client configured, out of scope for today.
+Not yet designed or implemented. Clarifying questions answered so far
+(via AskUserQuestion, one at a time per the brainstorming skill):
+
+1. Guest visiting `/profile` → **hard redirect to `/login`** (same pattern
+   as `/staff`/`/admin` in `middleware.ts`), not an inline "please log in"
+   card.
+2. **Gate `/profile`, `/orders` (Order History list), and `/loyalty`** the
+   same way — all three are account-specific and make no sense for an
+   anonymous guest.
+3. **`/orders/[orderId]` (the individual Order Tracking page) stays
+   guest-accessible** — a guest reaches it right after Checkout today
+   (guest checkout is real, no login required), so gating it would break
+   that flow. Only the Order History *list* gets gated, not individual
+   order tracking.
+4. **Staff, Manager, and Admin all get a role-appropriate "Go to [X]"
+   button** (Staff → POS, Manager/Admin → Admin Dashboard, reusing
+   `lib/roles.ts`'s existing `ROLE_HOME` map) — not just Manager/Admin as
+   first described.
+5. Button location: **Profile page card + a persistent header link**
+   (touches the shared `CustomerHeader`, used by marketing/auth layouts
+   too — scope this carefully when designing).
+
+**Blocked on:** the user wants this new UI designed in Stitch (per their
+"follow Stitch designs" preference) rather than have me freehand it, and
+wants me to connect to Stitch directly via MCP. I found and added
+`@_davideast/stitch-mcp` to `.mcp.json` together with the user this
+session — **but it requires `STITCH_API_KEY` as a real OS/shell
+environment variable** (the user only put it in `.env.local`, which the
+MCP server's `${STITCH_API_KEY}` expansion does not read), **and a fresh
+session start** to pick up the newly-added server (this session already
+loaded its toolset before the entry existed). The user is restarting for
+exactly this reason.
 
 ## Next session starts here
 
-Pick up wiring real Supabase queries into whatever's still mock, roughly
-in dependency order (most-referenced first):
-
-1. **`lib/mock-data/menu.ts` → real queries** (`categories`, `menu_items`,
-   `menu_item_sizes`, `modifier_groups`, `modifiers`). Feeds the customer
-   Menu page, Product Detail page, POS terminal, and Admin Menu
-   Management — the single highest-leverage replacement. All of those
-   tables already allow public `select` via RLS, so this is read-only to
-   start.
-2. **`hooks/useInventory.tsx`** → real `ingredients`/`inventory_logs`
-   queries (Dashboard low-stock widget + Inventory page).
-3. **`hooks/useTables.tsx`** → real `tables` queries (QR flow, Admin
-   Tables).
-4. **Orders** (`hooks/useOrders.tsx`, `hooks/useKitchenOrders.tsx`) → real
-   `orders`/`order_items`/`order_item_modifiers`, ideally via a
-   `place-order` Edge Function for the actual write (atomicity across
-   order + items + inventory deduction) rather than direct client inserts
-   — this is exactly what the plan doc's Task 11 `place-order` function is
-   for. Written in the plan doc but not yet deployed
-   (`supabase/functions/place-order/index.ts` is still a stub).
-5. **Admin Staff Accounts** (`components/admin/staff-accounts.tsx`) needs
-   real user creation, which hits the same "no service-role key / no
-   Admin API access" constraint hit today for the test admin account —
-   worth deciding then whether to request a service-role key from the
-   user or keep using the direct-SQL-insert workaround for new staff too.
-
-Before any of the above, if a browser tool is available in the new
-session, spend five minutes actually clicking through Login → Signup →
-Logout in a live browser against the running dev server — that's the one
-piece of today's work that's unverified beyond typechecking + a raw API
-call.
+1. **First, check whether Stitch is actually connected**: run
+   `ToolSearch` with query `"stitch"` (or just try invoking a Stitch tool
+   if one shows up unprompted in context). If it's there, that unblocks
+   the brainstorm — resume by using it to produce mockups for the 2 real
+   visual pieces (the role-based "Go to [X]" card on Profile and the
+   persistent header link/badge — the guest-profile redirect itself is
+   just a redirect, not something that needs a mockup).
+   - If Stitch still isn't showing up, check `STITCH_API_KEY` is actually
+     set at the OS level (`echo $STITCH_API_KEY` in bash, or check
+     Windows env vars) before assuming the MCP server itself is broken.
+   - If it's still not resolved and the user wants to keep moving, the
+     already-offered fallback is: design this directly, reusing the app's
+     existing card/button/color patterns (there's no existing Stitch
+     mockup for a guest-state Profile or a role-switcher to diverge from
+     anyway, so this isn't overriding an approved design).
+2. Once the design step is unblocked (Stitch or direct), **finish the
+   brainstorming skill's checklist**: propose 2-3 approaches for the
+   actual code structure (e.g. does the auth/role check happen in
+   `middleware.ts`, extending the existing `resolveRedirect`/
+   `ROUTE_GROUP_ROLES` pattern already used for `/staff`/`/admin`, or a
+   client-side check in `profile-view.tsx` itself?), present the design
+   in sections, get approval, write the spec to
+   `docs/superpowers/specs/2026-07-06-profile-auth-role-nav-design.md`,
+   self-review it, get the user's sign-off on the written spec, then
+   invoke `writing-plans` to turn it into an implementation plan before
+   any code gets written.
+3. After that feature ships: the remaining backend work is unchanged from
+   before — inventory, tables, orders, and staff accounts are still
+   `lib/mock-data/*`/local-hook mocks waiting on real Supabase queries,
+   roughly in that order of how many other pages depend on them (see
+   CLAUDE.md's "Building the rest"). Edge Functions
+   (`place-order`/`stripe-webhook`/`vnpay-ipn`/`vnpay-return`) are still
+   comment-only stubs — the Stripe/VNPay secrets are now sitting in both
+   `.env.local` and Vercel ready for when that work starts.

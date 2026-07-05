@@ -12,6 +12,19 @@ intentionally works differently).
 
 ## Current status
 
+**Stale-file notice (2026-07-06):** everything below this notice describes
+the FE-only, pre-Supabase state from an earlier phase of the project.
+CLAUDE.md is the actively-maintained structural map and should be treated
+as authoritative for current reality; this file has drifted since the
+backend work started. As of 2026-07-06: all 9 DB migrations are applied to
+the live hosted Supabase project, Login/Signup/Logout are real (Supabase
+Auth), menu data is real (`docs/superpowers/plans/2026-07-05-menu-data-migration.md`,
+`lib/mock-data/menu.ts` deleted), and the app is deployed live on Vercel at
+`https://phadincoffee.vercel.app` (see CLAUDE.md's "Deployment" section).
+Inventory, tables, orders, and staff accounts are still mock, same as
+described below. See `daily.md` for the most recent session's work and
+next-session starting point.
+
 **All FE pages from the original design are now genuinely real, interactive
 UI** — none are translated-placeholder-only anymore. This was previously
 claimed done but wasn't quite true: Landing, Login, Signup, Order History,
@@ -649,7 +662,13 @@ found `03-cart.html`'s promo-code row had never been built at all.
   the old hardcoded mock, while an unknown id still returns 200 via the
   fallback instead of crashing.
 
-## Next steps
+## Next steps (superseded — see daily.md for the current one)
+
+*Stale as of 2026-07-06 — kept for history, not a live plan.* The
+paragraph below predates the backend work; items 1-2 are now done (DB
+schema/RLS/Auth/menu data are real, see CLAUDE.md). For what's actually
+next, read `daily.md`'s "Next session starts here" section instead of
+this list.
 
 The originally agreed FE priority order (theme → customer → staff → admin)
 is now **fully done**. Remaining work is backend and polish, roughly in

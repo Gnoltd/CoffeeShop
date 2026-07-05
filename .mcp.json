@@ -3,6 +3,19 @@
     "supabase": {
       "type": "http",
       "url": "https://mcp.supabase.com/mcp?project_ref=qhiypdqnrnzndxdwqxbx&features=docs%2Caccount%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage"
+    },
+    "stitch-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "@_davideast/stitch-mcp",
+        "proxy",
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "STITCH_API_KEY": "${STITCH_API_KEY}"
+      }
     }
   }
 }

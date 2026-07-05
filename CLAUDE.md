@@ -322,6 +322,22 @@ screen `8436df098abc43ea801649f367476650`) before building it for real.
   as `components/shared/language-switcher.tsx`), and disabled+tooltip
   Addresses/Settings rows (no addresses table, no customer settings page).
   The **Logout row is now real** (see below) — no longer disabled+tooltip.
+  - **Known gap, real bug (caught 2026-07-06, fix not yet implemented):**
+    this page has zero auth-awareness. `profile`/`INITIAL_PROFILE` is a
+    hardcoded mock (name "Nguyễn Văn An", a fake email) that renders
+    identically whether anyone is logged in or not — it never calls
+    `supabase.auth.getUser()`, never redirects a logged-out visitor, and
+    shows the exact same mock data and a working Logout button to a guest
+    who was never logged in. There's also no "Log In" entry point anywhere
+    in the customer pages for a guest, and no role-based navigation for a
+    logged-in staff/manager/admin user browsing the customer side back to
+    their own area. A design (guest → redirect to `/login`; same gate
+    extended to `/orders` and `/loyalty`, but **not** `/orders/[orderId]`
+    since that page is reached by guest checkout too; a role-appropriate
+    "Go to [X]" button + persistent header link for staff/manager/admin)
+    was being brainstormed as of this writing — see
+    `docs/superpowers/specs/` for the dated design doc once written, or
+    `daily.md` if that step hasn't completed yet.
 - **Login / Signup** (`components/auth/login-form.tsx` +
   `signup-form.tsx`, ported from `06-login.html`/`07-signup.html`): **real
   Supabase Auth**, not mock — `supabase.auth.signInWithPassword` /
@@ -636,6 +652,35 @@ Not yet built — `place-order`, `stripe-webhook`, `vnpay-ipn`, `vnpay-return`
 are still comment-only `index.ts` stubs. Full handler code (with tests) is
 in the plan doc's Task 11.
 
+## Deployment (Vercel)
+
+Live at **https://phadincoffee.vercel.app** (project `phadincoffee` under
+the `gnoltd-s-projects` team, linked to GitHub repo `Gnoltd/CoffeeShop` —
+every push to `main` auto-deploys, no manual `vercel deploy` needed for
+routine work). Per the user's explicit preference, verification going
+forward should target this live URL, not `npm run dev`/localhost — local
+`build`/`tsc`/`eslint`/`test` are still fine for fast feedback, just not
+the source of truth for "does the feature actually work."
+
+- Env vars are mirrored from `.env.local` into Vercel (Production/Preview/
+  Development) via `vercel env add` whenever a new one is introduced
+  locally — currently synced: `NEXT_PUBLIC_SUPABASE_URL`,
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (in active use),
+  `NEXT_PUBLIC_SITE_URL`, `VNPAY_RETURN_URL` (set to the real domain for
+  Production/Preview, `localhost:3000` for Development — not read by any
+  code yet), and `SUPABASE_SECRET_KEY`/`STRIPE_SECRET_KEY`/
+  `VNPAY_TMN_CODE`/`VNPAY_HASH_SECRET` (real values, synced ahead of the
+  code that will read them). `STRIPE_WEBHOOK_SECRET` stays empty — no
+  Stripe webhook endpoint exists yet to generate one against.
+- **Supabase Auth's "URL Configuration" (Site URL + Redirect URLs
+  allow-list) is a Dashboard-only setting** — no MCP tool exposes it. Site
+  URL must be `https://phadincoffee.vercel.app` and Redirect URLs must
+  include `https://phadincoffee.vercel.app/**`,
+  `https://phadincoffee-*-gnoltd-s-projects.vercel.app/**` (preview
+  deployments), and `http://localhost:3000/**` — otherwise signup's email
+  confirmation link points at `localhost` instead of the live site. This
+  was manually confirmed set as of 2026-07-06.
+
 ## Building the rest
 
 All `design/stitch-exports/*.html` pages have been ported — there is no
@@ -649,7 +694,12 @@ plan doc's Task 11) are still comment-only stubs, and every other
 component listed in this file's feature sections still needs its mock
 data replaced with real Supabase queries (+ Realtime where noted) —
 inventory, tables, orders, and staff accounts, roughly in that order of
-how many other pages depend on them. When
+how many other pages depend on them. The app is also now live on Vercel
+(see "Deployment" above) — verify against the live URL, not localhost.
+**In progress as of 2026-07-06:** a real auth gate for Profile/Order
+History/Loyalty plus role-based navigation (see the Profile section's
+"Known gap" note above) is being brainstormed — check `daily.md` for
+where that stands before starting it fresh. When
 adding any genuinely new page/feature beyond what's already built, follow
 the same pattern used throughout: shared brand tokens (no hardcoded hex),
 `useTranslations`/`getTranslations` for every label with both
