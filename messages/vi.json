@@ -52,7 +52,13 @@
     "phoneLabel": "Số Điện Thoại",
     "phonePlaceholder": "+84 000 000 000",
     "termsText": "Bằng cách đăng ký, bạn đồng ý với Điều Khoản & Chính Sách của chúng tôi.",
-    "createAccount": "Tạo Tài Khoản"
+    "createAccount": "Tạo Tài Khoản",
+    "loggingIn": "Đang đăng nhập...",
+    "creatingAccount": "Đang tạo tài khoản...",
+    "loginError": "Đăng nhập thất bại",
+    "signupError": "Đăng ký thất bại",
+    "checkEmailTitle": "Kiểm tra email của bạn",
+    "checkEmailBody": "Chúng tôi đã gửi một liên kết xác nhận đến email của bạn. Nhấp vào đó để kích hoạt tài khoản, sau đó quay lại đăng nhập."
   },
   "Customer": {
     "back": "Quay Lại",

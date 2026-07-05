@@ -52,7 +52,13 @@
     "phoneLabel": "Phone Number",
     "phonePlaceholder": "+84 000 000 000",
     "termsText": "By signing up, you agree to our Terms & Policy.",
-    "createAccount": "Create Account"
+    "createAccount": "Create Account",
+    "loggingIn": "Logging in...",
+    "creatingAccount": "Creating account...",
+    "loginError": "Login failed",
+    "signupError": "Sign up failed",
+    "checkEmailTitle": "Check your email",
+    "checkEmailBody": "We've sent a confirmation link to your email address. Click it to activate your account, then come back and log in."
   },
   "Customer": {
     "back": "Back",

@@ -1,20 +1,73 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type FormEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Coffee, User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight } from "lucide-react"
-import { Link } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { GoogleIcon } from "@/components/auth/google-icon"
+import { createClient } from "@/lib/supabase/client"
+import { ROLE_HOME } from "@/lib/roles"
 
 export function SignupForm() {
   const t = useTranslations("Auth")
+  const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [confirmEmailSent, setConfirmEmailSent] = useState(false)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    const supabase = createClient()
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { full_name: name, phone },
+      },
+    })
+
+    setLoading(false)
+
+    if (signUpError) {
+      setError(signUpError.message)
+      return
+    }
+
+    if (!data.session) {
+      // Project requires email confirmation — no session until the user clicks the link.
+      setConfirmEmailSent(true)
+      return
+    }
+
+    await supabase.from("profiles").update({ full_name: name, phone }).eq("id", data.user!.id)
+    router.push(ROLE_HOME.customer)
+    router.refresh()
+  }
+
+  if (confirmEmailSent) {
+    return (
+      <div className="mx-auto w-full max-w-sm px-4 text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
+          <Mail className="h-8 w-8 text-primary" />
+        </div>
+        <h1 className="text-xl font-bold text-card-foreground">{t("checkEmailTitle")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("checkEmailBody")}</p>
+        <Link href="/login" className="mt-6 inline-block font-bold text-primary hover:underline">
+          {t("login")}
+        </Link>
+      </div>
+    )
+  }
 
   return (
     <div className="mx-auto w-full max-w-sm px-4">
@@ -28,7 +81,7 @@ export function SignupForm() {
         </div>
       </div>
 
-      <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="signup-name" className="block px-1 text-xs font-medium text-muted-foreground">
             {t("fullNameLabel")}
@@ -37,6 +90,7 @@ export function SignupForm() {
             <User className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               id="signup-name"
+              required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t("fullNamePlaceholder")}
@@ -54,6 +108,7 @@ export function SignupForm() {
             <Input
               id="signup-email"
               type="email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email@example.com"
@@ -88,6 +143,8 @@ export function SignupForm() {
             <Input
               id="signup-password"
               type={showPassword ? "text" : "password"}
+              required
+              minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
@@ -108,13 +165,18 @@ export function SignupForm() {
           {t("termsText")}
         </p>
 
+        {error && (
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {t("signupError")}: {error}
+          </p>
+        )}
+
         <Button
           type="submit"
-          disabled
-          title="Not implemented yet — Supabase Auth not wired up"
+          disabled={loading}
           className="h-12 w-full gap-2 rounded-xl text-base font-bold"
         >
-          {t("createAccount")}
+          {loading ? t("creatingAccount") : t("createAccount")}
           <ArrowRight className="h-4 w-4" />
         </Button>
       </form>

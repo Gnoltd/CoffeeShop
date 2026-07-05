@@ -18,6 +18,7 @@ import {
 } from "lucide-react"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { formatNumber } from "@/lib/format"
+import { createClient } from "@/lib/supabase/client"
 
 /** Matches loyalty-view.tsx's mock balance — no real profile/loyalty tables yet. */
 const MOCK_POINTS_BALANCE = 1250
@@ -70,6 +71,14 @@ export function ProfileView() {
       { pathname, params },
       { locale: nextLocale }
     )
+  }
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    // Guest ordering stays available — send them back to the menu, not /login.
+    router.push("/menu")
+    router.refresh()
   }
 
   return (
@@ -229,9 +238,8 @@ export function ProfileView() {
 
         <button
           type="button"
-          disabled
-          title="Not implemented yet — no real auth session to log out of. Once Supabase Auth exists: clear the session and return to /menu as a guest, not /login — guest ordering stays available."
-          className="flex w-full items-center justify-between p-4 text-left opacity-50"
+          onClick={handleLogout}
+          className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted"
         >
           <span className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">

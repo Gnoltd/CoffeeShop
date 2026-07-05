@@ -2,15 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import createIntlMiddleware from "next-intl/middleware"
 import { routing } from "./i18n/routing"
+import { ROLE_HOME } from "./lib/roles"
 
 const handleI18nRouting = createIntlMiddleware(routing)
-
-export const ROLE_HOME: Record<string, string> = {
-  customer: "/menu",
-  staff: "/staff/pos",
-  manager: "/admin/dashboard",
-  admin: "/admin/dashboard",
-}
 
 const ADMIN_ONLY_PREFIXES = ["/admin/staff", "/admin/settings"]
 

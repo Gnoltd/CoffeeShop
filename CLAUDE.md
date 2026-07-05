@@ -10,21 +10,27 @@ implementation plan (DB schema/RLS/Edge Functions) is at
 **Real and running:** Next.js app (App Router, TypeScript, Tailwind v4,
 shadcn/ui), bilingual routing (next-intl), role-based middleware, the real
 PhaDinCoffee brand theme (colors/font), and **every page in the app is now
-real, interactive UI with mock data** — Landing, Login/Signup, the full
-customer ordering flow (Menu/Cart/Checkout/Order Tracking/Order
-History/Loyalty/Profile) with a real client-side cart, the table QR
-identity flow, Food Cost Calculator, both staff pages (POS, Kitchen
-Display), and all six admin pages (Dashboard, Menu, Inventory, Tables,
-Staff, Settings). `npm run build`/`npm run dev` work. No page is a
-translated-heading placeholder anymore — Landing, Login, Signup, Order
-History, Loyalty, and Profile were the last six to be ported (see "Landing,
-Auth, and remaining customer pages" below); everything before that in this
-list was ported in earlier sessions.
+real, interactive UI** — Landing, the full customer ordering flow
+(Menu/Cart/Checkout/Order Tracking/Order History/Loyalty/Profile) with a
+real client-side cart, the table QR identity flow, Food Cost Calculator,
+both staff pages (POS, Kitchen Display), and all six admin pages
+(Dashboard, Menu, Inventory, Tables, Staff, Settings). `npm run build`/
+`npm run dev` work. No page is a translated-heading placeholder anymore.
+Most of these still read from `lib/mock-data/*` and local hooks pending
+Supabase query wiring (see "Building the rest" below) — **Login, Signup,
+and Logout are the first slice now backed by real Supabase Auth**, not
+mock data (see "Landing, Auth, and remaining customer pages" below).
 
-**Not yet built:** Supabase database (migrations exist only as comment
-stubs), Edge Functions, Stripe/VNPay integration, Realtime — every mock
-data source in the app is waiting on these. See each feature section below
-for exactly what's mocked and what's a documented (not hidden) gap.
+**Now built:** the Supabase database — all 7 migrations
+(`supabase/migrations/0001`-`0007`) are applied to the live hosted project
+(`qhiypdqnrnzndxdwqxbx`), every table has RLS enabled, and a real admin
+account exists (`profiles.role = 'admin'`). Real Supabase Auth now backs
+Login/Signup/Logout. **Still not built:** Edge Functions, Stripe/VNPay
+integration, Realtime, and — outside of auth — every other mock data
+source in the app (menu, inventory, tables, orders, staff accounts) is
+still waiting on real queries replacing `lib/mock-data/*` and the various
+`use*` hooks. See each feature section below for exactly what's mocked and
+what's a documented (not hidden) gap.
 
 ## Stack
 
@@ -299,17 +305,39 @@ screen `8436df098abc43ea801649f367476650`) before building it for real.
   rename), a menu list linking to the now-real Order History and Loyalty
   pages, a **functional** Language row (reuses the same locale-switch logic
   as `components/shared/language-switcher.tsx`), and disabled+tooltip
-  Addresses/Settings/Logout rows (no addresses table, no customer settings
-  page, and no real auth session to log out of, respectively).
+  Addresses/Settings rows (no addresses table, no customer settings page).
+  The **Logout row is now real** (see below) — no longer disabled+tooltip.
 - **Login / Signup** (`components/auth/login-form.tsx` +
-  `signup-form.tsx`, ported from `06-login.html`/`07-signup.html`): real
-  form state and a working show/hide password toggle, but the actual
-  submit buttons (Log In / Create Account) and the Google buttons are
-  **disabled+tooltip** — there is no Supabase Auth wired up yet, so a
-  button that looked like it logged you in without granting any real
-  session would be actively misleading. Re-enable these once Supabase Auth
-  exists. Shared Google "G" icon lives in `components/auth/google-icon.tsx`
-  (used by both forms, avoids duplicating the inline SVG).
+  `signup-form.tsx`, ported from `06-login.html`/`07-signup.html`): **real
+  Supabase Auth**, not mock — `supabase.auth.signInWithPassword` /
+  `.signUp` via `lib/supabase/client.ts`'s browser client. Login looks up
+  the signed-in user's `profiles.role` and redirects to `ROLE_HOME[role]`
+  (`lib/roles.ts` — the single source of truth also imported by
+  `middleware.ts`, so the role→home mapping can't drift between the two).
+  Signup passes `full_name`/`phone` as Auth user metadata
+  (`options.data`); if the project requires email confirmation (it does,
+  by default, on this hosted project) `data.session` comes back null and
+  the form shows a "check your email" screen instead of redirecting —
+  only writes `profiles.full_name`/`phone` and redirects immediately in
+  the rare case a session comes back right away (autoconfirm). Real error
+  messages from Supabase now render inline instead of a disabled button.
+  The Google buttons on both forms are still **disabled+tooltip** — no
+  OAuth client configured. Shared Google "G" icon lives in
+  `components/auth/google-icon.tsx` (used by both forms, avoids
+  duplicating the inline SVG).
+  - **Known gap:** this hosted Supabase project's shared email sender has
+    a very low rate limit — confirmed by hitting
+    `over_email_send_rate_limit` after a single real signup attempt during
+    setup. Real customer signups will frequently fail to receive a
+    confirmation email until a custom SMTP provider is configured in the
+    Supabase dashboard (not something an MCP tool can set — no
+    email/SMTP-config tool is exposed). Login is unaffected once an
+    account is confirmed.
+  - **Profile's Logout row** (`components/customer/profile-view.tsx`) is
+    also now real: `supabase.auth.signOut()` then redirect to `/menu` as a
+    guest (not `/login`) — guest ordering stays available, per the gap
+    note a previous session had already left in place for this exact
+    moment.
 - New translation namespaces: `TableLanding` (from the earlier table-flow
   work), `OrderHistory`, `Loyalty`, `Profile`; expanded `Landing` and
   `Auth`. All added to both `messages/vi.json` and `messages/en.json`.
@@ -499,11 +527,33 @@ customer's order, entirely client-side (no `tables` table yet).
 
 ## Database (`supabase/migrations/`)
 
-Not yet built — files are still comment-only placeholders in intended apply
-order: `0001_identity_and_roles` → `0002_shop_config` → `0003_menu` →
-`0004_inventory` → `0005_orders` → `0006_payments_and_loyalty` →
-`0007_handle_order_paid`. Full entity list: spec Section 2. Full SQL for
-every migration already exists in the plan doc's Tasks 3–9.
+**Built and applied.** All 7 migrations have real SQL (from the plan doc's
+Tasks 3–9) and are live on the hosted project `qhiypdqnrnzndxdwqxbx`, applied
+in order via the Supabase MCP server's `apply_migration`: `0001_identity_and_roles`
+→ `0002_shop_config` → `0003_menu` → `0004_inventory` → `0005_orders` →
+`0006_payments_and_loyalty` → `0007_handle_order_paid`. Every table in
+`public` has RLS enabled (confirmed via `list_tables`/`get_advisors`).
+Full entity list: spec Section 2.
+
+- pgcrypto was already installed on this project (needed for
+  `gen_random_uuid()`/`gen_random_bytes()`) — no `create extension` step
+  was actually required, despite the plan doc flagging it as a risk.
+- A real admin account exists for testing `/admin/*` and `/staff/*`:
+  `admin@phadincoffee.dev` (`profiles.role = 'admin'`). Created by
+  inserting directly into `auth.users`/`auth.identities` via SQL (with
+  `pgcrypto`'s `crypt()`/`gen_salt('bf')` for the password hash and
+  `email_confirmed_at` pre-set), **not** through the public signup
+  endpoint — that endpoint hit Supabase's shared email-send rate limit
+  before it could even create the user row. Verified the account actually
+  authenticates via a live call to `/auth/v1/token?grant_type=password`
+  before relying on it.
+- **Gotcha hit during setup:** `profiles`' own `on_profile_role_change`
+  trigger (blocks non-admins from changing `role`) blocks the very first
+  admin promotion too, since `current_user_role()` resolves to null for a
+  raw SQL session with no `auth.uid()`. Bootstrapped past it with
+  `alter table public.profiles disable trigger on_profile_role_change;`
+  around the one-time `UPDATE ... SET role = 'admin'`, then re-enabled it
+  immediately after. Only ever needed once, for the first admin.
 
 ## Edge Functions (`supabase/functions/`)
 
@@ -514,11 +564,14 @@ in the plan doc's Task 11.
 ## Building the rest
 
 All `design/stitch-exports/*.html` pages have been ported — there is no
-remaining frontend UI to port from Stitch. What's left is backend: follow
-`docs/superpowers/plans/2026-07-04-coffee-shop-scaffold.md` for the
-DB/RLS/Edge Function tasks (unaffected by the frontend/i18n work), then go
-through every component listed in this file's feature sections and replace
-its mock data with real Supabase queries (+ Realtime where noted). When
+remaining frontend UI to port from Stitch. What's left is backend: the DB
+schema/RLS is applied (see "Database" above) and Login/Signup/Logout are
+real; Edge Functions (`place-order`, `stripe-webhook`, `vnpay-ipn`,
+`vnpay-return` — full code in the plan doc's Task 11) are still comment-only
+stubs, and every other component listed in this file's feature sections
+still needs its mock data replaced with real Supabase queries (+ Realtime
+where noted) — menu, inventory, tables, orders, and staff accounts, roughly
+in that order of how many other pages depend on them. When
 adding any genuinely new page/feature beyond what's already built, follow
 the same pattern used throughout: shared brand tokens (no hardcoded hex),
 `useTranslations`/`getTranslations` for every label with both

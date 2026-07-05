@@ -1,18 +1,54 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type FormEvent } from "react"
 import { useTranslations } from "next-intl"
 import { Coffee, Mail, Eye, EyeOff } from "lucide-react"
-import { Link } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { GoogleIcon } from "@/components/auth/google-icon"
+import { createClient } from "@/lib/supabase/client"
+import { ROLE_HOME } from "@/lib/roles"
 
 export function LoginForm() {
   const t = useTranslations("Auth")
+  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    const supabase = createClient()
+    const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (signInError) {
+      setLoading(false)
+      setError(signInError.message)
+      return
+    }
+
+    let role: string | null = null
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", data.user.id)
+        .single()
+      role = profile?.role ?? null
+    }
+
+    router.push(ROLE_HOME[role ?? "customer"] ?? "/menu")
+    router.refresh()
+  }
 
   return (
     <div className="mx-auto w-full max-w-sm px-4">
@@ -26,10 +62,7 @@ export function LoginForm() {
         </div>
       </div>
 
-      <form
-        onSubmit={(e) => e.preventDefault()}
-        className="space-y-4"
-      >
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="login-email" className="block px-1 text-xs font-medium text-muted-foreground">
             {t("emailLabel")}
@@ -38,6 +71,7 @@ export function LoginForm() {
             <Input
               id="login-email"
               type="email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t("emailPlaceholder")}
@@ -55,6 +89,7 @@ export function LoginForm() {
             <Input
               id="login-password"
               type={showPassword ? "text" : "password"}
+              required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder={t("passwordPlaceholder")}
@@ -79,13 +114,18 @@ export function LoginForm() {
           </div>
         </div>
 
+        {error && (
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {t("loginError")}: {error}
+          </p>
+        )}
+
         <Button
           type="submit"
-          disabled
-          title="Not implemented yet — Supabase Auth not wired up"
+          disabled={loading}
           className="h-12 w-full rounded-xl text-base font-bold"
         >
-          {t("login")}
+          {loading ? t("loggingIn") : t("login")}
         </Button>
       </form>
 
