@@ -1,51 +1,70 @@
-# Today: Customer pages audited against Stitch, order lifecycle connected
+# Today: Backend setup started — real Supabase project connected, migrations written but not yet applied
 
 ## Task
 
-User asked to give customer-facing pages the same "check against Stitch,
-fully build real functions" treatment just done for admin. Re-read Menu/
-Cart/Checkout/Order Tracking mockups. Profile/Loyalty already matched
-their mockups from an earlier session and needed no changes. Found the
-big one: Checkout, Order Tracking, and Order History were three
-disconnected mock islands — same class of bug as POS/KDS and
-Dashboard/Inventory. Also found Cart's promo-code row was never built.
+User asked to start working with the backend. Chose a hosted Supabase
+project (no Docker/CLI) over local Supabase, then connected the official
+Supabase MCP server so Claude can run migrations/queries directly instead
+of manual copy-paste into the Dashboard's SQL Editor.
 
-## Context
+## Done this session
 
-- Full details: `continuity.md` ("Customer pages audited against Stitch —
-  order lifecycle connected" section), `CLAUDE.md` (under "Customer
-  ordering flow")
-- New: `hooks/useOrders.tsx`
-- Changed: `checkout-view.tsx` (builds+stores a real order),
-  `order-tracking.tsx` (now a client component reading real order data),
-  `order-history.tsx` (reads shared hook), `useCart.tsx` (promo codes),
-  `cart-view.tsx` (promo UI + Discount line), root layout (mounts
-  `OrdersProvider`)
+- Wrote real SQL into all 7 `supabase/migrations/*.sql` files (previously
+  comment-only stubs) — full schema from
+  `docs/superpowers/plans/2026-07-04-coffee-shop-scaffold.md` Tasks 3-9.
+  **Committed** (`b447a05`), but **not yet applied** to the live database.
+- Created a real Supabase project: `qhiypdqnrnzndxdwqxbx` (hosted,
+  supabase.com). Project uses the newer key naming — **publishable key**,
+  not the legacy "anon key".
+- `.env.local` filled in with the real `NEXT_PUBLIC_SUPABASE_URL` +
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (gitignored, not committed).
+  `.env.local.example` updated to match the new var names.
+- Renamed `NEXT_PUBLIC_SUPABASE_ANON_KEY` → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+  everywhere it's read: `lib/supabase/client.ts`, `lib/supabase/server.ts`,
+  `middleware.ts`.
+- **Reverted the TEMP-LOCAL-PREVIEW-ONLY `role = "admin"` bypass** in
+  `middleware.ts` back to the real `await resolveRole(request)` — no
+  longer needed now that a real Supabase project exists to test against.
+- Verified real connectivity (not just "env vars present"): curl against
+  the Supabase REST endpoint directly confirmed the URL/key are valid
+  (`{"message":"Secret API key required"...}` on the root endpoint — a
+  real Supabase response, not a DNS/network failure), and confirmed the
+  migrations genuinely haven't run yet (`PGRST205: Could not find the
+  table 'public.profiles'`).
+- Connected the **Supabase MCP server**: `claude mcp add --scope project
+  --transport http supabase "https://mcp.supabase.com/mcp?project_ref=qhiypdqnrnzndxdwqxbx&features=..."`
+  → wrote `.mcp.json` (no secrets in it, safe to commit — auth is a
+  separate OAuth flow, not embedded in the URL). User authenticated via
+  `claude /mcp` in a separate terminal. `claude mcp list` confirms both
+  `stitch-mcp` and `supabase` show **✔ Connected**.
 
-## Done when
+## Known gap / why this session ended here
 
-- `npm run build` succeeds, no type errors — done
-- curl confirms: Cart's promo code UI renders; looking up seed order
-  PDC-9815 through Order Tracking shows its real table (2), real item
-  (Cà Phê Trứng), and real status (Ready) instead of the old hardcoded
-  mock; an unknown order id still returns 200 via a graceful fallback —
-  done
-- Order Tracking's table/branch card now correctly shows Pickup vs
-  Dine-in instead of always saying Dine-in — done
-- Documented (not silently left) that nothing advances a customer order's
-  status after creation — customer Checkout and staff Kitchen Display
-  remain separate systems for now, connecting them is a bigger job than
-  this pass
-- Not click-tested in a real browser (placing an order end-to-end, promo
-  code entry) — no browser automation tool available in this environment,
-  standing caveat for the whole project
+MCP tool discovery happens at session start — this session was already
+running before the Supabase MCP server finished connecting, so no
+`mcp__supabase__*` tools ever became available here (`ToolSearch` for
+"supabase", "mcp", "execute_sql" all came back empty, despite `claude mcp
+list` showing it connected). **User is starting a fresh session for this
+reason** — a new session should discover the Supabase MCP tools immediately.
 
-## Next session
+## Next session starts here
 
-Every page in the app — customer, staff, and admin — has now been checked
-against its Stitch mockup and brought to real interactive parity, with
-shared state replacing every disconnected mock-data island found along
-the way (POS/KDS, Dashboard/Inventory, and now Checkout/Tracking/History).
-Backend is next: Supabase DB schema/RLS/Edge Functions per the
-implementation plan, then replace every mock/shared-hook data source with
-real queries (+ Realtime where noted).
+1. Confirm `mcp__supabase__*` tools are available (they should be, in a
+   fresh session — if not, something is off with the MCP config and it's
+   worth re-checking `claude mcp list`).
+2. Use those tools to run the 7 migrations in `supabase/migrations/`
+   **in order** (0001 through 0007) against the live
+   `qhiypdqnrnzndxdwqxbx` project. Watch for `gen_random_uuid()`/
+   `gen_random_bytes()` needing `create extension if not exists pgcrypto;`
+   first if either errors.
+3. Verify: list tables, confirm all expected tables from Tasks 3-9 exist
+   (`profiles`, `menu_items`, `orders`, etc.), each with RLS enabled.
+4. Create a real admin profile (sign up a test user, then manually set
+   its `profiles.role` to `'admin'` via SQL) so `/admin/*` and `/staff/*`
+   can finally be tested with a **real** authenticated session instead of
+   curl-only anonymous-redirect checks.
+5. Start replacing mock data sources with real Supabase queries, one hook
+   at a time (suggest starting with `lib/mock-data/menu.ts` → Menu/POS/
+   Admin Menu, since it's the most-referenced one) — do NOT do this until
+   steps 1-4 are confirmed working, to avoid building against a schema
+   that isn't actually live yet.
