@@ -17,10 +17,10 @@ export function StaffNav() {
 
   return (
     <header className="flex h-14 shrink-0 items-center gap-6 border-b bg-card px-4">
-      <span className="flex items-center gap-2 font-semibold text-primary">
+      <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
         <Coffee className="h-5 w-5" />
         {tBrand("name")}
-      </span>
+      </Link>
       <nav className="flex gap-2">
         {NAV_ITEMS.map(({ href, labelKey }) => (
           <Link

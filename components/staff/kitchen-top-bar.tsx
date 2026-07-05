@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { Coffee, Bell, Settings } from "lucide-react"
+import { Link } from "@/i18n/navigation"
 
 export function KitchenTopBar() {
   const tBrand = useTranslations("Brand")
@@ -10,10 +11,10 @@ export function KitchenTopBar() {
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4">
       <div className="flex items-center gap-4">
-        <span className="flex items-center gap-2 font-bold text-primary">
+        <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <Coffee className="h-5 w-5" />
           {tBrand("name")}
-        </span>
+        </Link>
         <div className="h-6 w-px bg-border" />
         <span className="text-sm font-semibold text-muted-foreground">{t("stationLabel")}</span>
       </div>
