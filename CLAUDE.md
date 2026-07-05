@@ -322,22 +322,30 @@ screen `8436df098abc43ea801649f367476650`) before building it for real.
   as `components/shared/language-switcher.tsx`), and disabled+tooltip
   Addresses/Settings rows (no addresses table, no customer settings page).
   The **Logout row is now real** (see below) — no longer disabled+tooltip.
-  - **Known gap, real bug (caught 2026-07-06, fix not yet implemented):**
-    this page has zero auth-awareness. `profile`/`INITIAL_PROFILE` is a
-    hardcoded mock (name "Nguyễn Văn An", a fake email) that renders
-    identically whether anyone is logged in or not — it never calls
-    `supabase.auth.getUser()`, never redirects a logged-out visitor, and
-    shows the exact same mock data and a working Logout button to a guest
-    who was never logged in. There's also no "Log In" entry point anywhere
-    in the customer pages for a guest, and no role-based navigation for a
-    logged-in staff/manager/admin user browsing the customer side back to
-    their own area. A design (guest → redirect to `/login`; same gate
-    extended to `/orders` and `/loyalty`, but **not** `/orders/[orderId]`
-    since that page is reached by guest checkout too; a role-appropriate
-    "Go to [X]" button + persistent header link for staff/manager/admin)
-    was being brainstormed as of this writing — see
-    `docs/superpowers/specs/` for the dated design doc once written, or
-    `daily.md` if that step hasn't completed yet.
+  - **Auth-gate + role-nav shipped (2026-07-06)**: `/profile`, `/orders`,
+    and `/loyalty` now hard-redirect a logged-out guest to `/login` —
+    `middleware.ts` gates them via a new exact-path check (not prefix, so
+    `/orders/[orderId]` — reached by guest checkout — stays reachable) in
+    `lib/middleware-rules.ts` (the pure routing logic was extracted out of
+    `middleware.ts` here so it's unit-testable without pulling in
+    `next-intl/middleware` → `next/server`, which fails to resolve under
+    Vitest in this environment). A logged-in Staff/Manager/Admin browsing
+    the customer side now also gets a role-appropriate "Go to [X]"
+    shortcut in two places: a small badge in `CustomerHeader` (all three
+    customer-facing layouts) and a card on Profile between the avatar and
+    editable fields, both linking to `ROLE_HOME[role]`. Role is resolved
+    server-side per layout/page via the new `lib/get-current-role.ts`
+    (`getCurrentRole(supabase)`, DI'd like `menu-data.ts`). `ProfileView`
+    itself is still otherwise unchanged — `INITIAL_PROFILE`'s hardcoded
+    mock name/phone/email remains a separate, still-open gap (not in this
+    feature's scope). Design: `docs/superpowers/specs/2026-07-06-profile-auth-role-nav-design.md`.
+    Plan: `docs/superpowers/plans/2026-07-06-profile-auth-role-nav.md`.
+    Two throwaway test accounts (staff/customer roles) exist in the live
+    Supabase project for verifying this — credentials in `.env.local`
+    (`TEST_STAFF_EMAIL`/`TEST_STAFF_PASSWORD`, `TEST_CUSTOMER_EMAIL`/
+    `TEST_CUSTOMER_PASSWORD`), created the same direct-SQL bootstrap way
+    as the admin account (see "Database" below) since public signup hits
+    the shared email rate limit.
 - **Login / Signup** (`components/auth/login-form.tsx` +
   `signup-form.tsx`, ported from `06-login.html`/`07-signup.html`): **real
   Supabase Auth**, not mock — `supabase.auth.signInWithPassword` /
