@@ -51,7 +51,6 @@ export function SignupForm() {
 
     await supabase.from("profiles").update({ full_name: name, phone }).eq("id", data.user!.id)
     router.push(ROLE_HOME.customer)
-    router.refresh()
   }
 
   if (confirmEmailSent) {

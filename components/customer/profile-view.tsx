@@ -82,7 +82,6 @@ export function ProfileView({ role = null }: { role?: string | null }) {
     await supabase.auth.signOut()
     // Guest ordering stays available — send them back to the menu, not /login.
     router.push("/menu")
-    router.refresh()
   }
 
   return (
