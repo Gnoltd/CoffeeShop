@@ -1,74 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { ChevronRight } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
-
-type OrderStatus = "preparing" | "ready" | "completed" | "cancelled"
-type MockOrderItem = { nameVi: string; nameEn: string }
-type MockOrder = {
-  id: string
-  date: string
-  status: OrderStatus
-  items: MockOrderItem[]
-  total: number
-}
-
-/**
- * No `orders` table yet — fixed mock history so this page demonstrates real
- * filtering/navigation instead of being a translated-heading placeholder.
- * Becomes a real Supabase query (+ Realtime for the active ones) once the
- * backend exists.
- */
-const MOCK_ORDERS: MockOrder[] = [
-  {
-    id: "PDC-9821",
-    date: "05/07/2026, 14:32",
-    status: "preparing",
-    items: [{ nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee" }],
-    total: 29000,
-  },
-  {
-    id: "PDC-9815",
-    date: "05/07/2026, 12:15",
-    status: "ready",
-    items: [
-      { nameVi: "Cà Phê Trứng", nameEn: "Egg Coffee" },
-      { nameVi: "Bánh Croissant Bơ", nameEn: "Butter Croissant" },
-    ],
-    total: 73000,
-  },
-  {
-    id: "PDC-9788",
-    date: "03/07/2026, 09:45",
-    status: "completed",
-    items: [
-      { nameVi: "Trà Vải", nameEn: "Lychee Tea" },
-      { nameVi: "Bánh Mì Que", nameEn: "Crispy Breadsticks" },
-    ],
-    total: 54000,
-  },
-  {
-    id: "PDC-9750",
-    date: "01/07/2026, 16:20",
-    status: "cancelled",
-    items: [{ nameVi: "Bạc Xỉu", nameEn: "White Coffee" }],
-    total: 32000,
-  },
-  {
-    id: "PDC-9712",
-    date: "28/06/2026, 08:30",
-    status: "completed",
-    items: [
-      { nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee" },
-      { nameVi: "Bánh Mì Que", nameEn: "Crispy Breadsticks" },
-    ],
-    total: 77000,
-  },
-]
+import { useOrders, type OrderStatus } from "@/hooks/useOrders"
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   preparing: "bg-amber-100 text-amber-800",
@@ -98,12 +36,21 @@ function matchesFilter(status: OrderStatus, filter: Filter): boolean {
   return status === "completed" || status === "cancelled"
 }
 
+function formatOrderDate(timestamp: number, locale: string): string {
+  return new Date(timestamp).toLocaleString(locale === "vi" ? "vi-VN" : "en-US", {
+    dateStyle: "short",
+    timeStyle: "short",
+  })
+}
+
 export function OrderHistory() {
   const locale = useLocale()
   const t = useTranslations("OrderHistory")
+  const { orders } = useOrders()
   const [filter, setFilter] = useState<Filter>("all")
 
-  const filtered = MOCK_ORDERS.filter((order) => matchesFilter(order.status, filter))
+  const sorted = useMemo(() => [...orders].sort((a, b) => b.createdAt - a.createdAt), [orders])
+  const filtered = sorted.filter((order) => matchesFilter(order.status, filter))
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-4">
@@ -149,7 +96,7 @@ export function OrderHistory() {
                       {t(STATUS_KEYS[order.status])}
                     </span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{order.date}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{formatOrderDate(order.createdAt, locale)}</p>
                   <p className="mt-1 truncate text-sm text-muted-foreground">
                     {t("itemCount", { count: order.items.length })}: {itemsLabel}
                   </p>

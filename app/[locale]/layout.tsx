@@ -7,6 +7,7 @@ import { routing } from "@/i18n/routing";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { TablesProvider } from "@/hooks/useTables";
 import { CartProvider } from "@/hooks/useCart";
+import { OrdersProvider } from "@/hooks/useOrders";
 import "../globals.css";
 
 const beVietnamPro = Be_Vietnam_Pro({
@@ -47,10 +48,12 @@ export default async function RootLayout({
         <NextIntlClientProvider locale={locale} messages={messages}>
           <TablesProvider>
             <CartProvider>
-              <div className="fixed top-2 right-2 z-50">
-                <LanguageSwitcher />
-              </div>
-              {children}
+              <OrdersProvider>
+                <div className="fixed top-2 right-2 z-50">
+                  <LanguageSwitcher />
+                </div>
+                {children}
+              </OrdersProvider>
             </CartProvider>
           </TablesProvider>
         </NextIntlClientProvider>

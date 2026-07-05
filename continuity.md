@@ -594,6 +594,61 @@ the real gaps were in each page's actual data/functionality.
   toggle labels) renders on all 5 pages in both locales, and the
   `/admin/*` gate is unaffected.
 
+## Customer pages audited against Stitch — order lifecycle connected (done)
+
+User asked to give the customer-facing pages the same treatment: check
+against Stitch and fully build real functions. Re-read `02-menu.html`
+through `05-order-tracking.html` against current components. Profile and
+Loyalty were already built with direct mockup fidelity earlier and didn't
+need changes. Found the real gap: **Checkout, Order Tracking, and Order
+History were three disconnected mock islands** — the exact same class of
+bug as POS/KDS and Dashboard/Inventory, just not caught until this pass.
+Placing a real order (with real items and per-item notes, freshly built
+this session) never actually showed up in tracking or history; Order
+Tracking always displayed the same 2 hardcoded items regardless of what
+was ordered, which directly contradicts what `05-order-tracking.html`
+depicts (a specific order's specific items with specific notes). Also
+found `03-cart.html`'s promo-code row had never been built at all.
+
+- **New `hooks/useOrders.tsx`** (Context+Provider, mounted at the root
+  layout next to `useCart`/`useTables`) is now the single source for a
+  placed order's full lifecycle:
+  - Checkout's "Place Order" builds a real `OrderRecord` from the actual
+    cart (items, notes, subtotal, discount, table, order type) and calls
+    `addOrder()` before clearing the cart.
+  - Order Tracking (converted from an async Server Component to a client
+    component) looks the order up by id — real data when found, a
+    graceful fixed-mock fallback for any id not in the store (never
+    crashes on a stale/hand-typed URL). The progress step now reflects the
+    order's real `status` field.
+  - Order History reads the same list instead of its own separate mock
+    array, sorted newest-first, so a just-placed order appears immediately.
+  - The 5 example orders were migrated from Order History's old
+    Order-History-only mock shape into full `OrderRecord`s (added
+    subtotal/discount/table/orderType) so they render correctly in Order
+    Tracking too — previously the two pages had two incompatible ideas of
+    what "an order" even was.
+  - **Known, documented gap, not a bug:** nothing advances a customer
+    order's status after it's created — it starts at "preparing" and
+    stays there, since customer Checkout orders and the staff Kitchen
+    Display board remain two separate systems (connecting them would be a
+    bigger unification than this pass's scope; POS orders already flow to
+    KDS, customer orders don't yet).
+  - Also caught and fixed the same turn: Order Tracking's table/branch
+    info card always said "Dine-in" even for pickup orders — now shows a
+    real Pickup badge when `orderType` is `"pickup"`.
+- **Real promo codes**: `useCart.tsx` gained `promoCode`/`promoDiscount`/
+  `applyPromoCode`/`clearPromoCode` — one hardcoded valid code
+  (`WELCOME10`, 10% off), real validation with an error message for
+  invalid codes, real discount shown in both Cart and Checkout as a
+  "Discount" line. `clear()` resets the code along with the cart.
+- Verified: `npm run build` clean; curl confirmed the Cart promo UI
+  renders, and — the key proof — looking up a seed order
+  (`PDC-9815`, dine-in table 2, status "ready", item "Cà Phê Trứng")
+  through Order Tracking shows all three of those real values instead of
+  the old hardcoded mock, while an unknown id still returns 200 via the
+  fallback instead of crashing.
+
 ## Next steps
 
 The originally agreed FE priority order (theme → customer → staff → admin)

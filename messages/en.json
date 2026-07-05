@@ -117,11 +117,19 @@
     "decrease": "Decrease quantity",
     "increase": "Increase quantity",
     "subtotal": "Subtotal",
+    "discount": "Discount",
     "total": "Total",
-    "proceedToCheckout": "Proceed to Checkout"
+    "proceedToCheckout": "Proceed to Checkout",
+    "promoLabel": "Add Promo Code",
+    "promoPlaceholder": "Enter promo code",
+    "apply": "Apply",
+    "invalidPromo": "Invalid promo code.",
+    "promoApplied": "Code applied",
+    "removePromo": "Remove promo code"
   },
   "Checkout": {
     "noteLabel": "Note",
+    "discount": "Discount",
     "orderType": "Order Type",
     "pickup": "Pickup",
     "dineIn": "Dine-in",
@@ -159,6 +167,9 @@
   "OrderTracking": {
     "orderId": "Order ID",
     "statusPreparing": "Preparing",
+    "statusReady": "Ready",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
     "etaLabel": "Ready in 5-10 minutes",
     "stepPaid": "Paid",
     "stepPreparing": "Preparing",
@@ -166,6 +177,7 @@
     "stepCompleted": "Completed",
     "tableLabel": "Table {table}",
     "dineInBadge": "Dine-in",
+    "pickupBadge": "Pickup",
     "branchName": "District 1 Branch",
     "orderDetails": "Order Details",
     "itemCount": "{count, plural, one {# item} other {# items}}",

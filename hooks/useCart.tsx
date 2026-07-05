@@ -39,11 +39,20 @@ type CartContextValue = {
   clear: () => void
   subtotal: number
   itemCount: number
+  promoCode: string | null
+  promoDiscount: number
+  applyPromoCode: (code: string) => boolean
+  clearPromoCode: () => void
 }
 
 const CartContext = createContext<CartContextValue | null>(null)
 
 const STORAGE_KEY = "phadincoffee-cart"
+
+/** No `promotions` table yet — a single hardcoded valid code, 10% off subtotal. */
+const VALID_PROMO_CODES: Record<string, number> = {
+  WELCOME10: 0.1,
+}
 
 function buildCartItemId(item: AddToCartInput): string {
   const modifierKey = item.modifiers
@@ -58,6 +67,7 @@ function buildCartItemId(item: AddToCartInput): string {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [promoCode, setPromoCode] = useState<string | null>(null)
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
@@ -103,6 +113,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   function clear() {
     setItems([])
+    setPromoCode(null)
+  }
+
+  function applyPromoCode(code: string): boolean {
+    const normalized = code.trim().toUpperCase()
+    if (!(normalized in VALID_PROMO_CODES)) return false
+    setPromoCode(normalized)
+    return true
+  }
+
+  function clearPromoCode() {
+    setPromoCode(null)
   }
 
   const subtotal = useMemo(
@@ -113,10 +135,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     () => items.reduce((sum, item) => sum + item.quantity, 0),
     [items]
   )
+  const promoDiscount = useMemo(
+    () => (promoCode ? Math.round(subtotal * VALID_PROMO_CODES[promoCode]) : 0),
+    [promoCode, subtotal]
+  )
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, updateQuantity, removeItem, clear, subtotal, itemCount }}
+      value={{
+        items,
+        addItem,
+        updateQuantity,
+        removeItem,
+        clear,
+        subtotal,
+        itemCount,
+        promoCode,
+        promoDiscount,
+        applyPromoCode,
+        clearPromoCode,
+      }}
     >
       {children}
     </CartContext.Provider>

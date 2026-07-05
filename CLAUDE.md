@@ -153,19 +153,47 @@ matches the Stitch mockups' "Destination Rule" for focused pages).
   until `menu_items` etc. exist in Supabase. Uses `nameVi`/`nameEn` directly;
   the planned DB schema only has one `name` column, so this needs a decision
   later (translation columns vs. Vietnamese-only content).
-- Order Tracking (`components/customer/order-tracking.tsx`) shows a fixed
-  mock status regardless of the URL's `orderId` — no `orders` table or
-  Realtime yet. "Place Order" on Checkout clears the cart and navigates
-  there; it does not submit anything anywhere. It now accepts a real
-  optional `table` prop (from the URL's `?table=` search param, read by
-  `app/[locale]/(customer)/orders/[orderId]/page.tsx`) and shows that
-  number instead of a hardcoded one when present — see "Table identity
-  flow" below.
+- **The full order lifecycle is now genuinely connected** — Checkout,
+  Order Tracking, and Order History used to be three disconnected mock
+  islands (a placed order's real items/notes never actually showed up in
+  tracking or history). Fixed with `hooks/useOrders.tsx` (Context+Provider,
+  mounted at the root layout next to `useCart`/`useTables`):
+  - Checkout's "Place Order" builds a real `OrderRecord` (actual cart
+    items with their notes, subtotal, discount, table, order type) and
+    calls `addOrder()` **before** clearing the cart and navigating.
+  - Order Tracking (`components/customer/order-tracking.tsx`, now a client
+    component) looks up the order by id in `useOrders()` — real items,
+    per-item notes, discount, and table render when found. An id not in
+    the store (stale link, hand-typed URL) falls back to a fixed mock
+    order rather than crashing, same honesty-with-a-safety-net pattern
+    used elsewhere. The progress-step shown is driven by the order's real
+    `status` field, not a hardcoded step index — though nothing currently
+    *advances* that status after creation (new orders start at
+    `"preparing"` and stay there — no staff-side actor moves customer
+    orders forward yet; that's a real gap, not a bug, since customer
+    Checkout orders and the staff Kitchen Display board remain separate
+    systems for now, see "Staff pages" below).
+  - Order History reads from the same `useOrders()` list (sorted by
+    `createdAt` descending) instead of its own separate mock array, so a
+    just-placed order appears at the top immediately.
+  - Seed data: the 5 example orders migrated from Order History's old
+    local mock into `useOrders.tsx`'s `SEED_ORDERS`, now with full
+    `subtotal`/`discount`/`table`/`orderType` fields so they render
+    correctly in Order Tracking too (previously Order History and Order
+    Tracking had two unrelated, incompatible mock shapes for "an order").
+- **Cart promo codes** (`hooks/useCart.tsx`): one hardcoded valid code,
+  `WELCOME10` (10% off subtotal) — real validation, real discount, shown
+  in both Cart and Checkout's summary as a "Discount" line. `clear()`
+  resets the applied code along with the cart. No `promotions` table, so
+  only the one code exists; matches `03-cart.html`'s promo-code row that
+  had never been built.
 - Checkout (`components/customer/checkout-view.tsx`) reads `activeTable`
   from `useTables()` — if the customer arrived via a table's QR code, the
   dine-in badge shows the real table number and it's appended as
   `?table=` on the Order Tracking URL. Falls back to a fixed mock number
   only if Dine-in is picked manually without ever scanning a QR code.
+  Total now subtracts both the cart's promo discount and the loyalty
+  redemption discount together.
 - Item "photos" are lucide-react icon placeholders in a colored box by
   default — `MenuItem.imageUrl` (optional) overrides this with a real
   `<img>` when set. No seed item ships with a photo (the Stitch exports'
@@ -253,9 +281,11 @@ screen `8436df098abc43ea801649f367476650`) before building it for real.
   (not pre-filtered — `menu-browser.tsx` has no query-param filtering).
 - **Order History** (`components/customer/order-history.tsx`, no prior
   mockup): filter pills (All/Active/Completed — Active = preparing/ready,
-  Completed = completed/cancelled), 5 fixed mock orders with color-coded
-  status badges, tapping a card navigates to `/orders/[id]`. Becomes a real
-  Supabase query (+ Realtime for active orders) once `orders` exists.
+  Completed = completed/cancelled), color-coded status badges, tapping a
+  card navigates to `/orders/[id]`. Reads from the shared `useOrders()`
+  hook (see "Customer ordering flow" above) — 5 seed orders plus whatever
+  the customer actually places through Checkout. Becomes a real Supabase
+  query (+ Realtime for active orders) once `orders` exists.
 - **Loyalty** (`components/customer/loyalty-view.tsx`, ported from
   `09-loyalty.html`): points hero card using the app's real agreed rates
   (10,000 VND = 1 point, 100 points = 10,000 VND off — not placeholder

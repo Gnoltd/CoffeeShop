@@ -117,11 +117,19 @@
     "decrease": "Giảm số lượng",
     "increase": "Tăng số lượng",
     "subtotal": "Tạm Tính",
+    "discount": "Giảm Giá",
     "total": "Tổng Cộng",
-    "proceedToCheckout": "Tiến Hành Thanh Toán"
+    "proceedToCheckout": "Tiến Hành Thanh Toán",
+    "promoLabel": "Thêm Mã Giảm Giá",
+    "promoPlaceholder": "Nhập mã giảm giá",
+    "apply": "Áp Dụng",
+    "invalidPromo": "Mã giảm giá không hợp lệ.",
+    "promoApplied": "Đã áp dụng mã",
+    "removePromo": "Xóa mã giảm giá"
   },
   "Checkout": {
     "noteLabel": "Ghi chú",
+    "discount": "Giảm Giá",
     "orderType": "Hình Thức Nhận Hàng",
     "pickup": "Mang Đi",
     "dineIn": "Tại Bàn",
@@ -159,6 +167,9 @@
   "OrderTracking": {
     "orderId": "Mã Đơn Hàng",
     "statusPreparing": "Đang Pha Chế",
+    "statusReady": "Sẵn Sàng",
+    "statusCompleted": "Hoàn Tất",
+    "statusCancelled": "Đã Hủy",
     "etaLabel": "Dự kiến xong trong 5-10 phút",
     "stepPaid": "Đã Thanh Toán",
     "stepPreparing": "Đang Pha Chế",
@@ -166,6 +177,7 @@
     "stepCompleted": "Hoàn Tất",
     "tableLabel": "Bàn số {table}",
     "dineInBadge": "Phục vụ tại chỗ",
+    "pickupBadge": "Mang Đi",
     "branchName": "Chi Nhánh Quận 1",
     "orderDetails": "Chi Tiết Đơn Hàng",
     "itemCount": "{count} món",

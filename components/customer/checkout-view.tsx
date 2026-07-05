@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart } from "@/hooks/useCart"
 import { useTables } from "@/hooks/useTables"
+import { useOrders, type OrderRecord } from "@/hooks/useOrders"
 
 /**
  * Loyalty numbers are mocked (no loyalty_settings table yet — see
@@ -35,8 +36,9 @@ export function CheckoutView() {
   const locale = useLocale()
   const t = useTranslations("Checkout")
   const router = useRouter()
-  const { items, subtotal, clear } = useCart()
+  const { items, subtotal, promoDiscount, clear } = useCart()
   const { activeTable } = useTables()
+  const { addOrder } = useOrders()
 
   const [orderType, setOrderType] = useState<OrderType>(activeTable ? "dine-in" : "pickup")
   const [pickupTime, setPickupTime] = useState("asap")
@@ -44,12 +46,31 @@ export function CheckoutView() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null)
 
   const tableNumber = activeTable?.number ?? FALLBACK_TABLE_NUMBER
-  const discount = redeemLoyalty ? MOCK_REDEEM_AMOUNT : 0
+  const loyaltyDiscount = redeemLoyalty ? MOCK_REDEEM_AMOUNT : 0
+  const discount = promoDiscount + loyaltyDiscount
   const total = Math.max(subtotal - discount, 0)
 
   function handlePlaceOrder() {
     if (items.length === 0 || !paymentMethod) return
     const mockOrderId = `PDC-${Math.floor(1000 + Math.random() * 9000)}`
+    const order: OrderRecord = {
+      id: mockOrderId,
+      createdAt: Date.now(),
+      orderType,
+      table: orderType === "dine-in" ? tableNumber : undefined,
+      items: items.map((item) => ({
+        nameVi: item.nameVi,
+        nameEn: item.nameEn,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        note: item.note,
+      })),
+      subtotal,
+      discount,
+      total,
+      status: "preparing",
+    }
+    addOrder(order)
     clear()
     if (orderType === "dine-in") {
       router.push(`/orders/${mockOrderId}?table=${encodeURIComponent(tableNumber)}`)
@@ -153,6 +174,12 @@ export function CheckoutView() {
           <span className="text-sm text-muted-foreground">{t("subtotal")}</span>
           <span className="font-bold text-card-foreground">{formatVND(subtotal)}</span>
         </div>
+        {promoDiscount > 0 && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">{t("discount")}</span>
+            <span className="font-bold text-green-600">-{formatVND(promoDiscount)}</span>
+          </div>
+        )}
       </section>
 
       <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">

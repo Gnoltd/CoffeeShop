@@ -1,9 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { Minus, Plus, Trash2, ArrowRight, ShoppingBasket } from "lucide-react"
+import { Minus, Plus, Trash2, ArrowRight, ShoppingBasket, Ticket, X } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { formatVND } from "@/lib/format"
 import { useCart, type CartItem } from "@/hooks/useCart"
 
@@ -17,7 +19,18 @@ function lineLabel(item: CartItem, locale: string): string {
 export function CartView() {
   const locale = useLocale()
   const t = useTranslations("Cart")
-  const { items, updateQuantity, removeItem, subtotal } = useCart()
+  const { items, updateQuantity, removeItem, subtotal, promoCode, promoDiscount, applyPromoCode, clearPromoCode } =
+    useCart()
+  const [promoInput, setPromoInput] = useState("")
+  const [promoError, setPromoError] = useState(false)
+
+  function handleApplyPromo() {
+    const success = applyPromoCode(promoInput)
+    setPromoError(!success)
+    if (success) setPromoInput("")
+  }
+
+  const total = Math.max(subtotal - promoDiscount, 0)
 
   if (items.length === 0) {
     return (
@@ -102,15 +115,61 @@ export function CartView() {
         })}
       </div>
 
+      {promoCode ? (
+        <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
+          <span className="flex items-center gap-2 text-sm font-medium text-accent-foreground">
+            <Ticket className="h-4 w-4" />
+            {t("promoApplied")}: <strong>{promoCode}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={clearPromoCode}
+            aria-label={t("removePromo")}
+            title={t("removePromo")}
+            className="text-accent-foreground/70 hover:text-destructive"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      ) : (
+        <div className="mt-6 flex flex-col gap-2 rounded-xl border border-dashed p-4">
+          <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Ticket className="h-4 w-4" />
+            {t("promoLabel")}
+          </span>
+          <div className="flex gap-2">
+            <Input
+              value={promoInput}
+              onChange={(e) => {
+                setPromoInput(e.target.value)
+                setPromoError(false)
+              }}
+              placeholder={t("promoPlaceholder")}
+              className="h-10 flex-1"
+            />
+            <Button variant="outline" className="h-10" onClick={handleApplyPromo} disabled={!promoInput.trim()}>
+              {t("apply")}
+            </Button>
+          </div>
+          {promoError && <p className="text-xs text-destructive">{t("invalidPromo")}</p>}
+        </div>
+      )}
+
       <section className="mt-6 space-y-3 rounded-2xl bg-muted p-5">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t("subtotal")}</span>
           <span className="font-medium">{formatVND(subtotal)}</span>
         </div>
+        {promoDiscount > 0 && (
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">{t("discount")}</span>
+            <span className="font-medium text-green-600">-{formatVND(promoDiscount)}</span>
+          </div>
+        )}
         <div className="h-px bg-border" />
         <div className="flex items-center justify-between">
           <span className="text-lg font-bold text-card-foreground">{t("total")}</span>
-          <span className="text-lg font-bold text-primary">{formatVND(subtotal)}</span>
+          <span className="text-lg font-bold text-primary">{formatVND(total)}</span>
         </div>
       </section>
 
