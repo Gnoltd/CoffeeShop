@@ -11,6 +11,8 @@ import { createClient } from "@/lib/supabase/client"
 import {
   createMenuItem,
   deleteMenuItem,
+  getMenuItemById,
+  setItemModifierGroups,
   updateMenuItem,
   type MenuCategory,
   type MenuIcon,
@@ -105,14 +107,16 @@ export function MenuManagement({
     }
   }
 
-  async function saveItem(input: MenuItemInput, editingId: string | null) {
+  async function saveItem(input: MenuItemInput, extraGroupIds: string[], editingId: string | null) {
     setError(null)
     try {
       const saved = editingId
         ? await updateMenuItem(supabase, editingId, input)
         : await createMenuItem(supabase, input)
+      await setItemModifierGroups(supabase, saved.id, extraGroupIds)
+      const refreshed = (await getMenuItemById(supabase, saved.id)) ?? saved
       setItems((prev) =>
-        editingId ? prev.map((item) => (item.id === editingId ? saved : item)) : [saved, ...prev]
+        editingId ? prev.map((item) => (item.id === editingId ? refreshed : item)) : [refreshed, ...prev]
       )
       setFormMode(null)
     } catch {
@@ -142,7 +146,9 @@ export function MenuManagement({
           categories={categories}
           initialItem={formMode.type === "edit" ? formMode.item : undefined}
           onCancel={() => setFormMode(null)}
-          onSave={(input) => saveItem(input, formMode?.type === "edit" ? formMode.item.id : null)}
+          onSave={(input, extraGroupIds) =>
+            saveItem(input, extraGroupIds, formMode?.type === "edit" ? formMode.item.id : null)
+          }
         />
       )}
 
