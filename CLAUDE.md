@@ -425,25 +425,37 @@ header for the same reason as staff — no real auth data yet.
   `staff-member-form.tsx` are separate Add/Edit modal components used by
   Menu Management and Staff Accounts respectively.
 - **Convention for not-yet-backed actions:** an "Add X" button is rendered
-  `disabled` with an explanatory `title` tooltip ("Not implemented yet —
-  no `<table>` to write to") only when there's genuinely no real table to
-  persist to (Tables' "Add Table" is the one remaining example — a new
-  physical table isn't just local UI state). **Menu's "Add/Edit Item" and
-  Staff's "Add/Edit Staff" are real**, not disabled — adding to that page's
-  own local array needs no real backend table, so per the "fully build the
-  frontend now, wire up BE later" direction, they're implemented like any
-  other local-state action.
+  `disabled` with an explanatory `title` tooltip only when there's
+  genuinely no real table to persist to. **Menu's "Add/Edit Item", Staff's
+  "Add/Edit Staff", and now Tables' "Add New Table" are all real** (see
+  `hooks/useTables.tsx`'s `addTable()`) — adding to that page's own local
+  array needs no real backend table, so per the "fully build the frontend
+  now, wire up BE later" direction, they're implemented like any other
+  local-state action. No remaining example of this convention exists in
+  the admin section as of this writing — everything with local state to
+  add to has a real Add action.
 - **Shared state across pages, not disconnected mock copies:** a full
   audit of every admin page against its Stitch mockup (user-requested)
   found several pages holding their own separate copy of data that other
   pages also needed — same class of bug as the earlier POS/Kitchen Display
   fix. Fixed the same way, with new Context+Provider hooks:
   - **`hooks/useInventory.tsx`** (mounted in `app/[locale]/admin/layout.tsx`,
-    shared by Dashboard and Inventory): `ingredients` + `restock()` + a
-    real `logs` array that every restock appends to. Dashboard's low-stock
-    widget and "Restock" button now read/write this same state instead of
-    a separate frozen mock list — restocking from the Dashboard actually
-    removes the item from Inventory's low-stock table too.
+    shared by Dashboard and Inventory): `ingredients` + a real `logs` array
+    that every stock change appends to (with a real signed `change` and a
+    `reason: "restock" | "adjustment" | "waste"`, not a hardcoded label).
+    Dashboard keeps its quick one-tap `restock()` (tops up by the
+    low-stock threshold — no modal, matches a dashboard's "glance and go"
+    role). Inventory's own page uses the more general `adjustStock(id,
+    change, reason)` and `setOutOfStock(id)` via
+    `components/admin/stock-adjust-form.tsx` — a real modal where an admin
+    types an amount to add or remove (stock is clamped at 0, never
+    negative) or force-sets an ingredient to Out of Stock regardless of
+    its current quantity. Status is now three-state (In Stock / Low Stock
+    / Out of Stock — `stock <= 0` takes priority over the threshold
+    comparison), not the old two-state derived badge. Dashboard's
+    low-stock widget and Restock button still read/write this same shared
+    state — restocking from the Dashboard still removes the item from
+    Inventory's low-stock table too.
   - **`hooks/useTables.tsx`** gained `isOccupied` (admin-toggleable),
     `scanCount` (genuinely incremented in `setActiveTableByToken` every
     time `/table/[qrToken]` resolves a real table — not a fake "today"
@@ -462,13 +474,20 @@ header for the same reason as staff — no real auth data yet.
     instance* created via `selectFile` get revoked, tracked by an
     `ownsPreviewUrl` flag), a real Category badge column, and client-side
     pagination (5/page).
-  - Inventory's restock (see shared hook above) plus a real **Logs tab**
-    (`components/admin/inventory-management.tsx`) showing genuine restock
-    history — not mock rows, built from the same `logs` array.
-  - Tables' rename, location edit, occupied/available toggle, and QR
-    token regeneration (all via the shared `useTables()` hook — see "Table
-    identity flow" below) plus a real stat row (Total/Available/Occupied/
-    Scans, all computed, none hardcoded).
+  - Inventory's stock adjustment (see shared hook above) plus a real
+    **Logs tab** (`components/admin/inventory-management.tsx`) showing
+    genuine stock-change history with correct sign and reason — not mock
+    rows, built from the same `logs` array.
+  - Tables' rename, location edit, occupied/available toggle, QR token
+    regeneration, and **Add New Table** (all via the shared `useTables()`
+    hook — see "Table identity flow" below) plus a real stat row
+    (Total/Available/Occupied/Scans, all computed, none hardcoded). Each
+    table card renders a **real, scannable QR code** (the `qrcode` npm
+    package, generated client-side as a PNG data URL encoding
+    `{origin}/table/{qrToken}` — no external QR-generation service, no
+    network call) in place of the old generic `QrCode` lucide icon
+    placeholder, and **Download QR** is real (triggers a browser download
+    of that PNG), not disabled+tooltip.
   - Staff's activate/deactivate toggle + **Add/Edit Staff**
     (`components/admin/staff-member-form.tsx`, same pattern as the Menu
     form) + pagination + real Total/Active/Disabled stat cards.
@@ -490,9 +509,39 @@ header for the same reason as staff — no real auth data yet.
 - All six routes remain behind the existing `/admin/*` middleware rule
   (manager|admin, with `/admin/staff` and `/admin/settings` admin-only) —
   confirmed the gate still works for every route (including Food Cost)
-  after the layout change; same rendering-verification caveat as
-  staff/customer pages (no live Supabase session, no browser automation
-  tool here).
+  after the layout change. Later verified rendering directly against a
+  real authenticated session using Playwright (installed ad hoc via
+  `npm install playwright` — not a project dependency, no `chromium-cli`
+  available in this environment) once real Supabase Auth existed; no
+  browser automation tool was available before that.
+- **Gotcha — toggle-switch thumb needs an explicit `left` position.**
+  Every hand-rolled `role="switch"` toggle in this codebase (Menu's
+  availability toggle, Settings' loyalty toggle, Checkout's redeem-points
+  toggle, and both Add/Edit form's availability/active toggles) had the
+  thumb `<span>` positioned with only `top-0.5` and no `left`/`inset-x`
+  class. Without an explicit `left`, the browser resolves the thumb's
+  static position to `left: 22px; right: 2px` inside the 44px track (not
+  flush-left as the `translate-x-0.5` / `translate-x-[22px]` values
+  assumed), so the "on" state's translate pushed the thumb completely
+  outside the track. Fixed everywhere by anchoring explicitly —
+  `absolute left-0.5 top-0.5` base position, `translate-x-0` (off) /
+  `translate-x-5` (on) — instead of relying on the browser's static-
+  position fallback. If a new toggle switch is added anywhere, copy this
+  fixed version, not the old pattern (check `git log` before this note's
+  commit for the broken version if it resurfaces from a merge).
+- **Gotcha — the fixed top-right `LanguageSwitcher` can overlap admin
+  page header buttons.** It's `fixed top-2 right-2 z-50`
+  (`app/[locale]/layout.tsx`), positioned relative to the viewport, not
+  page content. Admin pages with a right-aligned header action button
+  (Menu's Add Item, Staff's Add Staff, Tables' Add New Table) render close
+  enough to the viewport's top-right corner at common desktop widths that
+  the switcher visually sat on top of — and intercepted clicks on — part
+  of the button. Fixed by giving `app/[locale]/admin/layout.tsx`'s `main`
+  extra top padding (`pt-16` instead of `p-6`'s uniform `p-6`) so admin
+  page content never renders in the vertical band the switcher occupies.
+  Staff pages (`/staff/pos`, `/staff/orders`) have their own full-fidelity
+  top bars and weren't audited for the same issue — worth checking if a
+  similar report comes in for those.
 
 ## Table identity flow (`/table/[qrToken]` → Checkout → Order Tracking)
 

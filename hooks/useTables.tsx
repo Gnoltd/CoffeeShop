@@ -20,6 +20,7 @@ export type TableRecord = {
 
 type TablesContextValue = {
   tables: TableRecord[]
+  addTable: () => void
   renameTable: (id: string, number: string) => void
   updateLocation: (id: string, locationVi: string, locationEn: string) => void
   toggleOccupied: (id: string) => void
@@ -84,6 +85,27 @@ export function TablesProvider({ children }: { children: ReactNode }) {
     }
   }, [activeTable, hydrated])
 
+  function addTable() {
+    const highestNumber = tables.reduce((max, table) => {
+      const parsed = Number(table.number)
+      return Number.isFinite(parsed) ? Math.max(max, parsed) : max
+    }, 0)
+    const nextNumber = String(highestNumber + 1)
+
+    setTables((prev) => [
+      ...prev,
+      {
+        id: `t-${Date.now()}`,
+        number: nextNumber,
+        qrToken: randomToken(),
+        locationVi: "",
+        locationEn: "",
+        isOccupied: false,
+        scanCount: 0,
+      },
+    ])
+  }
+
   function renameTable(id: string, number: string) {
     setTables((prev) => prev.map((table) => (table.id === id ? { ...table, number } : table)))
     setActiveTable((prev) => (prev?.id === id ? { ...prev, number } : prev))
@@ -127,6 +149,7 @@ export function TablesProvider({ children }: { children: ReactNode }) {
     <TablesContext.Provider
       value={{
         tables,
+        addTable,
         renameTable,
         updateLocation,
         toggleOccupied,

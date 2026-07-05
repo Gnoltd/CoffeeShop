@@ -16,12 +16,15 @@ export type Ingredient = {
   icon: IngredientIcon
 }
 
+export type InventoryLogReason = "restock" | "adjustment" | "waste"
+
 export type InventoryLog = {
   id: string
   ingredientId: string
   ingredientNameVi: string
   ingredientNameEn: string
   change: number
+  reason: InventoryLogReason
   timestamp: number
 }
 
@@ -77,6 +80,8 @@ type InventoryContextValue = {
   ingredients: Ingredient[]
   logs: InventoryLog[]
   restock: (id: string) => void
+  adjustStock: (id: string, change: number, reason: InventoryLogReason) => void
+  setOutOfStock: (id: string) => void
 }
 
 const InventoryContext = createContext<InventoryContextValue | null>(null)
@@ -85,13 +90,13 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
   const [ingredients, setIngredients] = useState<Ingredient[]>(INITIAL_INGREDIENTS)
   const [logs, setLogs] = useState<InventoryLog[]>([])
 
-  function restock(id: string) {
+  function adjustStock(id: string, change: number, reason: InventoryLogReason) {
     const ingredient = ingredients.find((i) => i.id === id)
-    if (!ingredient) return
-    const change = ingredient.threshold
+    if (!ingredient || change === 0) return
+    const clampedChange = Math.round(Math.max(change, -ingredient.stock) * 100) / 100
 
     setIngredients((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, stock: i.stock + change } : i))
+      prev.map((i) => (i.id === id ? { ...i, stock: Math.max(0, Math.round((i.stock + clampedChange) * 100) / 100) } : i))
     )
     setLogs((prev) => [
       {
@@ -99,15 +104,29 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         ingredientId: id,
         ingredientNameVi: ingredient.nameVi,
         ingredientNameEn: ingredient.nameEn,
-        change,
+        change: clampedChange,
+        reason,
         timestamp: Date.now(),
       },
       ...prev,
     ])
   }
 
+  /** Quick one-tap restock (Dashboard's low-stock widget) — tops up by the low-stock threshold. */
+  function restock(id: string) {
+    const ingredient = ingredients.find((i) => i.id === id)
+    if (!ingredient) return
+    adjustStock(id, ingredient.threshold, "restock")
+  }
+
+  function setOutOfStock(id: string) {
+    const ingredient = ingredients.find((i) => i.id === id)
+    if (!ingredient) return
+    adjustStock(id, -ingredient.stock, "adjustment")
+  }
+
   return (
-    <InventoryContext.Provider value={{ ingredients, logs, restock }}>
+    <InventoryContext.Provider value={{ ingredients, logs, restock, adjustStock, setOutOfStock }}>
       {children}
     </InventoryContext.Provider>
   )

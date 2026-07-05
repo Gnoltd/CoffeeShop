@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import QRCode from "qrcode"
 import { QrCode, Download, RefreshCw, Plus, Pencil, Check, X, Grid2x2, CircleCheck, User, ScanLine } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -10,14 +11,41 @@ import { useTables } from "@/hooks/useTables"
 export function TablesManagement() {
   const locale = useLocale()
   const t = useTranslations("AdminTables")
-  const { tables, renameTable, updateLocation, toggleOccupied, regenerateToken } = useTables()
+  const { tables, addTable, renameTable, updateLocation, toggleOccupied, regenerateToken } = useTables()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftNumber, setDraftNumber] = useState("")
   const [draftLocationVi, setDraftLocationVi] = useState("")
   const [draftLocationEn, setDraftLocationEn] = useState("")
+  const [qrCodes, setQrCodes] = useState<Record<string, string>>({})
 
   const totalScans = tables.reduce((sum, table) => sum + table.scanCount, 0)
   const occupiedCount = tables.filter((table) => table.isOccupied).length
+
+  useEffect(() => {
+    let cancelled = false
+    const origin = window.location.origin
+
+    Promise.all(
+      tables.map(async (table) => {
+        const url = `${origin}/table/${table.qrToken}`
+        const dataUrl = await QRCode.toDataURL(url, { width: 256, margin: 1 })
+        return [table.id, dataUrl] as const
+      })
+    ).then((entries) => {
+      if (!cancelled) setQrCodes(Object.fromEntries(entries))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [tables])
+
+  function downloadQr(tableNumber: string, dataUrl: string) {
+    const link = document.createElement("a")
+    link.href = dataUrl
+    link.download = `table-${tableNumber}-qr.png`
+    link.click()
+  }
 
   function startEditing(id: string, currentNumber: string, locationVi: string, locationEn: string) {
     setEditingId(id)
@@ -41,11 +69,7 @@ export function TablesManagement() {
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
-        <Button
-          className="h-10 gap-2"
-          disabled
-          title="Not implemented yet — no tables table to write to"
-        >
+        <Button className="h-10 gap-2" onClick={addTable}>
           <Plus className="h-4 w-4" />
           {t("addTable")}
         </Button>
@@ -109,7 +133,16 @@ export function TablesManagement() {
               </button>
 
               <div className="flex h-32 w-32 items-center justify-center rounded-xl border bg-muted">
-                <QrCode className="h-16 w-16 text-muted-foreground" />
+                {qrCodes[table.id] ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={qrCodes[table.id]}
+                    alt={`${t("table")} ${table.number} QR`}
+                    className="h-full w-full rounded-xl object-contain p-2"
+                  />
+                ) : (
+                  <QrCode className="h-16 w-16 text-muted-foreground" />
+                )}
               </div>
 
               {isEditing ? (
@@ -183,8 +216,8 @@ export function TablesManagement() {
                   variant="secondary"
                   size="sm"
                   className="h-9 flex-1 gap-1.5"
-                  disabled
-                  title="Not implemented yet — no real QR image to download"
+                  disabled={!qrCodes[table.id]}
+                  onClick={() => downloadQr(table.number, qrCodes[table.id])}
                 >
                   <Download className="h-3.5 w-3.5" />
                   {t("downloadQr")}

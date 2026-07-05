@@ -5,7 +5,8 @@ import { useTranslations } from "next-intl"
 import { Coffee, Droplet, Wheat, Candy, Boxes, TriangleAlert, History } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useInventory, type IngredientIcon } from "@/hooks/useInventory"
+import { useInventory, type IngredientIcon, type InventoryLogReason } from "@/hooks/useInventory"
+import { StockAdjustForm } from "@/components/admin/stock-adjust-form"
 
 const ICONS: Record<IngredientIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -21,15 +22,23 @@ function formatLogTime(timestamp: number, locale: string): string {
   })
 }
 
+const REASON_LABEL_KEYS: Record<InventoryLogReason, "restockReason" | "adjustmentReason" | "wasteReason"> = {
+  restock: "restockReason",
+  adjustment: "adjustmentReason",
+  waste: "wasteReason",
+}
+
 type Tab = "ingredients" | "logs"
 
 export function InventoryManagement({ locale }: { locale: string }) {
   const t = useTranslations("AdminInventory")
-  const { ingredients, logs, restock } = useInventory()
+  const { ingredients, logs, adjustStock, setOutOfStock } = useInventory()
   const [tab, setTab] = useState<Tab>("ingredients")
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   const lowStockCount = ingredients.filter((i) => i.stock < i.threshold).length
   const lastUpdated = logs[0]?.timestamp
+  const editingIngredient = ingredients.find((i) => i.id === editingId) ?? null
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
@@ -100,13 +109,14 @@ export function InventoryManagement({ locale }: { locale: string }) {
                 <th className="px-4 py-3 font-medium">{t("currentStock")}</th>
                 <th className="px-4 py-3 font-medium">{t("threshold")}</th>
                 <th className="px-4 py-3 font-medium">{t("status")}</th>
-                <th className="px-4 py-3 text-right font-medium">{t("restock")}</th>
+                <th className="px-4 py-3 text-right font-medium">{t("adjustStock")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
               {ingredients.map((ingredient) => {
                 const Icon = ICONS[ingredient.icon]
-                const isLow = ingredient.stock < ingredient.threshold
+                const isOut = ingredient.stock <= 0
+                const isLow = !isOut && ingredient.stock < ingredient.threshold
                 return (
                   <tr key={ingredient.id}>
                     <td className="px-4 py-3">
@@ -135,17 +145,19 @@ export function InventoryManagement({ locale }: { locale: string }) {
                       <span
                         className={cn(
                           "rounded-full border px-2.5 py-1 text-xs font-bold",
-                          isLow
-                            ? "border-destructive/20 bg-destructive/10 text-destructive"
-                            : "border-green-200 bg-green-100 text-green-700"
+                          isOut
+                            ? "border-destructive/40 bg-destructive text-destructive-foreground"
+                            : isLow
+                              ? "border-destructive/20 bg-destructive/10 text-destructive"
+                              : "border-green-200 bg-green-100 text-green-700"
                         )}
                       >
-                        {isLow ? t("lowStock") : t("inStock")}
+                        {isOut ? t("outOfStock") : isLow ? t("lowStock") : t("inStock")}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button size="sm" variant="outline" className="h-8" onClick={() => restock(ingredient.id)}>
-                        {t("restock")}
+                      <Button size="sm" variant="outline" className="h-8" onClick={() => setEditingId(ingredient.id)}>
+                        {t("adjustStock")}
                       </Button>
                     </td>
                   </tr>
@@ -175,10 +187,18 @@ export function InventoryManagement({ locale }: { locale: string }) {
                     <td className="px-4 py-3 font-medium text-card-foreground">
                       {locale === "vi" ? log.ingredientNameVi : log.ingredientNameEn}
                     </td>
-                    <td className="px-4 py-3 font-bold text-green-600">+{log.change}</td>
+                    <td
+                      className={cn(
+                        "px-4 py-3 font-bold",
+                        log.change >= 0 ? "text-green-600" : "text-destructive"
+                      )}
+                    >
+                      {log.change >= 0 ? "+" : ""}
+                      {log.change}
+                    </td>
                     <td className="px-4 py-3">
                       <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                        {t("restockReason")}
+                        {t(REASON_LABEL_KEYS[log.reason])}
                       </span>
                     </td>
                   </tr>
@@ -187,6 +207,17 @@ export function InventoryManagement({ locale }: { locale: string }) {
             </table>
           )}
         </div>
+      )}
+
+      {editingIngredient && (
+        <StockAdjustForm
+          ingredient={editingIngredient}
+          locale={locale}
+          onAdd={(amount) => adjustStock(editingIngredient.id, amount, "restock")}
+          onRemove={(amount) => adjustStock(editingIngredient.id, -amount, "waste")}
+          onMarkOutOfStock={() => setOutOfStock(editingIngredient.id)}
+          onClose={() => setEditingId(null)}
+        />
       )}
     </div>
   )
