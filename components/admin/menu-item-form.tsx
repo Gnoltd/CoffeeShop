@@ -2,11 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useTranslations } from "next-intl"
-import { UploadCloud, X } from "lucide-react"
+import { UploadCloud, X, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
-import type { MenuCategory, MenuIcon, MenuItem, MenuItemInput } from "@/lib/supabase/menu-data"
+import { formatVND } from "@/lib/format"
+import { createClient } from "@/lib/supabase/client"
+import { createModifierGroup, getModifierGroups } from "@/lib/supabase/menu-data"
+import type { MenuCategory, MenuIcon, MenuItem, MenuItemInput, MenuModifierGroup } from "@/lib/supabase/menu-data"
 
 const ICON_OPTIONS: MenuIcon[] = ["coffee", "cup-soda", "cookie", "milk"]
 
@@ -19,7 +22,7 @@ export function MenuItemForm({
   categories: MenuCategory[]
   initialItem?: MenuItem
   onCancel: () => void
-  onSave: (input: MenuItemInput) => void
+  onSave: (input: MenuItemInput, extraGroupIds: string[]) => void
 }) {
   const t = useTranslations("AdminMenu")
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -44,6 +47,27 @@ export function MenuItemForm({
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  const supabase = createClient()
+  const [extraGroups, setExtraGroups] = useState<MenuModifierGroup[]>([])
+  const [selectedExtraIds, setSelectedExtraIds] = useState<string[]>(
+    initialItem?.modifierGroups.filter((g) => g.options.length === 1).map((g) => g.id) ?? []
+  )
+  const [showAddExtraForm, setShowAddExtraForm] = useState(false)
+  const [newExtraNameVi, setNewExtraNameVi] = useState("")
+  const [newExtraNameEn, setNewExtraNameEn] = useState("")
+  const [newExtraPrice, setNewExtraPrice] = useState("")
+  const [extrasError, setExtrasError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getModifierGroups(supabase).then((groups) => {
+      setExtraGroups(groups.filter((g) => g.options.length === 1))
+    })
+    // Runs once on mount; supabase is a fresh client instance each render
+    // but functionally equivalent, so depending on it would only cause
+    // needless repeated fetches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   useEffect(() => {
     return () => {
       if (imagePreviewUrl && ownsPreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
@@ -65,6 +89,30 @@ export function MenuItemForm({
     setOwnsPreviewUrl(false)
   }
 
+  async function handleAddExtra() {
+    const parsedPrice = Number(newExtraPrice)
+    if (!newExtraNameVi.trim() || !newExtraNameEn.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setExtrasError(t("extraRequiredFieldsError"))
+      return
+    }
+    setExtrasError(null)
+    try {
+      const created = await createModifierGroup(supabase, {
+        nameVi: newExtraNameVi.trim(),
+        nameEn: newExtraNameEn.trim(),
+        priceDelta: parsedPrice,
+      })
+      setExtraGroups((prev) => [...prev, created])
+      setSelectedExtraIds((prev) => [...prev, created.id])
+      setNewExtraNameVi("")
+      setNewExtraNameEn("")
+      setNewExtraPrice("")
+      setShowAddExtraForm(false)
+    } catch {
+      setExtrasError(t("extraSaveError"))
+    }
+  }
+
   function handleSave() {
     const parsedPrice = Number(price)
     if (!nameVi.trim() || !nameEn.trim() || !categoryId || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
@@ -72,21 +120,24 @@ export function MenuItemForm({
       return
     }
 
-    onSave({
-      categoryId,
-      nameVi: nameVi.trim(),
-      nameEn: nameEn.trim(),
-      descriptionVi: descriptionVi.trim(),
-      descriptionEn: descriptionEn.trim(),
-      basePrice: parsedPrice,
-      icon,
-      isAvailable,
-      isPopular,
-      // A blob: URL is per-tab/ephemeral (URL.createObjectURL) — never
-      // persist it to the real DB. Only pass through a real, persistable
-      // URL (inherited initialItem.imageUrl) or null.
-      imageUrl: imagePreviewUrl?.startsWith("blob:") ? null : imagePreviewUrl,
-    })
+    onSave(
+      {
+        categoryId,
+        nameVi: nameVi.trim(),
+        nameEn: nameEn.trim(),
+        descriptionVi: descriptionVi.trim(),
+        descriptionEn: descriptionEn.trim(),
+        basePrice: parsedPrice,
+        icon,
+        isAvailable,
+        isPopular,
+        // A blob: URL is per-tab/ephemeral (URL.createObjectURL) — never
+        // persist it to the real DB. Only pass through a real, persistable
+        // URL (inherited initialItem.imageUrl) or null.
+        imageUrl: imagePreviewUrl?.startsWith("blob:") ? null : imagePreviewUrl,
+      },
+      selectedExtraIds
+    )
   }
 
   return (
@@ -290,6 +341,82 @@ export function MenuItemForm({
                 )}
               />
             </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("extrasLabel")}</label>
+            {extrasError && (
+              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{extrasError}</p>
+            )}
+            <div className="space-y-2 rounded-lg border p-3">
+              {extraGroups.length === 0 && !showAddExtraForm && (
+                <p className="text-sm text-muted-foreground">{t("noExtrasYet")}</p>
+              )}
+              {extraGroups.map((group) => {
+                const checked = selectedExtraIds.includes(group.id)
+                const option = group.options[0]
+                return (
+                  <label key={group.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() =>
+                          setSelectedExtraIds((prev) =>
+                            checked ? prev.filter((id) => id !== group.id) : [...prev, group.id]
+                          )
+                        }
+                        className="h-4 w-4 rounded border-input text-primary focus:ring-primary/40"
+                      />
+                      <span className="text-card-foreground">
+                        {group.nameVi} / {group.nameEn}
+                      </span>
+                    </span>
+                    <span className="font-medium text-primary">+{formatVND(option.priceDelta)}</span>
+                  </label>
+                )
+              })}
+            </div>
+
+            {showAddExtraForm ? (
+              <div className="space-y-2 rounded-lg border border-dashed p-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <Input
+                    value={newExtraNameVi}
+                    onChange={(e) => setNewExtraNameVi(e.target.value)}
+                    placeholder={t("extraNameViPlaceholder")}
+                    className="h-9"
+                  />
+                  <Input
+                    value={newExtraNameEn}
+                    onChange={(e) => setNewExtraNameEn(e.target.value)}
+                    placeholder={t("extraNameEnPlaceholder")}
+                    className="h-9"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    value={newExtraPrice}
+                    onChange={(e) => setNewExtraPrice(e.target.value)}
+                    placeholder={t("extraPricePlaceholder")}
+                    className="h-9"
+                  />
+                </div>
+                <div className="flex justify-end gap-2">
+                  <Button type="button" variant="outline" size="sm" onClick={() => setShowAddExtraForm(false)}>
+                    {t("cancel")}
+                  </Button>
+                  <Button type="button" size="sm" onClick={handleAddExtra}>
+                    {t("confirmAddExtra")}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button type="button" variant="outline" size="sm" onClick={() => setShowAddExtraForm(true)}>
+                <Plus className="h-4 w-4" />
+                {t("addNewExtra")}
+              </Button>
+            )}
           </div>
         </div>
 
