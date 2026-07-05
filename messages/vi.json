@@ -73,6 +73,10 @@
     "profileTitle": "Cá Nhân",
     "loyaltyTitle": "Điểm Tích Lũy"
   },
+  "RoleNav": {
+    "badgeStaff": "Nhân Viên",
+    "badgeAdmin": "Quản Trị"
+  },
   "Profile": {
     "memberIdLabel": "Mã Thành Viên",
     "fullName": "Họ và Tên",
@@ -88,7 +92,13 @@
     "languageEn": "English",
     "save": "Lưu",
     "cancel": "Hủy",
-    "versionFooter": "PhaDinCoffee — bản demo"
+    "versionFooter": "PhaDinCoffee — bản demo",
+    "staffAccessHeadlineStaff": "Tài Khoản Nhân Viên",
+    "staffAccessSubtextStaff": "Bạn có quyền truy cập nhân viên.",
+    "staffAccessButtonStaff": "Đến Quầy Order",
+    "staffAccessHeadlineAdmin": "Tài Khoản Quản Trị",
+    "staffAccessSubtextAdmin": "Bạn có quyền quản trị hệ thống.",
+    "staffAccessButtonAdmin": "Đến Bảng Điều Khiển"
   },
   "Staff": {
     "posTitle": "Bán Hàng",
