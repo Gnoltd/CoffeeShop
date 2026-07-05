@@ -130,3 +130,48 @@ export async function getMenuItemById(supabase: SupabaseClient, id: string): Pro
   if (error) throw error
   return data ? mapMenuItemRow(data) : null
 }
+
+function toRow(input: MenuItemInput) {
+  return {
+    category_id: input.categoryId,
+    name_vi: input.nameVi,
+    name_en: input.nameEn,
+    description_vi: input.descriptionVi,
+    description_en: input.descriptionEn,
+    base_price: input.basePrice,
+    icon: input.icon,
+    is_available: input.isAvailable,
+    is_popular: input.isPopular,
+    image_url: input.imageUrl ?? null,
+  }
+}
+
+export async function createMenuItem(supabase: SupabaseClient, input: MenuItemInput): Promise<MenuItem> {
+  const { data, error } = await supabase
+    .from("menu_items")
+    .insert(toRow(input))
+    .select(MENU_ITEM_SELECT)
+    .single()
+  if (error) throw error
+  return mapMenuItemRow(data)
+}
+
+export async function updateMenuItem(
+  supabase: SupabaseClient,
+  id: string,
+  input: MenuItemInput
+): Promise<MenuItem> {
+  const { data, error } = await supabase
+    .from("menu_items")
+    .update(toRow(input))
+    .eq("id", id)
+    .select(MENU_ITEM_SELECT)
+    .single()
+  if (error) throw error
+  return mapMenuItemRow(data)
+}
+
+export async function deleteMenuItem(supabase: SupabaseClient, id: string): Promise<void> {
+  const { error } = await supabase.from("menu_items").delete().eq("id", id)
+  if (error) throw error
+}

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest"
 import { getCategories } from "./menu-data"
 import { getMenuItems } from "./menu-data"
+import { createMenuItem } from "./menu-data"
 
 function fakeSupabase(rows: unknown[]) {
   return {
@@ -86,5 +87,58 @@ describe("getMenuItems", () => {
         ],
       },
     ])
+  })
+})
+
+describe("createMenuItem", () => {
+  it("inserts snake_case columns and returns the mapped row", async () => {
+    const insertedRow = {
+      id: "item-new",
+      category_id: "cat-1",
+      name_vi: "Trà Đào",
+      name_en: "Peach Tea",
+      description_vi: "mô tả",
+      description_en: "description",
+      base_price: 35000,
+      icon: "cup-soda",
+      is_available: true,
+      is_popular: false,
+      image_url: null,
+      menu_item_sizes: [],
+      menu_item_modifier_groups: [],
+    }
+    const insertSpy = vi.fn(() => ({
+      select: () => ({
+        single: () => Promise.resolve({ data: insertedRow, error: null }),
+      }),
+    }))
+    const supabase = { from: () => ({ insert: insertSpy }) } as any
+
+    const result = await createMenuItem(supabase, {
+      categoryId: "cat-1",
+      nameVi: "Trà Đào",
+      nameEn: "Peach Tea",
+      descriptionVi: "mô tả",
+      descriptionEn: "description",
+      basePrice: 35000,
+      icon: "cup-soda",
+      isAvailable: true,
+      isPopular: false,
+    })
+
+    expect(insertSpy).toHaveBeenCalledWith({
+      category_id: "cat-1",
+      name_vi: "Trà Đào",
+      name_en: "Peach Tea",
+      description_vi: "mô tả",
+      description_en: "description",
+      base_price: 35000,
+      icon: "cup-soda",
+      is_available: true,
+      is_popular: false,
+      image_url: null,
+    })
+    expect(result.id).toBe("item-new")
+    expect(result.nameEn).toBe("Peach Tea")
   })
 })
