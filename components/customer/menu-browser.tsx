@@ -9,13 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart } from "@/hooks/useCart"
-import { StarRating } from "@/components/customer/star-rating"
-import {
-  menuCategories,
-  menuItems,
-  type MenuIcon,
-  type MenuItem,
-} from "@/lib/mock-data/menu"
+import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -37,22 +31,22 @@ function ItemImage({ item, className }: { item: MenuItem; className?: string }) 
   )
 }
 
-export function MenuBrowser() {
+export function MenuBrowser({ categories, items }: { categories: MenuCategory[]; items: MenuItem[] }) {
   const locale = useLocale()
   const t = useTranslations("Menu")
   const router = useRouter()
   const { addItem, itemCount, subtotal } = useCart()
 
-  const [selectedCategory, setSelectedCategory] = useState(menuCategories[0].id)
+  const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id ?? "")
   const [searchQuery, setSearchQuery] = useState("")
 
   const name = (item: MenuItem) => (locale === "vi" ? item.nameVi : item.nameEn)
   const description = (item: MenuItem) => (locale === "vi" ? item.descriptionVi : item.descriptionEn)
-  const categoryLabel = (c: (typeof menuCategories)[number]) => (locale === "vi" ? c.labelVi : c.labelEn)
+  const categoryLabel = (c: MenuCategory) => (locale === "vi" ? c.nameVi : c.nameEn)
 
   const visibleItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
-    return menuItems.filter((item) => {
+    return items.filter((item) => {
       const matchesCategory = item.categoryId === selectedCategory
       const matchesQuery =
         query === "" ||
@@ -60,7 +54,7 @@ export function MenuBrowser() {
         item.nameEn.toLowerCase().includes(query)
       return matchesCategory && matchesQuery
     })
-  }, [selectedCategory, searchQuery])
+  }, [items, selectedCategory, searchQuery])
 
   function openItem(item: MenuItem) {
     if (!item.isAvailable) return
@@ -95,7 +89,7 @@ export function MenuBrowser() {
       </div>
 
       <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
-        {menuCategories.map((category) => (
+        {categories.map((category) => (
           <button
             key={category.id}
             type="button"
@@ -141,12 +135,6 @@ export function MenuBrowser() {
                 )}
               </div>
               <p className="line-clamp-1 text-xs text-muted-foreground">{description(item)}</p>
-              {item.rating !== undefined && (
-                <div className="flex items-center gap-1.5">
-                  <StarRating rating={item.rating} />
-                  <span className="text-[11px] text-muted-foreground">{item.rating.toFixed(1)}</span>
-                </div>
-              )}
               <div className="mt-1 flex items-center justify-between">
                 <span className="font-bold text-primary">{formatVND(item.basePrice)}</span>
                 {item.isAvailable ? (
