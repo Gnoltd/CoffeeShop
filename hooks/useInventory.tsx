@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 
 export type IngredientIcon = "coffee" | "droplet" | "wheat" | "candy"
 
@@ -86,9 +86,36 @@ type InventoryContextValue = {
 
 const InventoryContext = createContext<InventoryContextValue | null>(null)
 
+const INGREDIENTS_STORAGE_KEY = "phadincoffee-inventory-ingredients"
+const LOGS_STORAGE_KEY = "phadincoffee-inventory-logs"
+
 export function InventoryProvider({ children }: { children: ReactNode }) {
   const [ingredients, setIngredients] = useState<Ingredient[]>(INITIAL_INGREDIENTS)
   const [logs, setLogs] = useState<InventoryLog[]>([])
+  const [hydrated, setHydrated] = useState(false)
+
+  useEffect(() => {
+    try {
+      const storedIngredients = window.localStorage.getItem(INGREDIENTS_STORAGE_KEY)
+      if (storedIngredients) setIngredients(JSON.parse(storedIngredients))
+      const storedLogs = window.localStorage.getItem(LOGS_STORAGE_KEY)
+      if (storedLogs) setLogs(JSON.parse(storedLogs))
+    } catch {
+      // ignore malformed/unavailable storage
+    } finally {
+      setHydrated(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!hydrated) return
+    window.localStorage.setItem(INGREDIENTS_STORAGE_KEY, JSON.stringify(ingredients))
+  }, [ingredients, hydrated])
+
+  useEffect(() => {
+    if (!hydrated) return
+    window.localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(logs))
+  }, [logs, hydrated])
 
   function adjustStock(id: string, change: number, reason: InventoryLogReason) {
     const ingredient = ingredients.find((i) => i.id === id)
