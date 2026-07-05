@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest"
+import type { SupabaseClient } from "@supabase/supabase-js"
 import { getCategories } from "./menu-data"
 import { getMenuItems } from "./menu-data"
 import { createMenuItem } from "./menu-data"
@@ -10,7 +11,7 @@ function fakeSupabase(rows: unknown[]) {
         order: () => Promise.resolve({ data: rows, error: null }),
       }),
     }),
-  } as any
+  } as unknown as SupabaseClient
 }
 
 describe("getCategories", () => {
@@ -58,7 +59,7 @@ describe("getMenuItems", () => {
       from: () => ({
         select: () => Promise.resolve({ data: [row], error: null }),
       }),
-    } as any
+    } as unknown as SupabaseClient
 
     const result = await getMenuItems(supabase)
 
@@ -112,7 +113,7 @@ describe("createMenuItem", () => {
         single: () => Promise.resolve({ data: insertedRow, error: null }),
       }),
     }))
-    const supabase = { from: () => ({ insert: insertSpy }) } as any
+    const supabase = { from: () => ({ insert: insertSpy }) } as unknown as SupabaseClient
 
     const result = await createMenuItem(supabase, {
       categoryId: "cat-1",

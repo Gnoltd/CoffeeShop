@@ -59,13 +59,20 @@ export type MenuItemInput = {
   imageUrl?: string | null
 }
 
+type CategoryRow = {
+  id: string
+  name_vi: string
+  name_en: string
+  sort_order: number
+}
+
 export async function getCategories(supabase: SupabaseClient): Promise<MenuCategory[]> {
   const { data, error } = await supabase
     .from("categories")
     .select("id, name_vi, name_en, sort_order")
     .order("sort_order")
   if (error) throw error
-  return (data ?? []).map((row: any) => ({
+  return ((data ?? []) as CategoryRow[]).map((row) => ({
     id: row.id,
     nameVi: row.name_vi,
     nameEn: row.name_en,
@@ -82,7 +89,48 @@ const MENU_ITEM_SELECT = `
   )
 `
 
-function mapMenuItemRow(row: any): MenuItem {
+type SizeRow = {
+  id: string
+  name: string
+  price_delta: number
+}
+
+type ModifierRow = {
+  id: string
+  name_vi: string
+  name_en: string
+  price_delta: number
+}
+
+type ModifierGroupRow = {
+  id: string
+  name_vi: string
+  name_en: string
+  is_required: boolean
+  modifiers: ModifierRow[] | null
+}
+
+type ModifierGroupLinkRow = {
+  modifier_groups: ModifierGroupRow
+}
+
+type MenuItemRow = {
+  id: string
+  category_id: string
+  name_vi: string
+  name_en: string
+  description_vi: string
+  description_en: string
+  base_price: number
+  icon: MenuIcon
+  is_available: boolean
+  is_popular: boolean
+  image_url: string | null
+  menu_item_sizes: SizeRow[] | null
+  menu_item_modifier_groups: ModifierGroupLinkRow[] | null
+}
+
+function mapMenuItemRow(row: MenuItemRow): MenuItem {
   return {
     id: row.id,
     categoryId: row.category_id,
@@ -95,17 +143,17 @@ function mapMenuItemRow(row: any): MenuItem {
     isAvailable: row.is_available,
     isPopular: row.is_popular,
     imageUrl: row.image_url,
-    sizes: (row.menu_item_sizes ?? []).map((s: any) => ({
+    sizes: (row.menu_item_sizes ?? []).map((s) => ({
       id: s.id,
       name: s.name,
       priceDelta: s.price_delta,
     })),
-    modifierGroups: (row.menu_item_modifier_groups ?? []).map((link: any) => ({
+    modifierGroups: (row.menu_item_modifier_groups ?? []).map((link) => ({
       id: link.modifier_groups.id,
       nameVi: link.modifier_groups.name_vi,
       nameEn: link.modifier_groups.name_en,
       required: link.modifier_groups.is_required,
-      options: (link.modifier_groups.modifiers ?? []).map((m: any) => ({
+      options: (link.modifier_groups.modifiers ?? []).map((m) => ({
         id: m.id,
         nameVi: m.name_vi,
         nameEn: m.name_en,
@@ -118,7 +166,7 @@ function mapMenuItemRow(row: any): MenuItem {
 export async function getMenuItems(supabase: SupabaseClient): Promise<MenuItem[]> {
   const { data, error } = await supabase.from("menu_items").select(MENU_ITEM_SELECT)
   if (error) throw error
-  return (data ?? []).map(mapMenuItemRow)
+  return ((data ?? []) as unknown as MenuItemRow[]).map(mapMenuItemRow)
 }
 
 export async function getMenuItemById(supabase: SupabaseClient, id: string): Promise<MenuItem | null> {
@@ -128,7 +176,7 @@ export async function getMenuItemById(supabase: SupabaseClient, id: string): Pro
     .eq("id", id)
     .maybeSingle()
   if (error) throw error
-  return data ? mapMenuItemRow(data) : null
+  return data ? mapMenuItemRow(data as unknown as MenuItemRow) : null
 }
 
 function toRow(input: MenuItemInput) {
@@ -153,7 +201,7 @@ export async function createMenuItem(supabase: SupabaseClient, input: MenuItemIn
     .select(MENU_ITEM_SELECT)
     .single()
   if (error) throw error
-  return mapMenuItemRow(data)
+  return mapMenuItemRow(data as unknown as MenuItemRow)
 }
 
 export async function updateMenuItem(
@@ -168,7 +216,7 @@ export async function updateMenuItem(
     .select(MENU_ITEM_SELECT)
     .single()
   if (error) throw error
-  return mapMenuItemRow(data)
+  return mapMenuItemRow(data as unknown as MenuItemRow)
 }
 
 export async function deleteMenuItem(supabase: SupabaseClient, id: string): Promise<void> {

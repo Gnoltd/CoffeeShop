@@ -25,9 +25,12 @@ mock data (see "Landing, Auth, and remaining customer pages" below).
 (`supabase/migrations/0001`-`0007`) are applied to the live hosted project
 (`qhiypdqnrnzndxdwqxbx`), every table has RLS enabled, and a real admin
 account exists (`profiles.role = 'admin'`). Real Supabase Auth now backs
-Login/Signup/Logout. **Still not built:** Edge Functions, Stripe/VNPay
-integration, Realtime, and — outside of auth — every other mock data
-source in the app (menu, inventory, tables, orders, staff accounts) is
+Login/Signup/Logout. Menu data (items/categories/sizes/modifier groups) is
+now real too — migrations `0008`/`0009` and `lib/supabase/menu-data.ts`,
+see "Customer ordering flow" below — the one exception to the paragraph
+above so far. **Still not built:** Edge Functions, Stripe/VNPay
+integration, Realtime, and — outside of auth and menu — every other mock
+data source in the app (inventory, tables, orders, staff accounts) is
 still waiting on real queries replacing `lib/mock-data/*` and the various
 `use*` hooks. See each feature section below for exactly what's mocked and
 what's a documented (not hidden) gap.
@@ -155,10 +158,16 @@ matches the Stitch mockups' "Destination Rule" for focused pages).
   mocked. `addItem`/`updateQuantity`/`removeItem`/`clear`, computed
   `subtotal`/`itemCount`. Wrap any new customer page that needs cart access
   in the existing `CartProvider` (already in the customer layout).
-- `lib/mock-data/menu.ts` — placeholder menu items/categories/sizes/modifiers
-  until `menu_items` etc. exist in Supabase. Uses `nameVi`/`nameEn` directly;
-  the planned DB schema only has one `name` column, so this needs a decision
-  later (translation columns vs. Vietnamese-only content).
+- `lib/supabase/menu-data.ts` — real menu data. `menu_items`/`categories`/
+  `menu_item_sizes`/`modifier_groups`/`modifiers` exist in Supabase (migration
+  `0008`) and are seeded with the real menu (migration `0009`); this module is
+  the shared query layer (`getCategories`, `getMenuItems`, `getMenuItemById`,
+  `createMenuItem`, `updateMenuItem`, `deleteMenuItem`) every menu-reading
+  page now calls instead of importing a mock array. The old
+  `lib/mock-data/menu.ts` placeholder (with its `nameVi`/`nameEn`-only-columns
+  open question) is gone — the schema resolved that question with real
+  `name_vi`/`name_en` columns, mapped to the same camelCase shape client code
+  already expected.
 - **The full order lifecycle is now genuinely connected** — Checkout,
   Order Tracking, and Order History used to be three disconnected mock
   islands (a placed order's real items/notes never actually showed up in
@@ -234,19 +243,24 @@ page now. The quick "+" one-tap add on the grid is unaffected (still adds
 directly for items with no sizes/modifiers, bypassing this page).
 
 - `components/customer/product-detail.tsx` (client) +
-  `app/[locale]/(customer)/menu/[itemId]/page.tsx` (looks up the item in
-  `lib/mock-data/menu.ts`, calls Next's `notFound()` for an unknown id).
+  `app/[locale]/(customer)/menu/[itemId]/page.tsx` (server component; looks
+  up the item via `lib/supabase/menu-data.ts`'s `getMenuItemById`, calls
+  Next's `notFound()` for an unknown id).
   Hides `BottomNav` (added to `bottom-nav.tsx`'s `isFocusedPage`) since it
   has its own sticky Add-to-Cart bar — safe now that every customer page
   has the header back button (see below), unlike when this Destination
   Rule pattern was first introduced.
-- Rating/reviews are mock, not real: `MenuItem.rating`/`reviewCount` (per
-  item, in `lib/mock-data/menu.ts`) drive the star summary; the actual
-  review list is `lib/mock-data/reviews.ts` — **one shared set of 3 generic
-  reviews reused across every product**, not per-item content, and
+- Rating/reviews are still mock, not real — the real `MenuItem` type
+  (`lib/supabase/menu-data.ts`) has no `rating`/`reviewCount` columns to
+  migrate; `MOCK_RATING`/`MOCK_REVIEW_COUNT` (`lib/mock-data/reviews.ts`,
+  a fixed 4.5/75) drive this page's star summary, same shared value for
+  every product rather than invented per-item precision. The actual
+  review list is that same file's `MOCK_REVIEWS` — **one shared set of 3
+  generic reviews reused across every product**, not per-item content, and
   deliberately read-only (no submit form) since a real review needs a
   customer identity that doesn't exist yet. `components/customer/star-rating.tsx`
-  is the shared 5-star display, reused on both this page and the Menu grid.
+  is the shared 5-star display, used on this page (the Menu grid itself
+  doesn't show a rating).
 - **Gotcha:** this project's shadcn `Button` wraps **Base UI**
   (`@base-ui/react/button`), not Radix — there is no `asChild` prop. For
   polymorphic rendering (e.g. a `Button` that navigates), use Base UI's
@@ -283,8 +297,9 @@ screen `8436df098abc43ea801649f367476650`) before building it for real.
   camera-based QR scanning implemented — customers reach `/table/[qrToken]`
   by literally scanning a printed code with their phone's camera app, not
   from inside this app), a promo banner, a best-sellers horizontal scroll
-  (reuses `lib/mock-data/menu.ts`), and category chips that link to `/menu`
-  (not pre-filtered — `menu-browser.tsx` has no query-param filtering).
+  (real menu items via `lib/supabase/menu-data.ts`, filtered to
+  `isPopular`), and category chips that link to `/menu` (not pre-filtered
+  — `menu-browser.tsx` has no query-param filtering).
 - **Order History** (`components/customer/order-history.tsx`, no prior
   mockup): filter pills (All/Active/Completed — Active = preparing/ready,
   Completed = completed/cancelled), color-coded status badges, tapping a
@@ -351,8 +366,8 @@ and `11-staff-kitchen-display.html`. `components/staff/staff-nav.tsx`
 `app/[locale]/staff/layout.tsx` no longer renders a nav itself; each staff
 page is responsible for its own top-level chrome.
 
-- **POS** (`components/staff/pos-terminal.tsx`) reuses `lib/mock-data/menu.ts`
-  (same menu source as the customer app). Tapping an item adds it at base
+- **POS** (`components/staff/pos-terminal.tsx`) reuses the same real menu
+  data as the customer app (`lib/supabase/menu-data.ts`). Tapping an item adds it at base
   price directly — there is no size/modifier picker here yet, unlike the
   customer Menu page; that's a known gap, not an oversight, tracked in
   continuity.md. Local component state only for the ticket itself (not
@@ -418,8 +433,10 @@ pre-existing Food Cost Calculator) now share one left-sidebar shell:
 header for the same reason as staff — no real auth data yet.
 
 - `components/admin/{dashboard-view,menu-management,inventory-management,tables-management,staff-accounts,settings-view}.tsx`
-  — one component per page. Menu Management reuses `lib/mock-data/menu.ts`;
-  Dashboard/Inventory share `hooks/useInventory.tsx`; Tables shares
+  — one component per page. Menu Management reads/writes real menu data via
+  `lib/supabase/menu-data.ts` (`getMenuItems`/`createMenuItem`/
+  `updateMenuItem`/`deleteMenuItem`); Dashboard/Inventory share
+  `hooks/useInventory.tsx`; Tables shares
   `hooks/useTables.tsx`; Staff and Settings hold their own local mocks
   since nothing else needs that data. `menu-item-form.tsx` and
   `staff-member-form.tsx` are separate Add/Edit modal components used by
@@ -584,6 +601,15 @@ in order via the Supabase MCP server's `apply_migration`: `0001_identity_and_rol
 `public` has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 Full entity list: spec Section 2.
 
+- Two more migrations were added later by
+  `docs/superpowers/plans/2026-07-05-menu-data-migration.md`:
+  `0008_menu_translations` (adds `name_vi`/`name_en`/`description_vi`/
+  `description_en` bilingual columns to `categories`/`menu_items`, plus
+  `menu_item_sizes`/`modifier_groups`/`modifiers` tables) and
+  `0009_seed_menu_data` (seeds the real menu — the same 9 items/4
+  categories that used to live in the deleted `lib/mock-data/menu.ts`).
+  Both are applied to the same hosted project; see "Customer ordering
+  flow" above for the resulting query module (`lib/supabase/menu-data.ts`).
 - pgcrypto was already installed on this project (needed for
   `gen_random_uuid()`/`gen_random_bytes()`) — no `create extension` step
   was actually required, despite the plan doc flagging it as a risk.
@@ -614,13 +640,16 @@ in the plan doc's Task 11.
 
 All `design/stitch-exports/*.html` pages have been ported — there is no
 remaining frontend UI to port from Stitch. What's left is backend: the DB
-schema/RLS is applied (see "Database" above) and Login/Signup/Logout are
-real; Edge Functions (`place-order`, `stripe-webhook`, `vnpay-ipn`,
-`vnpay-return` — full code in the plan doc's Task 11) are still comment-only
-stubs, and every other component listed in this file's feature sections
-still needs its mock data replaced with real Supabase queries (+ Realtime
-where noted) — menu, inventory, tables, orders, and staff accounts, roughly
-in that order of how many other pages depend on them. When
+schema/RLS is applied (see "Database" above), Login/Signup/Logout are
+real, and menu data is real (`docs/superpowers/plans/2026-07-05-menu-data-migration.md`
+— schema, seed, and every consumer rewired to `lib/supabase/menu-data.ts`,
+`lib/mock-data/menu.ts` deleted); Edge Functions (`place-order`,
+`stripe-webhook`, `vnpay-ipn`, `vnpay-return` — full code in the scaffold
+plan doc's Task 11) are still comment-only stubs, and every other
+component listed in this file's feature sections still needs its mock
+data replaced with real Supabase queries (+ Realtime where noted) —
+inventory, tables, orders, and staff accounts, roughly in that order of
+how many other pages depend on them. When
 adding any genuinely new page/feature beyond what's already built, follow
 the same pattern used throughout: shared brand tokens (no hardcoded hex),
 `useTranslations`/`getTranslations` for every label with both
