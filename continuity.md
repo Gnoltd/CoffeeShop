@@ -547,6 +547,53 @@ including Edit.
   button, and "Showing 1-5 of 9 items" pagination text render in both
   locales, and the `/admin/*` auth gate is unaffected.
 
+## Full admin/staff/manager audit against Stitch — "build real functions now, BE later" (done)
+
+User asked to check every remaining admin/staff/manager page against its
+Stitch mockup and fully build out the functionality now (frontend-complete
+with real interactions over mock data), leaving only backend wiring for
+later. Read all 5 remaining admin mockups (`12-admin-dashboard.html`,
+`14-admin-inventory.html`, `15-admin-tables.html`, `16-admin-staff.html`,
+`17-admin-settings.html`) against their current components. The shared
+sidebar chrome was already an intentional deviation (documented earlier);
+the real gaps were in each page's actual data/functionality.
+
+- **Root cause found and fixed, same as the earlier POS/KDS bug:**
+  Dashboard and Inventory each held their own disconnected copy of the
+  ingredient list. New `hooks/useInventory.tsx` (Context+Provider, mounted
+  in `app/[locale]/admin/layout.tsx`) is now the single source — Dashboard's
+  "Restock" button and Inventory's actually update the same state, and a
+  new real "Logs" tab on Inventory shows genuine restock history (not mock
+  rows) built from a `logs` array the shared hook appends to on every
+  restock.
+- **Tables**: `useTables.tsx` gained `isOccupied` (admin can tap a badge
+  to toggle Available/Occupied), `scanCount` (a real counter — incremented
+  inside `setActiveTableByToken` every time someone actually visits
+  `/table/[qrToken]` and it resolves, not a fake number), and
+  `locationVi`/`locationEn` (editable alongside the table number). A new
+  stat row (Total/Available/Occupied/Scans) is fully computed from this,
+  no hardcoded numbers.
+- **Staff**: built `components/admin/staff-member-form.tsx` (same
+  Add/Edit-in-one-form pattern as Menu's), wired it into Staff Accounts
+  (previously-disabled "Add Staff" is now real, plus a new per-row Edit),
+  added pagination (same component pattern as Menu Management), and real
+  Total/Active/Disabled stat cards computed from the actual staff array.
+- **Settings**: Loyalty program gained a real enable/disable toggle that
+  disables the rate inputs when off, and a working **Cancel** button that
+  reverts unsaved draft edits to the last-saved snapshot (there was
+  previously no way to discard an in-progress edit).
+- **Deliberately skipped**: trend percentage badges (+12.4%, +8%,
+  "Stable"/"URGENT" chips), a "1,284 loyalty members" KPI, and "New hires"
+  — none of these have any real signal to compute from without an
+  `orders`/`loyalty_transactions`/staff-hire-date table, and inventing
+  plausible fake numbers for them would break the project's established
+  mock-vs-real honesty convention. Documented in CLAUDE.md so this isn't
+  mistaken for an oversight later.
+- Verified: `npm run build` clean on the first try despite the scope;
+  curl confirmed real content (ingredient names, stat numbers, tab labels,
+  toggle labels) renders on all 5 pages in both locales, and the
+  `/admin/*` gate is unaffected.
+
 ## Next steps
 
 The originally agreed FE priority order (theme → customer → staff → admin)

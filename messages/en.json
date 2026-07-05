@@ -275,7 +275,9 @@
     "status": "Status",
     "action": "Action",
     "critical": "Critical",
-    "restock": "Restock"
+    "restock": "Restock",
+    "viewAllItems": "View All Items",
+    "noLowStock": "No items are low on stock."
   },
   "AdminMenu": {
     "title": "Manage Menu",
@@ -320,7 +322,19 @@
     "status": "Status",
     "inStock": "In Stock",
     "lowStock": "Low Stock",
-    "restock": "Restock"
+    "restock": "Restock",
+    "totalIngredients": "Total Ingredients",
+    "lowStockCount": "Low on Stock",
+    "lastUpdated": "Last Updated",
+    "neverUpdated": "Not updated yet",
+    "tabIngredients": "Ingredients",
+    "tabLogs": "Logs",
+    "logDate": "Date",
+    "logIngredient": "Ingredient",
+    "logChange": "Change",
+    "logReason": "Reason",
+    "restockReason": "Restock",
+    "logsEmpty": "No restock activity yet."
   },
   "AdminTables": {
     "title": "Tables",
@@ -330,11 +344,20 @@
     "regenerateCode": "Regenerate Code",
     "rename": "Rename Table",
     "save": "Save",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "totalTables": "Total Tables",
+    "available": "Available",
+    "occupied": "Occupied",
+    "totalScans": "Total QR Scans",
+    "locationViLabel": "Location (Vietnamese)",
+    "locationEnLabel": "Location (English)",
+    "markAvailable": "Mark Available",
+    "markOccupied": "Mark Occupied"
   },
   "AdminStaff": {
     "title": "Staff Accounts",
     "addStaff": "Add Staff",
+    "editStaffTitle": "Edit Staff",
     "name": "Full Name",
     "email": "Email",
     "role": "Role",
@@ -343,7 +366,18 @@
     "disabled": "Disabled",
     "roleAdmin": "Admin",
     "roleManager": "Manager",
-    "roleStaff": "Staff"
+    "roleStaff": "Staff",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "activeToggle": "Active",
+    "requiredFieldsError": "Please fill in name and email.",
+    "totalStaff": "Total Staff",
+    "activeCount": "Active",
+    "inactiveCount": "Disabled",
+    "showingItems": "Showing {start}-{end} of {total} staff",
+    "previous": "Previous",
+    "next": "Next"
   },
   "AdminSettings": {
     "shopInfo": "Shop Info",
@@ -353,9 +387,11 @@
     "openingHours": "Opening Hours",
     "taxRate": "Tax Rate (%)",
     "loyaltySettings": "Loyalty Settings",
+    "loyaltyEnabled": "Enable Program",
     "earnRate": "Earn Rate (VND / 1 point)",
     "redeemRate": "Redeem Rate (VND / 1 point)",
     "saveChanges": "Save Changes",
+    "cancel": "Cancel",
     "savedMessage": "Changes saved."
   },
   "FoodCost": {

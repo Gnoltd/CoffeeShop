@@ -12,11 +12,17 @@ export type TableRecord = {
   id: string
   number: string
   qrToken: string
+  locationVi: string
+  locationEn: string
+  isOccupied: boolean
+  scanCount: number
 }
 
 type TablesContextValue = {
   tables: TableRecord[]
   renameTable: (id: string, number: string) => void
+  updateLocation: (id: string, locationVi: string, locationEn: string) => void
+  toggleOccupied: (id: string) => void
   regenerateToken: (id: string) => void
   activeTable: TableRecord | null
   setActiveTableByToken: (token: string) => TableRecord | null
@@ -34,12 +40,12 @@ const ACTIVE_TABLE_STORAGE_KEY = "phadincoffee-active-table"
  * `tables` table exists) would be opaque random strings, not this readable.
  */
 const DEFAULT_TABLES: TableRecord[] = [
-  { id: "t1", number: "1", qrToken: "table-1" },
-  { id: "t2", number: "2", qrToken: "table-2" },
-  { id: "t3", number: "3", qrToken: "table-3" },
-  { id: "t4", number: "4", qrToken: "table-4" },
-  { id: "t5", number: "5", qrToken: "table-5" },
-  { id: "t6", number: "6", qrToken: "table-6" },
+  { id: "t1", number: "1", qrToken: "table-1", locationVi: "Khu vực cửa sổ", locationEn: "Window Area", isOccupied: false, scanCount: 0 },
+  { id: "t2", number: "2", qrToken: "table-2", locationVi: "Khu trung tâm", locationEn: "Center Hall", isOccupied: true, scanCount: 0 },
+  { id: "t3", number: "3", qrToken: "table-3", locationVi: "Tầng 1 - Ban công", locationEn: "Floor 1 - Balcony", isOccupied: false, scanCount: 0 },
+  { id: "t4", number: "4", qrToken: "table-4", locationVi: "Tầng 1 - Trong nhà", locationEn: "Floor 1 - Indoor", isOccupied: false, scanCount: 0 },
+  { id: "t5", number: "5", qrToken: "table-5", locationVi: "Khu vực Bar", locationEn: "Bar Area", isOccupied: false, scanCount: 0 },
+  { id: "t6", number: "6", qrToken: "table-6", locationVi: "Sân vườn", locationEn: "Garden", isOccupied: false, scanCount: 0 },
 ]
 
 function randomToken(): string {
@@ -83,6 +89,19 @@ export function TablesProvider({ children }: { children: ReactNode }) {
     setActiveTable((prev) => (prev?.id === id ? { ...prev, number } : prev))
   }
 
+  function updateLocation(id: string, locationVi: string, locationEn: string) {
+    setTables((prev) =>
+      prev.map((table) => (table.id === id ? { ...table, locationVi, locationEn } : table))
+    )
+    setActiveTable((prev) => (prev?.id === id ? { ...prev, locationVi, locationEn } : prev))
+  }
+
+  function toggleOccupied(id: string) {
+    setTables((prev) =>
+      prev.map((table) => (table.id === id ? { ...table, isOccupied: !table.isOccupied } : table))
+    )
+  }
+
   function regenerateToken(id: string) {
     setTables((prev) =>
       prev.map((table) => (table.id === id ? { ...table, qrToken: randomToken() } : table))
@@ -91,6 +110,11 @@ export function TablesProvider({ children }: { children: ReactNode }) {
 
   function setActiveTableByToken(token: string): TableRecord | null {
     const found = tables.find((table) => table.qrToken === token) ?? null
+    if (found) {
+      setTables((prev) =>
+        prev.map((table) => (table.id === found.id ? { ...table, scanCount: table.scanCount + 1 } : table))
+      )
+    }
     setActiveTable(found)
     return found
   }
@@ -101,7 +125,16 @@ export function TablesProvider({ children }: { children: ReactNode }) {
 
   return (
     <TablesContext.Provider
-      value={{ tables, renameTable, regenerateToken, activeTable, setActiveTableByToken, clearActiveTable }}
+      value={{
+        tables,
+        renameTable,
+        updateLocation,
+        toggleOccupied,
+        regenerateToken,
+        activeTable,
+        setActiveTableByToken,
+        clearActiveTable,
+      }}
     >
       {children}
     </TablesContext.Provider>

@@ -1,15 +1,26 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { Banknote, ShoppingBag, Gift, TriangleAlert, Coffee } from "lucide-react"
+import { Banknote, ShoppingBag, Gift, TriangleAlert, Coffee, Droplet, Wheat, Candy, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Link } from "@/i18n/navigation"
 import { formatVND } from "@/lib/format"
 import { cn } from "@/lib/utils"
+import { useInventory, type IngredientIcon } from "@/hooks/useInventory"
+
+const INGREDIENT_ICONS: Record<IngredientIcon, typeof Coffee> = {
+  coffee: Coffee,
+  droplet: Droplet,
+  wheat: Wheat,
+  candy: Candy,
+}
 
 /**
- * No orders/analytics tables yet — all figures here are fixed mock data
- * matching the approved Stitch mockup's example numbers. Becomes a real
- * aggregation query once Supabase's orders/loyalty_transactions exist.
+ * No orders/analytics tables yet — revenue/orders/loyalty figures are fixed
+ * mock data matching the approved Stitch mockup's example numbers. Becomes
+ * a real aggregation query once Supabase's orders/loyalty_transactions
+ * exist. Low-stock data below is real, shared state (hooks/useInventory.tsx)
+ * — not a separate mock copy.
  */
 const MOCK_REVENUE_TODAY = 5420000
 const MOCK_ORDERS_TODAY = 142
@@ -24,14 +35,10 @@ const MOCK_BEST_SELLERS = [
   { nameVi: "Trà Đào Cam Sả", nameEn: "Peach Tea", sold: 162 },
 ]
 
-const MOCK_LOW_STOCK = [
-  { nameVi: "Hạt Cà Phê Robusta", nameEn: "Coffee Beans", stock: "5.2 kg" },
-  { nameVi: "Sữa Đặc", nameEn: "Condensed Milk", stock: "12 lon / cans" },
-  { nameVi: "Lá Trà Đen", nameEn: "Black Tea Leaves", stock: "1.5 kg" },
-]
-
 export function DashboardView({ locale }: { locale: string }) {
   const t = useTranslations("Dashboard")
+  const { ingredients, restock } = useInventory()
+  const lowStock = ingredients.filter((i) => i.stock < i.threshold)
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -67,7 +74,7 @@ export function DashboardView({ locale }: { locale: string }) {
             <TriangleAlert className="h-5 w-5" />
           </div>
           <p className="mb-1 text-sm text-destructive">{t("lowStockAlerts")}</p>
-          <h3 className="text-xl font-bold text-destructive">{MOCK_LOW_STOCK.length}</h3>
+          <h3 className="text-xl font-bold text-destructive">{lowStock.length}</h3>
         </div>
       </div>
 
@@ -116,6 +123,15 @@ export function DashboardView({ locale }: { locale: string }) {
               </div>
             ))}
           </div>
+          <Button
+            variant="outline"
+            className="mt-4 h-9 w-full gap-1.5 border-dashed text-xs"
+            render={<Link href="/admin/menu" />}
+            nativeButton={false}
+          >
+            {t("viewAllItems")}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Button>
         </div>
       </div>
 
@@ -126,7 +142,7 @@ export function DashboardView({ locale }: { locale: string }) {
             {t("inventoryStatus")}
           </h4>
           <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-bold text-destructive">
-            {t("itemsLowInStock", { count: MOCK_LOW_STOCK.length })}
+            {t("itemsLowInStock", { count: lowStock.length })}
           </span>
         </div>
         <div className="overflow-x-auto">
@@ -134,31 +150,51 @@ export function DashboardView({ locale }: { locale: string }) {
             <thead>
               <tr className="border-b text-left text-muted-foreground">
                 <th className="px-3 pb-3 font-medium">{t("product")}</th>
+                <th className="px-3 pb-3 font-medium">{t("category")}</th>
                 <th className="px-3 pb-3 text-center font-medium">{t("stock")}</th>
                 <th className="px-3 pb-3 font-medium">{t("status")}</th>
                 <th className="px-3 pb-3 text-right font-medium">{t("action")}</th>
               </tr>
             </thead>
             <tbody className="divide-y">
-              {MOCK_LOW_STOCK.map((item) => (
-                <tr key={item.nameEn}>
-                  <td className="px-3 py-3 font-bold text-card-foreground">
-                    {locale === "vi" ? item.nameVi : item.nameEn}
-                  </td>
-                  <td className="px-3 py-3 text-center font-bold text-destructive">{item.stock}</td>
-                  <td className="px-3 py-3">
-                    <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-destructive">
-                      <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
-                      {t("critical")}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    <Button size="sm" className="h-8">
-                      {t("restock")}
-                    </Button>
+              {lowStock.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
+                    {t("noLowStock")}
                   </td>
                 </tr>
-              ))}
+              ) : (
+                lowStock.map((item) => {
+                  const Icon = INGREDIENT_ICONS[item.icon]
+                  return (
+                    <tr key={item.id}>
+                      <td className="px-3 py-3">
+                        <div className="flex items-center gap-2 font-bold text-card-foreground">
+                          <Icon className="h-4 w-4 text-muted-foreground" />
+                          {locale === "vi" ? item.nameVi : item.nameEn}
+                        </div>
+                      </td>
+                      <td className="px-3 py-3 text-muted-foreground">
+                        {locale === "vi" ? item.subtitleVi : item.subtitleEn}
+                      </td>
+                      <td className="px-3 py-3 text-center font-bold text-destructive">
+                        {item.stock} {item.unit}
+                      </td>
+                      <td className="px-3 py-3">
+                        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-destructive">
+                          <span className="h-1.5 w-1.5 rounded-full bg-destructive" />
+                          {t("critical")}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        <Button size="sm" className="h-8" onClick={() => restock(item.id)}>
+                          {t("restock")}
+                        </Button>
+                      </td>
+                    </tr>
+                  )
+                })
+              )}
             </tbody>
           </table>
         </div>

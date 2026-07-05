@@ -360,37 +360,75 @@ pre-existing Food Cost Calculator) now share one left-sidebar shell:
 header for the same reason as staff — no real auth data yet.
 
 - `components/admin/{dashboard-view,menu-management,inventory-management,tables-management,staff-accounts,settings-view}.tsx`
-  — one component per page, each with its own local mock data (Menu
-  Management reuses `lib/mock-data/menu.ts`; the rest define their mocks
-  inline since nothing else needs them).
-- **Convention for not-yet-backed actions:** every "Add X" button
-  (Tables/Staff) is rendered `disabled` with an explanatory `title`
-  tooltip ("Not implemented yet — no `<table>` to write to") rather than
-  silently doing nothing or faking success — keep this pattern for any new
-  admin action that has no real table to persist to yet. **Menu's "Add New
-  Item" is the one exception** (see below) — adding to `MenuManagement`'s
-  own local item list needs no real table, so it's implemented for real
-  like the other local-state actions, not disabled.
+  — one component per page. Menu Management reuses `lib/mock-data/menu.ts`;
+  Dashboard/Inventory share `hooks/useInventory.tsx`; Tables shares
+  `hooks/useTables.tsx`; Staff and Settings hold their own local mocks
+  since nothing else needs that data. `menu-item-form.tsx` and
+  `staff-member-form.tsx` are separate Add/Edit modal components used by
+  Menu Management and Staff Accounts respectively.
+- **Convention for not-yet-backed actions:** an "Add X" button is rendered
+  `disabled` with an explanatory `title` tooltip ("Not implemented yet —
+  no `<table>` to write to") only when there's genuinely no real table to
+  persist to (Tables' "Add Table" is the one remaining example — a new
+  physical table isn't just local UI state). **Menu's "Add/Edit Item" and
+  Staff's "Add/Edit Staff" are real**, not disabled — adding to that page's
+  own local array needs no real backend table, so per the "fully build the
+  frontend now, wire up BE later" direction, they're implemented like any
+  other local-state action.
+- **Shared state across pages, not disconnected mock copies:** a full
+  audit of every admin page against its Stitch mockup (user-requested)
+  found several pages holding their own separate copy of data that other
+  pages also needed — same class of bug as the earlier POS/Kitchen Display
+  fix. Fixed the same way, with new Context+Provider hooks:
+  - **`hooks/useInventory.tsx`** (mounted in `app/[locale]/admin/layout.tsx`,
+    shared by Dashboard and Inventory): `ingredients` + `restock()` + a
+    real `logs` array that every restock appends to. Dashboard's low-stock
+    widget and "Restock" button now read/write this same state instead of
+    a separate frozen mock list — restocking from the Dashboard actually
+    removes the item from Inventory's low-stock table too.
+  - **`hooks/useTables.tsx`** gained `isOccupied` (admin-toggleable),
+    `scanCount` (genuinely incremented in `setActiveTableByToken` every
+    time `/table/[qrToken]` resolves a real table — not a fake "today"
+    counter), and `locationVi`/`locationEn` (editable alongside the table
+    number, same inline edit UI).
 - Actions that only need **local** state (no persistence) are implemented
-  for real, not stubbed: Menu's availability toggle + delete + **Add/Edit
-  Item** (`components/admin/menu-item-form.tsx` — one form handles both;
-  `MenuManagement` passes `initialItem` when editing, omitted when adding.
-  Has a working drag-and-drop/browse-from-computer image picker using
-  `URL.createObjectURL`. **Gotcha:** when editing, the form must not
-  `revokeObjectURL` an inherited `initialItem.imageUrl` on close/cleanup —
-  that blob URL may still be live in the table row, Menu grid, and Product
-  Detail Page simultaneously; only URLs *this form instance* created via
-  `selectFile` get revoked, tracked by an `ownsPreviewUrl` flag. Saved
-  items are upserted into `MenuManagement`'s local state by `id` — resets
-  on reload, like every other admin mock mutation), a real Category badge
-  column and client-side pagination (5/page) over the mock item list,
-  Inventory's restock (increments stock and flips the status badge),
-  Tables' rename and QR token regeneration (via the shared `useTables()`
-  hook — see "Table identity flow" below), Staff's activate/deactivate
-  toggle, Settings' save (shows a real confirmation, doesn't persist).
-- Dashboard's KPI numbers, chart, best-sellers, and low-stock table are
-  fixed mock data matching the approved Stitch example values — no
-  analytics query yet.
+  for real, not stubbed:
+  - Menu's availability toggle + delete + **Add/Edit Item**
+    (`components/admin/menu-item-form.tsx` — one form handles both;
+    `MenuManagement` passes `initialItem` when editing, omitted when
+    adding. Has a working drag-and-drop/browse-from-computer image picker
+    using `URL.createObjectURL`. **Gotcha:** when editing, the form must
+    not `revokeObjectURL` an inherited `initialItem.imageUrl` on
+    close/cleanup — that blob URL may still be live in the table row, Menu
+    grid, and Product Detail Page simultaneously; only URLs *this form
+    instance* created via `selectFile` get revoked, tracked by an
+    `ownsPreviewUrl` flag), a real Category badge column, and client-side
+    pagination (5/page).
+  - Inventory's restock (see shared hook above) plus a real **Logs tab**
+    (`components/admin/inventory-management.tsx`) showing genuine restock
+    history — not mock rows, built from the same `logs` array.
+  - Tables' rename, location edit, occupied/available toggle, and QR
+    token regeneration (all via the shared `useTables()` hook — see "Table
+    identity flow" below) plus a real stat row (Total/Available/Occupied/
+    Scans, all computed, none hardcoded).
+  - Staff's activate/deactivate toggle + **Add/Edit Staff**
+    (`components/admin/staff-member-form.tsx`, same pattern as the Menu
+    form) + pagination + real Total/Active/Disabled stat cards.
+  - Settings' Loyalty program now has a real enable/disable toggle
+    (disables the rate inputs when off) and a working **Cancel** button
+    that reverts unsaved edits to the last-saved snapshot — previously
+    there was no way to discard a draft edit. Save still shows a real
+    confirmation but doesn't persist.
+- Dashboard's revenue/orders/loyalty KPI numbers and the 7-day chart
+  remain fixed mock data (no `orders` table to aggregate yet) — but its
+  low-stock widget is real (see shared inventory hook above), and "View
+  All Items" under Best Sellers is a real link to `/admin/menu`.
+- **Deliberately not built:** trend badges (+12.4%, +8%, "Stable"),
+  "1,284 loyalty members," "New hires," and similar mockup numbers that
+  have no real signal to compute from yet — inventing plausible-looking
+  fake analytics would contradict the mock-vs-real honesty convention this
+  whole app follows. These become real once Supabase's `orders` and
+  `loyalty_transactions` tables exist.
 - All six routes remain behind the existing `/admin/*` middleware rule
   (manager|admin, with `/admin/staff` and `/admin/settings` admin-only) —
   confirmed the gate still works for every route (including Food Cost)

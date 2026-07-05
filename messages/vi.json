@@ -275,7 +275,9 @@
     "status": "Trạng Thái",
     "action": "Hành Động",
     "critical": "Sắp Hết",
-    "restock": "Nhập Kho"
+    "restock": "Nhập Kho",
+    "viewAllItems": "Xem Tất Cả Món",
+    "noLowStock": "Không có món nào sắp hết hàng."
   },
   "AdminMenu": {
     "title": "Quản Lý Thực Đơn",
@@ -320,7 +322,19 @@
     "status": "Trạng Thái",
     "inStock": "Đủ Hàng",
     "lowStock": "Sắp Hết",
-    "restock": "Nhập Kho"
+    "restock": "Nhập Kho",
+    "totalIngredients": "Tổng Nguyên Liệu",
+    "lowStockCount": "Sắp Hết Hàng",
+    "lastUpdated": "Cập Nhật Cuối",
+    "neverUpdated": "Chưa cập nhật",
+    "tabIngredients": "Nguyên Liệu",
+    "tabLogs": "Lịch Sử",
+    "logDate": "Ngày",
+    "logIngredient": "Nguyên Liệu",
+    "logChange": "Biến Động",
+    "logReason": "Lý Do",
+    "restockReason": "Nhập Kho",
+    "logsEmpty": "Chưa có hoạt động nhập kho nào."
   },
   "AdminTables": {
     "title": "Quản Lý Bàn",
@@ -330,11 +344,20 @@
     "regenerateCode": "Tạo Lại Mã",
     "rename": "Đổi Tên Bàn",
     "save": "Lưu",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "totalTables": "Tổng Số Bàn",
+    "available": "Đang Trống",
+    "occupied": "Đang Dùng",
+    "totalScans": "Tổng Lượt Quét QR",
+    "locationViLabel": "Vị Trí (Tiếng Việt)",
+    "locationEnLabel": "Vị Trí (English)",
+    "markAvailable": "Đánh Dấu Trống",
+    "markOccupied": "Đánh Dấu Đang Dùng"
   },
   "AdminStaff": {
     "title": "Nhân Viên",
     "addStaff": "Thêm Nhân Viên",
+    "editStaffTitle": "Sửa Nhân Viên",
     "name": "Họ Và Tên",
     "email": "Email",
     "role": "Vai Trò",
@@ -343,7 +366,18 @@
     "disabled": "Đã Khóa",
     "roleAdmin": "Quản Trị",
     "roleManager": "Quản Lý",
-    "roleStaff": "Nhân Viên"
+    "roleStaff": "Nhân Viên",
+    "edit": "Sửa",
+    "save": "Lưu",
+    "cancel": "Hủy",
+    "activeToggle": "Đang Hoạt Động",
+    "requiredFieldsError": "Vui lòng nhập đầy đủ họ tên và email.",
+    "totalStaff": "Tổng Nhân Sự",
+    "activeCount": "Đang Hoạt Động",
+    "inactiveCount": "Đã Khóa",
+    "showingItems": "Hiển thị {start}-{end} trong {total} nhân viên",
+    "previous": "Trước",
+    "next": "Sau"
   },
   "AdminSettings": {
     "shopInfo": "Thông Tin Cửa Hàng",
@@ -353,9 +387,11 @@
     "openingHours": "Giờ Mở Cửa",
     "taxRate": "Thuế Suất (%)",
     "loyaltySettings": "Cài Đặt Tích Điểm",
+    "loyaltyEnabled": "Kích Hoạt Chương Trình",
     "earnRate": "Tỷ Lệ Tích Điểm (VNĐ / 1 điểm)",
     "redeemRate": "Tỷ Lệ Quy Đổi (VNĐ / 1 điểm)",
     "saveChanges": "Lưu Thay Đổi",
+    "cancel": "Hủy Bỏ",
     "savedMessage": "Đã lưu thay đổi."
   },
   "FoodCost": {
