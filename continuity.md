@@ -513,6 +513,40 @@ fix both.
   click-tested in a real browser — no browser automation tool available in
   this environment, standing caveat for the whole project.
 
+## Admin Menu Management fidelity fixes (done)
+
+Checked `menu-management.tsx` against `13-admin-menu.html` per the user's
+request. The shared admin sidebar shell already intentionally replaces
+the mockup's own top bar/sidebar (documented earlier), so that wasn't a
+gap — but the data table itself was missing real things: no Category
+column (just plain text under the name), no per-row Edit (delete-only),
+no pagination footer, no page subtitle. User chose to build all of it,
+including Edit.
+
+- Added the page subtitle line and a colored Category badge column
+  (replacing the old plain-text category caption — the second line under
+  the item name is now the other-locale name, matching the mockup's
+  bold-VI/italic-EN pattern exactly).
+- **Real per-row Edit**: `menu-item-form.tsx` now takes an optional
+  `initialItem` prop and pre-fills every field when editing; `MenuManagement`
+  tracks `formMode: {type:"add"} | {type:"edit", item} | null` and a single
+  `saveItem()` upserts by id (add if new, replace if existing) instead of
+  always prepending.
+- **Bug caught and fixed while building Edit**: the form's cleanup effect
+  was unconditionally calling `URL.revokeObjectURL` on whatever preview
+  URL it held. That's safe for a freshly-picked file, but when *editing*
+  an item, the preview URL is inherited from `initialItem.imageUrl` — the
+  same blob URL the table row, Menu grid, and Product Detail Page are all
+  still rendering. Revoking it on close would have broken that item's
+  photo everywhere else in the app. Fixed with an `ownsPreviewUrl` flag —
+  only URLs the form itself created via `selectFile` get revoked.
+- **Real client-side pagination**, 5 items per page, over the (currently
+  9-item) mock list — page resets to 1 on search/category change so you
+  can't get stranded on an empty page.
+- Verified: `npm run build` clean; curl confirmed the subtitle, Edit
+  button, and "Showing 1-5 of 9 items" pagination text render in both
+  locales, and the `/admin/*` auth gate is unaffected.
+
 ## Next steps
 
 The originally agreed FE priority order (theme → customer → staff → admin)

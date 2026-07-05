@@ -279,13 +279,17 @@
   },
   "AdminMenu": {
     "title": "Quản Lý Thực Đơn",
+    "subtitle": "Quản lý món ăn, danh mục, giá cả và tình trạng còn hàng mỗi ngày.",
     "addItem": "Thêm Món Mới",
+    "editItemTitle": "Sửa Món",
     "searchPlaceholder": "Tìm kiếm món...",
     "allCategories": "Tất Cả",
     "item": "Món",
     "price": "Giá",
     "available": "Trạng Thái",
     "actions": "Hành Động",
+    "edit": "Sửa",
+    "delete": "Xóa",
     "inStock": "Đang Bán",
     "outOfStock": "Ngừng Bán",
     "nameViLabel": "Tên (Tiếng Việt)",
@@ -298,10 +302,14 @@
     "dragDropText": "Kéo thả ảnh vào đây hoặc",
     "browseButton": "Chọn Ảnh Từ Máy Tính",
     "removeImage": "Xóa ảnh",
+    "currentPhoto": "Ảnh hiện tại",
     "availableToggle": "Đang Bán",
     "cancel": "Hủy",
     "save": "Lưu Món",
-    "requiredFieldsError": "Vui lòng nhập đầy đủ tên, giá và danh mục."
+    "requiredFieldsError": "Vui lòng nhập đầy đủ tên, giá và danh mục.",
+    "showingItems": "Hiển thị {start}-{end} trong {total} món",
+    "previous": "Trước",
+    "next": "Sau"
   },
   "AdminInventory": {
     "title": "Kho Hàng",

@@ -372,14 +372,18 @@ header for the same reason as staff — no real auth data yet.
   own local item list needs no real table, so it's implemented for real
   like the other local-state actions, not disabled.
 - Actions that only need **local** state (no persistence) are implemented
-  for real, not stubbed: Menu's availability toggle + delete + **Add New
-  Item** (`components/admin/menu-item-form.tsx` — a real modal with a
-  working drag-and-drop/browse-from-computer image picker using
-  `URL.createObjectURL`; saved items are prepended to `MenuManagement`'s
-  local state with a real `imageUrl`, matching what the Menu grid and
-  Product Detail Page render for that item in the same browser session —
-  resets on reload, like every other admin mock mutation. No per-row
-  "Edit" yet — out of scope for this pass, same reasoning as before),
+  for real, not stubbed: Menu's availability toggle + delete + **Add/Edit
+  Item** (`components/admin/menu-item-form.tsx` — one form handles both;
+  `MenuManagement` passes `initialItem` when editing, omitted when adding.
+  Has a working drag-and-drop/browse-from-computer image picker using
+  `URL.createObjectURL`. **Gotcha:** when editing, the form must not
+  `revokeObjectURL` an inherited `initialItem.imageUrl` on close/cleanup —
+  that blob URL may still be live in the table row, Menu grid, and Product
+  Detail Page simultaneously; only URLs *this form instance* created via
+  `selectFile` get revoked, tracked by an `ownsPreviewUrl` flag. Saved
+  items are upserted into `MenuManagement`'s local state by `id` — resets
+  on reload, like every other admin mock mutation), a real Category badge
+  column and client-side pagination (5/page) over the mock item list,
   Inventory's restock (increments stock and flips the status badge),
   Tables' rename and QR token regeneration (via the shared `useTables()`
   hook — see "Table identity flow" below), Staff's activate/deactivate

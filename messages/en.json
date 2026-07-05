@@ -279,13 +279,17 @@
   },
   "AdminMenu": {
     "title": "Manage Menu",
+    "subtitle": "Manage your menu items, categories, pricing, and daily availability.",
     "addItem": "Add New Item",
+    "editItemTitle": "Edit Item",
     "searchPlaceholder": "Search items...",
     "allCategories": "All",
     "item": "Item",
     "price": "Price",
     "available": "Status",
     "actions": "Actions",
+    "edit": "Edit",
+    "delete": "Delete",
     "inStock": "Active",
     "outOfStock": "Inactive",
     "nameViLabel": "Name (Vietnamese)",
@@ -298,10 +302,14 @@
     "dragDropText": "Drag and drop an image here, or",
     "browseButton": "Browse from Computer",
     "removeImage": "Remove image",
+    "currentPhoto": "Current photo",
     "availableToggle": "Available for sale",
     "cancel": "Cancel",
     "save": "Save Item",
-    "requiredFieldsError": "Please fill in name, price, and category."
+    "requiredFieldsError": "Please fill in name, price, and category.",
+    "showingItems": "Showing {start}-{end} of {total} items",
+    "previous": "Previous",
+    "next": "Next"
   },
   "AdminInventory": {
     "title": "Inventory",

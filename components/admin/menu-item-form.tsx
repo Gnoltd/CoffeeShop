@@ -20,44 +20,54 @@ function iconForCategory(categoryId: string): MenuIcon {
 }
 
 export function MenuItemForm({
+  initialItem,
   onCancel,
   onSave,
 }: {
+  initialItem?: MenuItem
   onCancel: () => void
   onSave: (item: MenuItem) => void
 }) {
   const t = useTranslations("AdminMenu")
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isEditing = Boolean(initialItem)
 
-  const [nameVi, setNameVi] = useState("")
-  const [nameEn, setNameEn] = useState("")
-  const [categoryId, setCategoryId] = useState(menuCategories[0].id)
-  const [price, setPrice] = useState("")
-  const [descriptionVi, setDescriptionVi] = useState("")
-  const [descriptionEn, setDescriptionEn] = useState("")
-  const [isAvailable, setIsAvailable] = useState(true)
+  const [nameVi, setNameVi] = useState(initialItem?.nameVi ?? "")
+  const [nameEn, setNameEn] = useState(initialItem?.nameEn ?? "")
+  const [categoryId, setCategoryId] = useState(initialItem?.categoryId ?? menuCategories[0].id)
+  const [price, setPrice] = useState(initialItem ? String(initialItem.basePrice) : "")
+  const [descriptionVi, setDescriptionVi] = useState(initialItem?.descriptionVi ?? "")
+  const [descriptionEn, setDescriptionEn] = useState(initialItem?.descriptionEn ?? "")
+  const [isAvailable, setIsAvailable] = useState(initialItem?.isAvailable ?? true)
   const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialItem?.imageUrl ?? null)
+  // Tracks whether *this form* created the current preview URL via
+  // createObjectURL — an inherited initialItem.imageUrl may still be
+  // referenced by the table row / Menu grid / Product Detail Page, so we
+  // must never revoke a URL we didn't create ourselves.
+  const [ownsPreviewUrl, setOwnsPreviewUrl] = useState(false)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     return () => {
-      if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
+      if (imagePreviewUrl && ownsPreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
     }
-  }, [imagePreviewUrl])
+  }, [imagePreviewUrl, ownsPreviewUrl])
 
   function selectFile(file: File | null) {
     if (!file || !file.type.startsWith("image/")) return
-    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
+    if (imagePreviewUrl && ownsPreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
     setImageFile(file)
     setImagePreviewUrl(URL.createObjectURL(file))
+    setOwnsPreviewUrl(true)
   }
 
   function removeImage() {
-    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
+    if (imagePreviewUrl && ownsPreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
     setImageFile(null)
     setImagePreviewUrl(null)
+    setOwnsPreviewUrl(false)
   }
 
   function handleSave() {
@@ -68,7 +78,7 @@ export function MenuItemForm({
     }
 
     onSave({
-      id: `custom-${Date.now()}`,
+      id: initialItem?.id ?? `custom-${Date.now()}`,
       categoryId,
       nameVi: nameVi.trim(),
       nameEn: nameEn.trim(),
@@ -85,7 +95,9 @@ export function MenuItemForm({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
       <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-card shadow-xl">
         <div className="flex items-center justify-between border-b px-6 py-4">
-          <h2 className="text-lg font-bold text-card-foreground">{t("addItem")}</h2>
+          <h2 className="text-lg font-bold text-card-foreground">
+            {isEditing ? t("editItemTitle") : t("addItem")}
+          </h2>
           <button
             type="button"
             onClick={onCancel}
@@ -173,7 +185,9 @@ export function MenuItemForm({
               <div className="flex items-center gap-3 rounded-lg border p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imagePreviewUrl} alt="" className="h-16 w-16 rounded-lg object-cover" />
-                <span className="flex-1 truncate text-sm text-muted-foreground">{imageFile?.name}</span>
+                <span className="flex-1 truncate text-sm text-muted-foreground">
+                  {imageFile?.name ?? t("currentPhoto")}
+                </span>
                 <button
                   type="button"
                   onClick={removeImage}
