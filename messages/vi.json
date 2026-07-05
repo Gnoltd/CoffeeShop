@@ -74,6 +74,8 @@
     "loyaltyTitle": "Điểm Tích Lũy"
   },
   "RoleNav": {
+    "badgeGuest": "Khách",
+    "badgeCustomer": "Khách Hàng",
     "badgeStaff": "Nhân Viên",
     "badgeAdmin": "Quản Trị"
   },

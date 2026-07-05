@@ -74,6 +74,8 @@
     "loyaltyTitle": "Loyalty Points"
   },
   "RoleNav": {
+    "badgeGuest": "Guest",
+    "badgeCustomer": "Customer",
     "badgeStaff": "Staff",
     "badgeAdmin": "Admin"
   },
