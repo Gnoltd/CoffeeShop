@@ -139,7 +139,16 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                   <button
                     key={option.id}
                     type="button"
-                    onClick={() => setSelectedModifiers((prev) => ({ ...prev, [group.id]: option.id }))}
+                    onClick={() =>
+                      setSelectedModifiers((prev) => {
+                        if (!group.required && prev[group.id] === option.id) {
+                          const next = { ...prev }
+                          delete next[group.id]
+                          return next
+                        }
+                        return { ...prev, [group.id]: option.id }
+                      })
+                    }
                     className={cn(
                       "flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm transition-colors",
                       selected
