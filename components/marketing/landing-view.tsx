@@ -5,7 +5,7 @@ import { Coffee, CupSoda, Cookie, Milk, QrCode, Sparkles, ArrowRight } from "luc
 import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { formatVND } from "@/lib/format"
-import { menuCategories, menuItems, type MenuIcon } from "@/lib/mock-data/menu"
+import type { MenuItem, MenuIcon } from "@/lib/supabase/menu-data"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -14,12 +14,16 @@ const ICONS: Record<MenuIcon, typeof Coffee> = {
   milk: Milk,
 }
 
-const BEST_SELLER_IDS = ["phin-sua-da", "ca-phe-trung", "ca-phe-da-xay"]
+const CATEGORY_CHIPS = [
+  { id: "coffee", labelVi: "Cà Phê", labelEn: "Coffee" },
+  { id: "tea", labelVi: "Trà", labelEn: "Tea" },
+  { id: "pastries", labelVi: "Bánh Ngọt", labelEn: "Pastries" },
+  { id: "blended", labelVi: "Đá Xay", labelEn: "Blended" },
+]
 
-export function LandingView() {
+export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
   const locale = useLocale()
   const t = useTranslations("Landing")
-  const bestSellers = menuItems.filter((item) => BEST_SELLER_IDS.includes(item.id))
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -96,7 +100,7 @@ export function LandingView() {
 
       <section className="mt-6 flex gap-2 overflow-x-auto px-4 pb-8">
         <span className="mb-1 sr-only">{t("categories")}</span>
-        {menuCategories.map((category) => {
+        {CATEGORY_CHIPS.map((category) => {
           const label = locale === "vi" ? category.labelVi : category.labelEn
           return (
             <Link
