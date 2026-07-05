@@ -270,6 +270,22 @@ directly for items with no sizes/modifiers, bypassing this page).
   literally be a `<button>` — since `Link` renders an `<a>`, always pass
   `nativeButton={false}` alongside `render={<Link .../>}` or it logs a dev
   warning about lost native button semantics.
+- **Item extras are now admin-configurable** (2026-07-06,
+  `docs/superpowers/specs/2026-07-06-menu-item-extras-design.md` +
+  `docs/superpowers/plans/2026-07-06-menu-item-extras.md`). Each extra
+  (e.g. "Extra Shot +10.000đ") is its own single-option `modifier_group`
+  — no schema change — reused across items via the existing
+  `menu_item_modifier_groups` join table, so admin defines it once
+  (`components/admin/menu-item-form.tsx`'s new "Extras" section:
+  checklist of existing extras + an inline "+ Add New Extra" form) and
+  toggles it on for whichever items should offer it.
+  `lib/supabase/menu-data.ts` gained `getModifierGroups`/
+  `createModifierGroup`/`setItemModifierGroups` for this. Also fixed a
+  real bug found while building this: a non-`required` modifier group
+  with a single option (exactly what an extra is) could be selected on
+  this page but never deselected — the click handler now really toggles
+  for non-required groups, so a customer can pick any number of extras
+  independently. Required groups (Size) are unaffected.
 
 ## Landing, Auth, and remaining customer pages (`/`, `/login`, `/signup`, `/orders`, `/loyalty`, `/profile`)
 
