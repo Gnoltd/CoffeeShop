@@ -4,7 +4,8 @@ import { useEffect, useState } from "react"
 import { KitchenTopBar } from "@/components/staff/kitchen-top-bar"
 import { KitchenSidebar } from "@/components/staff/kitchen-sidebar"
 import { KitchenStatsFooter } from "@/components/staff/kitchen-stats-footer"
-import { KitchenBoard, INITIAL_ORDERS, NEXT_STATUS, type KdsOrder } from "@/components/staff/kitchen-board"
+import { KitchenBoard } from "@/components/staff/kitchen-board"
+import { useKitchenOrders, NEXT_STATUS } from "@/hooks/useKitchenOrders"
 
 function formatDuration(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000))
@@ -14,7 +15,7 @@ function formatDuration(ms: number): string {
 }
 
 export function KitchenDisplay() {
-  const [orders, setOrders] = useState<KdsOrder[]>(INITIAL_ORDERS)
+  const { orders, advance: advanceShared } = useKitchenOrders()
   const [now, setNow] = useState(() => Date.now())
   const [completedCount, setCompletedCount] = useState(0)
   const [completedDurations, setCompletedDurations] = useState<number[]>([])
@@ -26,18 +27,12 @@ export function KitchenDisplay() {
 
   function advance(orderId: string) {
     const order = orders.find((o) => o.id === orderId)
-    if (!order) return
-    const next = NEXT_STATUS[order.status]
-
-    if (!next) {
+    if (order && !NEXT_STATUS[order.status]) {
       const duration = Date.now() - order.createdAt
       setCompletedCount((count) => count + 1)
       setCompletedDurations((durations) => [...durations, duration])
-      setOrders((prev) => prev.filter((o) => o.id !== orderId))
-      return
     }
-
-    setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: next } : o)))
+    advanceShared(orderId)
   }
 
   const avgTimeLabel =

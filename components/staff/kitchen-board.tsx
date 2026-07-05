@@ -3,71 +3,7 @@
 import { useLocale, useTranslations } from "next-intl"
 import { Play, CheckCircle2, PackageCheck, Utensils, ShoppingBag, ListTodo, RefreshCw, CheckCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-export type KdsStatus = "new" | "preparing" | "ready"
-
-export type KdsOrderItem = {
-  quantity: number
-  nameVi: string
-  nameEn: string
-  noteVi?: string
-  noteEn?: string
-  isSignature?: boolean
-}
-
-export type KdsOrder = {
-  id: string
-  orderType: "dine-in" | "pickup"
-  table?: string
-  items: KdsOrderItem[]
-  status: KdsStatus
-  createdAt: number
-}
-
-/**
- * No orders table / Realtime yet — this board is seeded with fixed mock
- * orders and only tracks status transitions in local component state.
- * Once Supabase exists, this becomes a Realtime subscription on `orders`
- * filtered by status, per the design spec's Section 3d.
- */
-export const INITIAL_ORDERS: KdsOrder[] = [
-  {
-    id: "8829",
-    orderType: "dine-in",
-    table: "04",
-    status: "new",
-    createdAt: Date.now() - 45 * 1000,
-    items: [
-      { quantity: 2, nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", noteVi: "Ít sữa, thêm đá", noteEn: "Less milk, extra ice" },
-      { quantity: 1, nameVi: "Bánh Mì Que", nameEn: "Crispy Breadsticks", noteVi: "Pate nhiều", noteEn: "Extra pate" },
-    ],
-  },
-  {
-    id: "8831",
-    orderType: "pickup",
-    status: "new",
-    createdAt: Date.now() - 12 * 1000,
-    items: [{ quantity: 1, nameVi: "Cà Phê Muối", nameEn: "Salted Coffee" }],
-  },
-  {
-    id: "8825",
-    orderType: "dine-in",
-    table: "07",
-    status: "preparing",
-    createdAt: Date.now() - 4 * 60 * 1000 - 32 * 1000,
-    items: [
-      { quantity: 3, nameVi: "Bạc Xỉu", nameEn: "White Coffee", noteVi: "Nhiều cốt dừa", noteEn: "Extra coconut milk" },
-      { quantity: 1, nameVi: "Cà Phê Trứng", nameEn: "Egg Coffee", isSignature: true },
-    ],
-  },
-  {
-    id: "8812",
-    orderType: "pickup",
-    status: "ready",
-    createdAt: Date.now() - 9 * 60 * 1000,
-    items: [{ quantity: 1, nameVi: "Trà Sen Vàng", nameEn: "Lotus Tea" }],
-  },
-]
+import type { KdsStatus, KdsOrder } from "@/hooks/useKitchenOrders"
 
 const COLUMNS: {
   status: KdsStatus
@@ -80,12 +16,6 @@ const COLUMNS: {
   { status: "preparing", headerClass: "bg-amber-600", labelKey: "columnPreparing", icon: RefreshCw, iconClass: "animate-spin [animation-duration:3s]" },
   { status: "ready", headerClass: "bg-green-600", labelKey: "columnReady", icon: CheckCheck },
 ]
-
-export const NEXT_STATUS: Record<KdsStatus, KdsStatus | null> = {
-  new: "preparing",
-  preparing: "ready",
-  ready: null,
-}
 
 export function formatElapsed(createdAt: number, now: number): string {
   const totalSeconds = Math.max(0, Math.floor((now - createdAt) / 1000))

@@ -480,6 +480,39 @@ items) are decorative/non-functional like other Stitch chrome.
   bar/stats-bar text renders in both locales and the `/staff/*` auth gate
   and POS's own nav are unaffected.
 
+## POS ↔ Kitchen Display connected, real tables shared (done)
+
+Asked to "check logic of staff page" (POS) after the KDS review — found
+two real inconsistencies while reading `pos-terminal.tsx`: it had its own
+hardcoded 3-table list separate from the shared `useTables()` hook, and a
+charged POS order never reached the Kitchen Display board (two
+disconnected mock-data islands, same gap as Checkout→KDS). User asked to
+fix both.
+
+- **New `hooks/useKitchenOrders.tsx`** — Context+Provider holding the
+  `orders` array (moved out of `kitchen-board.tsx`/`kitchen-display.tsx`),
+  `INITIAL_ORDERS`, `NEXT_STATUS`, and `addOrder`/`advance`. Mounted in
+  `app/[locale]/staff/layout.tsx`, so it's shared by both `/staff/pos` and
+  `/staff/orders` — same pattern as `useCart`/`useTables`. Deliberately
+  **not** persisted to localStorage (matches POS/KDS's existing
+  reset-on-reload behavior, just now shared instead of duplicated).
+- **POS's table dropdown now reads from `useTables()`**, selecting by
+  table `id` (not the raw number) so a rename in Admin Tables stays in
+  sync even if the customer/staff already had a table selected.
+- **"Charge" now pushes a real ticket onto the Kitchen Display board**:
+  builds a `KdsOrder` from the current ticket (dine-in→"dine-in" with the
+  selected table's real number, takeaway→"pickup"), calls
+  `addOrder()`, then clears the ticket as before. Ring up a dine-in order
+  at POS and it now actually shows up on the KDS "New" column.
+  `kitchen-display.tsx`'s own completion-stats tracking (Shift Stats'
+  completedCount/avgTime) is unaffected — it still wraps the shared
+  `advance()` to detect completions.
+- Verified: `npm run build` clean; curl confirmed both `/staff/pos` and
+  `/staff/orders` still render and the `/staff/*` auth gate is unaffected.
+  The actual POS→KDS hand-off (a client-side interaction) wasn't
+  click-tested in a real browser — no browser automation tool available in
+  this environment, standing caveat for the whole project.
+
 ## Next steps
 
 The originally agreed FE priority order (theme → customer → staff → admin)

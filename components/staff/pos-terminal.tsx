@@ -6,6 +6,8 @@ import { Coffee, CupSoda, Cookie, Milk, Search, Minus, Plus, Trash2, ArrowRight 
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { menuCategories, menuItems, type MenuIcon, type MenuItem } from "@/lib/mock-data/menu"
+import { useTables } from "@/hooks/useTables"
+import { useKitchenOrders, type KdsOrder } from "@/hooks/useKitchenOrders"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -15,7 +17,10 @@ const ICONS: Record<MenuIcon, typeof Coffee> = {
 }
 
 const TAX_RATE = 0.08
-const MOCK_TABLES = ["04", "05", "06"]
+
+function randomOrderId(): string {
+  return String(Math.floor(1000 + Math.random() * 9000))
+}
 
 type OrderLine = {
   menuItemId: string
@@ -31,13 +36,17 @@ type PaymentMethod = "cash" | "card" | "vnpay"
 export function PosTerminal() {
   const locale = useLocale()
   const t = useTranslations("Pos")
+  const { tables } = useTables()
+  const { addOrder } = useKitchenOrders()
 
   const [selectedCategory, setSelectedCategory] = useState(menuCategories[0].id)
   const [searchQuery, setSearchQuery] = useState("")
   const [order, setOrder] = useState<OrderLine[]>([])
   const [orderType, setOrderType] = useState<OrderType>("dine-in")
-  const [table, setTable] = useState(MOCK_TABLES[0])
+  const [selectedTableId, setSelectedTableId] = useState(tables[0]?.id ?? "")
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash")
+
+  const selectedTable = tables.find((tbl) => tbl.id === selectedTableId) ?? tables[0]
 
   const name = (item: MenuItem) => (locale === "vi" ? item.nameVi : item.nameEn)
   const categoryLabel = (c: (typeof menuCategories)[number]) => (locale === "vi" ? c.labelVi : c.labelEn)
@@ -82,7 +91,21 @@ export function PosTerminal() {
   function handleCharge() {
     if (order.length === 0) return
     // No orders table / payment processing yet — this simulates a completed
-    // sale by clearing the current order. Real submission comes with Supabase.
+    // sale by clearing the current order and pushing a real ticket onto the
+    // shared Kitchen Display board (see hooks/useKitchenOrders.tsx).
+    const kdsOrder: KdsOrder = {
+      id: randomOrderId(),
+      orderType: orderType === "dine-in" ? "dine-in" : "pickup",
+      table: orderType === "dine-in" ? selectedTable?.number : undefined,
+      items: order.map((line) => ({
+        quantity: line.quantity,
+        nameVi: line.nameVi,
+        nameEn: line.nameEn,
+      })),
+      status: "new",
+      createdAt: Date.now(),
+    }
+    addOrder(kdsOrder)
     setOrder([])
   }
 
@@ -230,13 +253,13 @@ export function PosTerminal() {
                   {t("table")}
                 </label>
                 <select
-                  value={table}
-                  onChange={(e) => setTable(e.target.value)}
+                  value={selectedTableId}
+                  onChange={(e) => setSelectedTableId(e.target.value)}
                   className="h-full rounded-lg border-none bg-muted px-3 text-xs font-bold outline-none"
                 >
-                  {MOCK_TABLES.map((tbl) => (
-                    <option key={tbl} value={tbl}>
-                      {t("table")} {tbl}
+                  {tables.map((tbl) => (
+                    <option key={tbl.id} value={tbl.id}>
+                      {t("table")} {tbl.number}
                     </option>
                   ))}
                 </select>

@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from "next-intl"
 import { cn } from "@/lib/utils"
-import type { KdsOrder } from "@/components/staff/kitchen-board"
+import type { KdsOrder } from "@/hooks/useKitchenOrders"
 
 type LoadLevel = "light" | "moderate" | "busy"
 

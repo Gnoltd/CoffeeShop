@@ -1,41 +1,36 @@
-# Today: Kitchen Display full layout parity with the Stitch mockup
+# Today: POS connected to Kitchen Display, shared real table list
 
 ## Task
 
-User asked if KDS can connect to real orders, and to verify it matches
-the Stitch design 1:1 (time count, table, orders, statuses, current load,
-queue, wait time). Found a real gap: no Bottom Stats Bar existed at all,
-and the sidebar/richer top bar had been deliberately dropped earlier.
-Confirmed with the user to go for full layout match, then built it.
+User asked to check the logic of the staff pages after the KDS review.
+Reading `pos-terminal.tsx` surfaced two real gaps: POS had its own
+hardcoded 3-table list separate from the shared `useTables()` hook, and a
+charged POS order never reached the Kitchen Display board (disconnected
+mock-data islands, same issue as Checkout→KDS). Fixed both.
 
 ## Context
 
-- Full details: `continuity.md` ("Kitchen Display full layout parity"
-  section), `CLAUDE.md` (same, under "Staff pages")
-- New: `components/staff/{kitchen-top-bar,kitchen-sidebar,
-  kitchen-board,kitchen-stats-footer}.tsx`
-- Changed: `components/staff/kitchen-display.tsx` (now an orchestrator),
-  `app/[locale]/staff/layout.tsx` + `pos/page.tsx` (StaffNav moved to POS
-  only), `app/[locale]/staff/orders/page.tsx`
+- Full details: `continuity.md` ("POS ↔ Kitchen Display connected, real
+  tables shared" section), `CLAUDE.md` (under "Staff pages")
+- New: `hooks/useKitchenOrders.tsx` (Context+Provider, moved out of
+  `kitchen-board.tsx`/`kitchen-display.tsx`)
+- Changed: `components/staff/pos-terminal.tsx` (table dropdown now uses
+  `useTables()`; "Charge" calls `addOrder()`), `kitchen-board.tsx` /
+  `kitchen-display.tsx` / `kitchen-stats-footer.tsx` (import types/state
+  from the new shared hook), `app/[locale]/staff/layout.tsx` (mounts
+  `KitchenOrdersProvider`)
 
 ## Done when
 
 - `npm run build` succeeds, no type errors — done
-- curl confirms the new sidebar/top-bar/stats-bar text renders in both
-  locales on `/staff/orders` — done
-- POS (`/staff/pos`) still shows its original nav, unaffected — done
-- `/staff/*` auth gate unaffected — done
-- Current Load / Queue / Wait Time are real computed values from the
-  order list, not mock numbers — done
-- Shift Stats (Completed / Avg Time) genuinely track session completions
-  instead of a static mock "42" — done
-- Not click-tested in a real browser — no browser automation tool
-  available in this environment, standing caveat for the whole project
+- curl confirms `/staff/pos` and `/staff/orders` both still render, and
+  the `/staff/*` auth gate is unaffected — done
+- Ringing up a dine-in order at POS now pushes a real ticket onto the KDS
+  "New" column with the correct table number — done by code review; not
+  click-tested in a real browser (no browser automation tool available in
+  this environment, standing caveat)
 
-## Next session
+## Next up (in progress)
 
-Still nothing left on the frontend that isn't a documented, intentional
-gap. Backend is next — Supabase DB schema/RLS/Edge Functions, then wire
-Kitchen Display to a real Realtime `orders` subscription (the board/
-footer/sidebar are already structured to just consume whatever `orders`
-array they're given, so this should be a contained change).
+User also asked to check Admin Menu Management against its Stitch mockup
+(`13-admin-menu.html`) — starting that review now.

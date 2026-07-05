@@ -297,8 +297,21 @@ page is responsible for its own top-level chrome.
   (same menu source as the customer app). Tapping an item adds it at base
   price directly — there is no size/modifier picker here yet, unlike the
   customer Menu page; that's a known gap, not an oversight, tracked in
-  continuity.md. Local component state only (not `useCart` — POS is a
-  separate staff-side transaction, not a shared persisted cart).
+  continuity.md. Local component state only for the ticket itself (not
+  `useCart` — POS is a separate staff-side transaction, not a shared
+  persisted cart). Its table dropdown reads from the shared `useTables()`
+  hook (selected by table `id`, not raw number — stays correct if the
+  table is renamed elsewhere), and "Charge" pushes a real `KdsOrder` onto
+  the shared Kitchen Display board via `useKitchenOrders()`'s `addOrder()`
+  before clearing the ticket — POS and Kitchen Display are no longer
+  disconnected mock-data islands.
+- **`hooks/useKitchenOrders.tsx`** — Context+Provider (mounted in
+  `app/[locale]/staff/layout.tsx`, shared by both `/staff/pos` and
+  `/staff/orders`, same pattern as `useCart`/`useTables`) holding the
+  `orders` array, `INITIAL_ORDERS` seed data, `NEXT_STATUS` map, and
+  `addOrder`/`advance`. Deliberately **not** persisted to localStorage —
+  matches POS/KDS's existing reset-on-reload behavior, just shared instead
+  of duplicated per-page.
 - **Kitchen Display** — split across several files under `components/staff/`,
   orchestrated by `kitchen-display.tsx`:
   - `kitchen-board.tsx` — the 3-column board (New/Preparing/Ready), a real
@@ -306,8 +319,8 @@ page is responsible for its own top-level chrome.
     icons, per-status timer captions ("Elapsed Time"/"Preparing Time"),
     a "SIGNATURE ITEM" tag example, and Ready-column-specific styling
     (tinted card header, strikethrough items, "Done" instead of a timer).
-    Exports `INITIAL_ORDERS`/`NEXT_STATUS`/types so the orchestrator and
-    footer can share them.
+    Types (`KdsOrder`/`KdsStatus`/`KdsOrderItem`) come from
+    `useKitchenOrders.tsx`, not defined locally.
   - `kitchen-top-bar.tsx` — brand + a static "Barista Station 1" label +
     a "System Online" indicator + disabled+tooltip notification/settings
     icons (no notification system or staff settings page exist).
@@ -324,12 +337,13 @@ page is responsible for its own top-level chrome.
     same active-order count), Wait Time (average elapsed time across
     active orders, in minutes), and a live clock reusing the same ticking
     `now` state as the elapsed-time counters.
-  - Advancing an order (`advance()` in `kitchen-display.tsx`) is local
-    state only for now — becomes a Realtime subscription + a real
+  - Advancing an order (`advance()`, now in `useKitchenOrders.tsx`) is
+    shared state only for now — becomes a Realtime subscription + a real
     `UPDATE orders SET status=...` once the `orders` table exists (design
     spec Section 3d). The board/footer/sidebar don't need to change when
-    that happens — they already just consume whatever `orders` array they're
-    given.
+    that happens — they already just consume whatever `orders` array
+    they're given. `kitchen-display.tsx` wraps `advance()` locally just to
+    detect completions for its own Shift Stats display.
 - Both routes are still gated by the existing `/staff/*` middleware rule
   (staff|manager|admin) — confirmed the gate itself wasn't broken by these
   changes, but couldn't verify the pages' own rendering against a real
