@@ -12,18 +12,28 @@ intentionally works differently).
 
 ## Current status
 
-**Stale-file notice (2026-07-06):** everything below this notice describes
-the FE-only, pre-Supabase state from an earlier phase of the project.
-CLAUDE.md is the actively-maintained structural map and should be treated
-as authoritative for current reality; this file has drifted since the
-backend work started. As of 2026-07-06: all 9 DB migrations are applied to
-the live hosted Supabase project, Login/Signup/Logout are real (Supabase
-Auth), menu data is real (`docs/superpowers/plans/2026-07-05-menu-data-migration.md`,
-`lib/mock-data/menu.ts` deleted), and the app is deployed live on Vercel at
-`https://phadincoffee.vercel.app` (see CLAUDE.md's "Deployment" section).
-Inventory, tables, orders, and staff accounts are still mock, same as
-described below. See `daily.md` for the most recent session's work and
-next-session starting point.
+**Stale-file notice (updated 2026-07-06):** everything below this notice
+describes the FE-only, pre-Supabase state from an earlier phase of the
+project. CLAUDE.md is the actively-maintained structural map and should
+be treated as authoritative for current reality; this file has drifted
+since the backend work started. As of the latest session: all 9 DB
+migrations are applied to the live hosted Supabase project, Login/Signup/
+Logout are real (Supabase Auth), menu data is real
+(`docs/superpowers/plans/2026-07-05-menu-data-migration.md`,
+`lib/mock-data/menu.ts` deleted), the Profile auth-gate + role-based
+navigation feature is fully shipped (`docs/superpowers/specs/2026-07-06-profile-auth-role-nav-design.md`,
+`docs/superpowers/plans/2026-07-06-profile-auth-role-nav.md`), and five
+live bugs the user found (login redirect race, missing Admin→POS/KDS
+nav, non-clickable logo, incomplete role-status badge, Inventory
+resetting on locale switch) have all been fixed and verified live. The
+app is deployed live on Vercel at `https://phadincoffee.vercel.app` (see
+CLAUDE.md's "Deployment" section). Tables, orders, and staff accounts are
+still mock, same as described below — Inventory is real client-side
+state now (persisted to `localStorage`) but still not Supabase-backed.
+A menu item extras/modifiers admin-configuration feature is mid-brainstorm,
+and a much larger "make all data real-time" project is queued after it.
+See `daily.md` for the most recent session's full work and the next-session
+starting point.
 
 **All FE pages from the original design are now genuinely real, interactive
 UI** — none are translated-placeholder-only anymore. This was previously
@@ -664,11 +674,14 @@ found `03-cart.html`'s promo-code row had never been built at all.
 
 ## Next steps (superseded — see daily.md for the current one)
 
-*Stale as of 2026-07-06 — kept for history, not a live plan.* The
-paragraph below predates the backend work; items 1-2 are now done (DB
-schema/RLS/Auth/menu data are real, see CLAUDE.md). For what's actually
-next, read `daily.md`'s "Next session starts here" section instead of
-this list.
+*Stale — kept for history, not a live plan.* The paragraph below predates
+the backend work; items 1-2 are now done (DB schema/RLS/Auth/menu data
+are real, see CLAUDE.md), and item 6 (rename `middleware.ts` to
+`proxy.ts`) is still pending but now also affects the new
+`lib/middleware-rules.ts` it depends on. For what's actually next
+(finishing the menu item extras/modifiers brainstorm, then the "all data
+real-time" project), read `daily.md`'s "Next session starts here" section
+instead of this list.
 
 The originally agreed FE priority order (theme → customer → staff → admin)
 is now **fully done**. Remaining work is backend and polish, roughly in
