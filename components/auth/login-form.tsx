@@ -47,7 +47,6 @@ export function LoginForm() {
     }
 
     router.push(ROLE_HOME[role ?? "customer"] ?? "/menu")
-    router.refresh()
   }
 
   return (
