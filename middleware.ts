@@ -2,42 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 import { createServerClient } from "@supabase/ssr"
 import createIntlMiddleware from "next-intl/middleware"
 import { routing } from "./i18n/routing"
-import { ROLE_HOME } from "./lib/roles"
+import { resolveRedirect, splitLocaleFromPathname } from "./lib/middleware-rules"
 
 const handleI18nRouting = createIntlMiddleware(routing)
-
-const ADMIN_ONLY_PREFIXES = ["/admin/staff", "/admin/settings"]
-
-const ROUTE_GROUP_ROLES: { prefix: string; roles: string[] }[] = [
-  { prefix: "/staff", roles: ["staff", "manager", "admin"] },
-  { prefix: "/admin", roles: ["manager", "admin"] },
-]
-
-export function resolveRedirect(pathname: string, role: string | null): string | null {
-  const adminOnlyMatch = ADMIN_ONLY_PREFIXES.find((p) => pathname.startsWith(p))
-  if (adminOnlyMatch) {
-    if (role !== "admin") {
-      return role ? (ROLE_HOME[role] ?? "/menu") : "/login"
-    }
-    return null
-  }
-
-  const match = ROUTE_GROUP_ROLES.find((r) => pathname.startsWith(r.prefix))
-  if (!match) return null
-
-  if (!role || !match.roles.includes(role)) {
-    return role ? (ROLE_HOME[role] ?? "/menu") : "/login"
-  }
-  return null
-}
-
-/** Splits a locale-prefixed pathname (e.g. "/vi/staff/pos") into its locale and the rest ("/staff/pos"). */
-export function splitLocaleFromPathname(pathname: string): { locale: string; rest: string } {
-  const segments = pathname.split("/")
-  const locale = segments[1]
-  const rest = "/" + segments.slice(2).join("/")
-  return { locale, rest: rest === "/" ? "/" : rest.replace(/\/+$/, "") || "/" }
-}
 
 async function resolveRole(request: NextRequest): Promise<string | null> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
