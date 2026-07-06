@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { Coffee, CupSoda, Cookie, Milk, Search, Minus, Plus, Trash2, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -47,6 +47,12 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash")
 
   const selectedTable = tables.find((tbl) => tbl.id === selectedTableId) ?? tables[0]
+
+  useEffect(() => {
+    if (!selectedTableId && tables.length > 0) {
+      setSelectedTableId(tables[0].id)
+    }
+  }, [tables, selectedTableId])
 
   const name = (item: MenuItem) => (locale === "vi" ? item.nameVi : item.nameEn)
   const categoryLabel = (c: MenuCategory) => (locale === "vi" ? c.nameVi : c.nameEn)
