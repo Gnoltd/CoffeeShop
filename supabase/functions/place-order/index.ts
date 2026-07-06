@@ -13,10 +13,16 @@
 // VND is a Stripe zero-decimal currency — the integer total is sent
 // as-is, never multiplied by 100.
 //
-// For this pass, VNPay stays disabled in Checkout until its own spec
-// lands. This function is a thin wrapper around the place_order RPC,
-// shaped so a future VNPay pass can wrap a gateway call around this
-// same call without re-architecting anything here.
+// VNPay follow-up (2026-07-07): same shape, different gateway — see
+// docs/superpowers/specs/2026-07-07-vnpay-payment-integration-design.md.
+// Unlike Stripe, no API call is needed to build the redirect URL — it's
+// a locally-signed query string. VNPay's amount convention is the
+// OPPOSITE of Stripe's: always total × 100, not a zero-decimal
+// exception. vnp_ReturnUrl points at this project's own Supabase
+// function URL (SUPABASE_URL), not SITE_URL (the Vercel app domain used
+// for Stripe's success/cancel URLs) — vnpay-return does its own
+// server-side redirect onward to the actual Next.js pages after
+// verifying VNPay's hash.
 //
 // verify_jwt is disabled for this function: a guest (no session at
 // all) must be able to place an order, and place_order itself already
@@ -116,6 +122,76 @@ async function createStripeCheckoutSession(params: {
   return { url: json.url as string }
 }
 
+const VNPAY_GATEWAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+
+// yyyyMMddHHmmss in Asia/Ho_Chi_Minh time — VNPay requires this exact
+// format and timezone regardless of where this function actually runs.
+function toVnpayDateString(d: Date): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(d)
+  const get = (type: string) => parts.find((p) => p.type === type)!.value
+  return `${get("year")}${get("month")}${get("day")}${get("hour")}${get("minute")}${get("second")}`
+}
+
+async function signVnpayParams(params: Record<string, string>, secret: string): Promise<string> {
+  const sortedKeys = Object.keys(params).sort()
+  const signString = sortedKeys.map((k) => `${k}=${encodeURIComponent(params[k])}`).join("&")
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-512" },
+    false,
+    ["sign"]
+  )
+  const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signString))
+  return Array.from(new Uint8Array(signed))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("")
+}
+
+async function buildVnpayCheckoutUrl(params: {
+  orderId: string
+  total: number
+  ipAddr: string
+  locale: string
+  returnUrl: string
+}): Promise<string> {
+  const now = new Date()
+  const expire = new Date(now.getTime() + 15 * 60 * 1000)
+  const vnpParams: Record<string, string> = {
+    vnp_Version: "2.1.0",
+    vnp_Command: "pay",
+    vnp_TmnCode: Deno.env.get("VNPAY_TMN_CODE")!,
+    // VNPay's own convention: amount is always x100, regardless of
+    // currency having no subdivision — the OPPOSITE of the zero-decimal
+    // VND handling used for Stripe above. Do not "fix" this to match.
+    vnp_Amount: String(params.total * 100),
+    vnp_CurrCode: "VND",
+    vnp_TxnRef: params.orderId,
+    vnp_OrderInfo: `Thanh toan don hang ${params.orderId}`,
+    vnp_OrderType: "other",
+    vnp_Locale: params.locale === "vi" ? "vn" : "en",
+    vnp_ReturnUrl: params.returnUrl,
+    vnp_IpAddr: params.ipAddr,
+    vnp_CreateDate: toVnpayDateString(now),
+    vnp_ExpireDate: toVnpayDateString(expire),
+  }
+  const secureHash = await signVnpayParams(vnpParams, Deno.env.get("VNPAY_HASH_SECRET")!)
+  const query = Object.keys(vnpParams)
+    .sort()
+    .map((k) => `${k}=${encodeURIComponent(vnpParams[k])}`)
+    .join("&")
+  return `${VNPAY_GATEWAY_URL}?${query}&vnp_SecureHash=${secureHash}`
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -148,10 +224,11 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders })
     }
 
+    const locale = VALID_LOCALES.includes(payload.locale) ? payload.locale : "vi"
     const needsStripeSession = payload.paymentMethod === "stripe" && payload.paymentCollected !== true
+    const needsVnpayUrl = payload.paymentMethod === "vnpay" && payload.paymentCollected !== true
 
     if (needsStripeSession) {
-      const locale = VALID_LOCALES.includes(payload.locale) ? payload.locale : "vi"
       const siteUrl = Deno.env.get("SITE_URL")!
       const tableQuery =
         payload.orderType === "dine_in" && payload.tableNumber
@@ -170,6 +247,24 @@ Deno.serve(async (req) => {
       }
 
       return new Response(JSON.stringify({ ...data, checkoutUrl: session.url }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      })
+    }
+
+    if (needsVnpayUrl) {
+      const ipAddr = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1"
+      const returnUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/vnpay-return?orderId=${data.orderId}&locale=${locale}`
+
+      const checkoutUrl = await buildVnpayCheckoutUrl({
+        orderId: data.orderId,
+        total: data.total,
+        ipAddr,
+        locale,
+        returnUrl,
+      })
+
+      return new Response(JSON.stringify({ ...data, checkoutUrl }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       })
