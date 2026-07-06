@@ -1,97 +1,111 @@
-# Today: Real Inventory data + Realtime + admin-configurable recipes shipped
+# Today: Real Table data + Realtime shipped (2nd "make all data real-time" sub-project)
 
 ## Task
 
-Kicked off the "make all data real-time" project (decomposed into
-Inventory → Tables → Orders → Staff accounts). This session designed,
-planned, and shipped the first sub-project: Inventory. Full cycle —
-brainstorm → spec → plan → inline execution → live verification → docs.
+Continued the "make all data real-time" project (decomposition:
+Inventory → Tables → Orders → Staff accounts). This session shipped
+Tables — full cycle again: brainstorm → spec → plan → inline execution →
+live verification → docs. Inventory (shipped earlier today) recap is
+below for continuity, then Tables.
 
-## Done this session
+## Done today
 
-### Real Inventory data + Realtime (shipped)
+### Real Inventory data + Realtime (shipped, first sub-project)
 
-Replaced `hooks/useInventory.tsx`'s `localStorage` mock model with real
-Supabase data and cross-session Realtime sync. Spec:
-`docs/superpowers/specs/2026-07-06-inventory-realtime-design.md`. Plan:
-`docs/superpowers/plans/2026-07-06-inventory-realtime.md` (10 tasks,
-executed inline on `main`).
+See the previous commit history / CLAUDE.md's "Admin pages" section for
+full detail — summary: `ingredients`/`inventory_logs` (already-applied
+schema) got bilingual columns, an atomic `adjust_ingredient_stock` RPC,
+and Realtime; new Add/Edit Ingredient UI; admin-configurable recipes
+(`menu_item_ingredients`/`modifier_ingredients`) for both menu items and
+extras. 10 plan tasks, all shipped and verified live.
 
-- **Big discovery before any design questions** (same pattern as last
-  session's extras feature): `ingredients`/`inventory_logs`/
-  `menu_item_ingredients`/`modifier_ingredients` (migration
-  `0004_inventory.sql`) were already applied with RLS, and migration
-  `0007_handle_order_paid.sql` already had a trigger that deducts stock
-  and logs it when an order is paid — dead code today since real order
-  placement doesn't exist yet, but already correct. The actual gap was
-  narrower: no bilingual columns, no admin UI at all, and no Realtime.
-- Migration `0010_inventory_i18n_and_stock_fn`: bilingual `name_vi`/
-  `name_en`/`subtitle_vi`/`subtitle_en`/`icon` columns on `ingredients`,
-  an atomic `adjust_ingredient_stock` RPC (`security invoker` — locks the
-  row, clamps at 0, updates, logs, all in one round trip — replaces the
-  old mock's client-side clamp-then-write, which was only safe with a
-  single browser tab), and `ingredients`/`inventory_logs` added to the
-  `supabase_realtime` publication. Migration `0011_seed_inventory_data`
-  seeded the 4 mock ingredients as real rows through that same RPC.
-- `lib/supabase/inventory-data.ts` — new query layer (DI'd like
-  `menu-data.ts`, 7 unit tests): ingredients CRUD, `adjustStock`,
-  `getInventoryLogs`, and recipe CRUD for both menu items
-  (`menu_item_ingredients`) and modifiers (`modifier_ingredients`).
-- `hooks/useInventory.tsx` rewritten: fetches once on mount, subscribes
-  to `postgres_changes` on both tables. Mutation functions never call
-  `setIngredients` themselves — the Realtime echo is the only code path
-  that updates local state, including for the tab that made the change.
-  Confirmed live via Playwright: two admin sessions, one adjusts stock,
-  the other sees the new number and log entry within ~1 second, no
-  reload.
-- New admin UI: "+ Add Ingredient" + a per-row edit pencil
-  (`components/admin/ingredient-form.tsx`) — ingredients are no longer a
-  fixed set of 4.
-- **Recipes are now real and admin-configurable.** New shared
-  `components/admin/recipe-checklist.tsx` (checkbox + quantity input per
-  ingredient), used in two places:
-  - A new "Recipe" section in the menu item Add/Edit form
-    (`menu_item_ingredients`).
-  - Extras (shipped last session with create-only UI) gained their first
-    **edit** affordance — a pencil per extra opens an inline panel to
-    change name/price and the extra's own ingredient usage
-    (`modifier_ingredients`). Needed a new `updateModifierGroup` in
-    `menu-data.ts`.
-  - Verified both persist correctly across reopen and in the DB directly.
-    Also verified no regression on the customer Product Detail Page: an
-    edited extra's new price correctly changes the running total when
-    selected/deselected.
-- ESLint baseline actually **improved**: the old hydrate-in-effect
-  pattern in `useInventory.tsx` (added last session as a stopgap for the
-  locale-switch-resets-state bug) is gone entirely now that Supabase +
-  Realtime is the real persistence/sync layer — back down to the
-  documented 5 pre-existing `react-hooks/set-state-in-effect` errors,
-  down from 6.
-- All 10 plan tasks committed separately, pushed, deployed, verified live
-  on `https://phadincoffee.vercel.app`. 27/27 tests passing.
+### Real Table data + Realtime (shipped, second sub-project)
+
+Spec: `docs/superpowers/specs/2026-07-06-tables-realtime-design.md`.
+Plan: `docs/superpowers/plans/2026-07-06-tables-realtime.md` (7 tasks +
+one mid-verification fix, executed inline on `main`).
+
+- **Big discovery, same pattern as Inventory**: `public.tables` (migration
+  `0005_orders.sql`) already existed with RLS and was already wired as
+  `orders.table_id`'s FK target. Gap: no bilingual/occupied/scan columns,
+  no admin UI, no Realtime.
+- **A real RLS wrinkle Inventory didn't have**: scan-count tracking must
+  be writable by an anonymous guest (scanning a QR code has no login at
+  all), but `tables_admin_all` is manager/admin-only. Solved with
+  `increment_table_scan_count` as the one `security definer` function in
+  this project (vs. every other RPC using `security invoker`), scoped
+  narrowly enough that it can't be used to rename/relocate/re-token a
+  table — verified live with a fresh, logged-out browser context that a
+  real scan increments `scan_count` with zero authentication.
+- **Caught and fixed a real design flaw during spec self-review, before
+  writing the plan**: an earlier draft assumed `activeTable` (a
+  customer's "which table am I ordering at" session) could drop its
+  `localStorage` persistence now that its source data is real. Wrong —
+  that persistence exists specifically so `activeTable` survives a VI/EN
+  locale switch (which remounts every provider), the same bug class that
+  hit `useInventory.tsx` two sessions ago. Fixed the spec before it
+  became a real regression; verified live that `localStorage`'s
+  `phadincoffee-active-table` value survives a full page reload with all
+  fields intact.
+- **Caught a real bug in `pos-terminal.tsx` before it shipped**: its
+  `selectedTableId` state initializes from `tables[0]?.id` once at
+  mount — with real async-loaded `tables` starting as `[]`, the
+  `<select>` would render with no visible selection even though the
+  underlying logic still resolved correctly via an existing fallback.
+  Fixed with a one-line `useEffect` sync.
+- **Found and fixed a real gap mid-plan-writing (not by the plan
+  itself)**: the plan as first written had no seed migration for tables
+  — caught only when Task 7's live verification showed Admin Tables with
+  zero table cards instead of the original 6. Added migration
+  `0013_seed_tables_data` on the spot to seed the 6 original mock tables
+  as real rows.
+- New admin UI: real "+ Add Table" modal
+  (`components/admin/table-form.tsx`) — a real `table_number unique`
+  constraint means collisions (on add *or* rename) now surface a real
+  inline error instead of a mock auto-increment that could never
+  collide. Verified live via Playwright (two admin sessions): add,
+  rename (including a deliberate collision), occupied toggle, and QR
+  regeneration all sync live across sessions within about a second.
+- **New gap found and documented, correctly left out of scope**:
+  `checkout-view.tsx`'s `orderType` state reads `activeTable` only once
+  at first render — a pre-existing race (identical pattern existed in
+  the old mock hook too) that can default to "pickup" even when
+  `activeTable` becomes populated moments later after a full reload.
+  Confirmed this predates today's work; noted in CLAUDE.md as a small
+  follow-up for whenever Checkout itself is revisited, not fixed here.
+- ESLint baseline stayed at the documented 5 pre-existing
+  `react-hooks/set-state-in-effect` errors — composition shifted
+  (`table-landing.tsx` dropped off the list as a side effect of its
+  async rewrite; `pos-terminal.tsx`'s new one-line sync effect joined it,
+  same legitimate pattern class as the others, no suppression used
+  anywhere in this codebase for this rule).
+- All 8 commits (schema, seed, query layer, hook rewrite, 2 consumer
+  fixes, admin UI, mid-verification seed fix) pushed and deployed.
+  33/33 tests passing.
 
 ## Next session starts here
 
-1. **Sub-project #2: Tables.** `hooks/useTables.tsx` (table list, QR
-   tokens, active session, occupied/scan-count) → a real `tables` table +
-   RLS + Realtime. Would also fix the documented gap where regenerating a
-   QR token doesn't invalidate an already-active client-side session.
-   Start with a brainstorm, same cycle as Inventory (design questions:
-   does `tables` need bilingual location columns like ingredients did;
-   does the QR-token regeneration gap get fixed as part of this or stay
-   deferred).
-2. After Tables: **Orders** (the biggest slice — unifying customer
-   Checkout/Tracking/History with staff POS/Kitchen Display into one real
-   `orders` schema + Realtime), then **Staff accounts**.
-3. Two throwaway test accounts (staff/customer roles) exist in the live
-   Supabase project — credentials in `.env.local`
-   (`TEST_STAFF_EMAIL`/`TEST_STAFF_PASSWORD`,
-   `TEST_CUSTOMER_EMAIL`/`TEST_CUSTOMER_PASSWORD`) and the gitignored
+1. **Sub-project #3: Orders** — the biggest slice. Unifies customer
+   Checkout/Tracking/History (`hooks/useOrders.tsx`) with staff POS/
+   Kitchen Display (`hooks/useKitchenOrders.tsx`) — currently two
+   separate mock systems that don't talk to each other (a customer's
+   Checkout order never reaches the Kitchen Display board). The real
+   `orders`/`order_items`/`order_item_modifiers` schema (migration
+   `0005_orders.sql`) already exists with RLS, and migration
+   `0007_handle_order_paid.sql` already has the inventory-deduction
+   trigger from the Inventory sub-project ready to fire the moment real
+   order placement exists — likely the "big discovery" pattern will hold
+   again. This needs a real design discussion (single `orders` table
+   driving both customer tracking and staff KDS) and should probably
+   also account for the still-stubbed `place-order` Edge Function, since
+   atomic stock decrement + payment handling both live there.
+2. After Orders: **Staff accounts** (`components/admin/staff-accounts.tsx`'s
+   local mock array → real `profiles` queries).
+3. Small documented follow-up, not urgent: `checkout-view.tsx`'s
+   `orderType` should re-derive from `activeTable` reactively instead of
+   only at first mount (see CLAUDE.md's Table identity flow section).
+4. Two throwaway test accounts (staff/customer roles) exist in the live
+   Supabase project — credentials in `.env.local` and the gitignored
    `test-accounts.md` at the repo root.
-4. Noticed, not yet acted on: `next build` prints "The 'middleware' file
-   convention is deprecated. Please use 'proxy' instead" (Next.js
-   16.2.10). Not urgent.
-5. Edge Functions (`place-order`/`stripe-webhook`/`vnpay-ipn`/
-   `vnpay-return`) are still comment-only stubs — the Orders sub-project
-   should account for `place-order` at least, since real order placement
-   needs atomic stock decrement + payment handling.
+5. `next build` still prints the "middleware deprecated, use proxy"
+   warning (Next.js 16.2.10). Not urgent.

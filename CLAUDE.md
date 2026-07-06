@@ -21,20 +21,23 @@ Supabase query wiring (see "Building the rest" below) — **Login, Signup,
 and Logout are the first slice now backed by real Supabase Auth**, not
 mock data (see "Landing, Auth, and remaining customer pages" below).
 
-**Now built:** the Supabase database — 11 migrations
-(`supabase/migrations/0001`-`0011`) are applied to the live hosted project
+**Now built:** the Supabase database — 13 migrations
+(`supabase/migrations/0001`-`0013`) are applied to the live hosted project
 (`qhiypdqnrnzndxdwqxbx`), every table has RLS enabled, and a real admin
 account exists (`profiles.role = 'admin'`). Real Supabase Auth now backs
 Login/Signup/Logout. Menu data (items/categories/sizes/modifier
 groups/extras) is real — migrations `0008`/`0009` and
-`lib/supabase/menu-data.ts`, see "Customer ordering flow" below. Inventory
-(ingredients/stock/logs/recipes) is also real, and the first data source
-in the app with **live Realtime sync** across sessions — migrations
-`0010`/`0011` and `lib/supabase/inventory-data.ts`, see "Admin pages"
+`lib/supabase/menu-data.ts`, see "Customer ordering flow" below.
+Inventory (ingredients/stock/logs/recipes) and Tables
+(directory/location/occupied/scan-count/QR tokens) are also real, with
+**live Realtime sync** across sessions — migrations `0010`/`0011` and
+`0012`/`0013` respectively, `lib/supabase/inventory-data.ts`/
+`lib/supabase/tables-data.ts`, see "Admin pages"/"Table identity flow"
 below. **Still not built:** Edge Functions, Stripe/VNPay integration, and
-— outside of auth, menu, and inventory — every other mock data source in
-the app (tables, orders, staff accounts) is still waiting on real queries
-(+ Realtime) replacing the various `use*` hooks. See each feature section
+— outside of auth, menu, inventory, and tables — every other mock data
+source in the app (orders, staff accounts) is still waiting on real
+queries (+ Realtime) replacing the various `use*` hooks. See each feature
+section
 below for exactly what's mocked and what's a documented (not hidden) gap.
 
 ## Stack
@@ -649,33 +652,71 @@ header for the same reason as staff — no real auth data yet.
 ## Table identity flow (`/table/[qrToken]` → Checkout → Order Tracking)
 
 Connects an admin-renamed table's identity all the way through to a
-customer's order, entirely client-side (no `tables` table yet).
+customer's order. **Now real Supabase data with Realtime (2026-07-06)**
+for the table directory, not `localStorage` mock rows. Design:
+`docs/superpowers/specs/2026-07-06-tables-realtime-design.md`. Plan:
+`docs/superpowers/plans/2026-07-06-tables-realtime.md`.
 
-- `hooks/useTables.tsx` — `TablesProvider` + `useTables()`, mounted app-wide
-  in `app/[locale]/layout.tsx` (outside/around everything, so both the
-  admin and customer sides share one source of truth). Holds the table
-  list (`{ id, number, qrToken }[]`, seeded with demo tokens `table-1`
-  through `table-6` so the flow is testable by visiting `/vi/table/table-1`
-  directly) and the current `activeTable` session. Both persist to
-  `localStorage` independently (`phadincoffee-tables`,
-  `phadincoffee-active-table`) with the same hydrate-then-persist pattern
-  as `useCart`. `setActiveTableByToken(token)` looks up a table by its QR
-  token, sets it as the active session, and returns it (or `null` if the
-  token doesn't match any table).
-- `components/customer/table-landing.tsx` — client component rendered by
-  `/table/[qrToken]`. Calls `setActiveTableByToken` on mount; shows a
-  "You're ordering at Table N" screen with a "View Menu" button on success,
-  or an "Invalid Table Code" screen with a link back to the menu if the
-  token doesn't match (e.g. a stale/regenerated QR code).
-- Checkout reads `activeTable` and shows/forwards the real number (see
-  "Customer ordering flow" above).
-- Admin Tables' rename (`components/admin/tables-management.tsx`) writes
-  through the same hook, so renaming "Table 3" to e.g. "Patio 1" is
-  immediately what a customer sees after scanning that table's QR code.
-- Gap, documented not hidden: token regeneration doesn't invalidate a
-  currently-active session client-side (mirrors how a real QR reprint
-  wouldn't affect an order already in progress) — becomes moot once real
-  `tables` rows + RLS exist.
+- `public.tables` (migration `0005_orders.sql`) was already applied with
+  RLS (`tables_select_all` — public read, since a QR-scanning guest has
+  no role; `tables_admin_all` — manager/admin-only writes) and already
+  wired as `orders.table_id`'s FK target. Migrations
+  `0012_tables_i18n_and_scan_fn`/`0013_seed_tables_data` added
+  `location_vi`/`location_en`/`is_occupied`/`scan_count` columns and
+  seeded the 6 original mock tables as real rows.
+- `lib/supabase/tables-data.ts` — query layer (DI'd like `menu-data.ts`/
+  `inventory-data.ts`). Two RPCs back the two operations that plain
+  RLS-gated updates can't safely express: `regenerate_table_qr_token`
+  (`security invoker`, admin-only, generates a fresh
+  `encode(gen_random_bytes(16),'hex')` server-side) and
+  **`increment_table_scan_count`** (`security definer` — the one
+  function in this project that needs it, since an anonymous QR-scanning
+  guest has no role and would otherwise be blocked by
+  `tables_admin_all`; scoped to only ever touch `scan_count`, so it
+  can't be used to rename/relocate/re-token a table as a privilege-
+  escalation path). Verified live with a fresh, logged-out browser
+  context: scanning a real token resolves the table and increments
+  `scan_count` with no authentication at all.
+- `hooks/useTables.tsx` — the **table list** (`tables`) fetches once and
+  subscribes to `postgres_changes`, same pattern as `useInventory.tsx`:
+  an admin's rename/location-edit/occupied-toggle/QR-regen appears live
+  on every other open admin session within about a second. **`activeTable`
+  (a single browser tab's "which table am I ordering at" session)
+  deliberately keeps its existing `localStorage` persistence, unchanged**
+  — it must survive a VI/EN locale switch (which remounts every provider
+  under `app/[locale]/layout.tsx`, the same bug class that hit
+  `useInventory.tsx` two sessions ago); dropping it would silently
+  regress a customer's dine-in context on a language switch. Verified
+  directly: `localStorage`'s `phadincoffee-active-table` value survives
+  a full page reload with all fields intact.
+- `components/customer/table-landing.tsx` — `setActiveTableByToken` is
+  now `async` (a real query, not a local array `.find`); the component's
+  loading/invalid/success states are otherwise unchanged.
+- Admin Tables gained a real **"+ Add Table"** modal
+  (`components/admin/table-form.tsx`) — a real `table_number unique`
+  constraint means admin must supply a number, and a collision (on add
+  *or* rename) now surfaces a real inline error instead of a mock
+  auto-increment that could never collide.
+- **Previously documented gap resolved, no code needed:** "QR token
+  regeneration doesn't invalidate an already-active session" was only
+  ever true because everything was one shared local array. With a real
+  backend, `activeTable` is a value resolved once at scan time and held
+  in that tab's memory — an admin regenerating the token afterward
+  doesn't (and shouldn't) retroactively change what a customer already
+  has, mirroring a real reprinted QR sticker not affecting someone
+  already seated. This is working as intended, not a remaining gap.
+- **New gap found, out of scope for this plan:** `components/customer/checkout-view.tsx`'s
+  `const [orderType, setOrderType] = useState(activeTable ? "dine-in" : "pickup")`
+  reads `activeTable` only once, at first render — if `activeTable` is
+  still `null` at that exact instant (e.g. right after a full page
+  reload, before `TablesProvider`'s `localStorage` hydration effect has
+  run), Checkout defaults to "pickup" even though `activeTable` becomes
+  correctly populated moments later. Confirmed via Playwright: this
+  predates the Tables Realtime work (the old mock hook had the identical
+  hydrate-in-effect timing) and isn't something this plan's scope
+  touched — worth a small follow-up fix (e.g. re-deriving `orderType`
+  reactively, or gating Checkout's initial render on `TablesProvider`
+  finishing hydration) whenever Checkout itself is revisited.
 
 ## Database (`supabase/migrations/`)
 
@@ -705,6 +746,15 @@ Full entity list: spec Section 2.
   `hooks/useInventory.tsx`'s hardcoded mock rows). See "Admin pages" above
   for the resulting query module (`lib/supabase/inventory-data.ts`) and
   Realtime wiring.
+- Two more after that, by `docs/superpowers/plans/2026-07-06-tables-realtime.md`:
+  `0012_tables_i18n_and_scan_fn` (bilingual `location_vi`/`location_en`,
+  `is_occupied`, `scan_count` columns on `tables`; the guest-writable
+  `security definer` `increment_table_scan_count` RPC and the admin-only
+  `security invoker` `regenerate_table_qr_token` RPC; adding `tables` to
+  the `supabase_realtime` publication) and `0013_seed_tables_data`
+  (seeds the 6 tables that used to be `hooks/useTables.tsx`'s hardcoded
+  mock rows). See "Table identity flow" above for the resulting query
+  module (`lib/supabase/tables-data.ts`) and Realtime wiring.
 - pgcrypto was already installed on this project (needed for
   `gen_random_uuid()`/`gen_random_bytes()`) — no `create extension` step
   was actually required, despite the plan doc flagging it as a risk.
@@ -769,16 +819,18 @@ real, menu data is real (`docs/superpowers/plans/2026-07-05-menu-data-migration.
 — schema, seed, and every consumer rewired to `lib/supabase/menu-data.ts`,
 `lib/mock-data/menu.ts` deleted), the Profile auth-gate + role-based
 navigation is shipped, menu item extras/modifiers are admin-configurable,
-and — as of 2026-07-06 — **Inventory is the first of the "make all data
-real-time" sub-projects to ship** (real Supabase data + Realtime +
-admin-configurable recipes, see the Admin pages section above). Edge
-Functions (`place-order`, `stripe-webhook`, `vnpay-ipn`, `vnpay-return` —
-full code in the scaffold plan doc's Task 11) are still comment-only
-stubs, and the remaining "make all data real-time" sub-projects —
-**Tables, Orders (+ unifying customer Checkout/Tracking with staff
-POS/Kitchen Display), and Staff accounts**, in that order per `daily.md`
-— still need their mock/local-Context data replaced with real Supabase
-queries (+ Realtime where it matters). The app is also live on Vercel
+and — as of 2026-07-06 — **Inventory and Tables are the first two of the
+"make all data real-time" sub-projects to ship** (real Supabase data +
+Realtime + admin-configurable recipes for Inventory, see the Admin pages
+section above; real table directory + a guest-writable scan-count RPC
+for Tables, see "Table identity flow" above). Edge Functions
+(`place-order`, `stripe-webhook`, `vnpay-ipn`, `vnpay-return` — full code
+in the scaffold plan doc's Task 11) are still comment-only stubs, and the
+remaining "make all data real-time" sub-projects — **Orders (+ unifying
+customer Checkout/Tracking with staff POS/Kitchen Display) and Staff
+accounts**, in that order per `daily.md` — still need their mock/local-
+Context data replaced with real Supabase queries (+ Realtime where it
+matters). The app is also live on Vercel
 (see "Deployment" above) — verify against the live URL, not localhost.
 When adding any genuinely new page/feature beyond what's already built,
 follow the same pattern used throughout: shared brand tokens (no
