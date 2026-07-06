@@ -393,7 +393,22 @@
     "orderDeductionReason": "Đơn Hàng",
     "logsEmpty": "Chưa có hoạt động nhập kho nào.",
     "loadingIngredients": "Đang tải nguyên liệu…",
-    "loadError": "Không thể tải dữ liệu kho hàng. Vui lòng làm mới trang."
+    "loadError": "Không thể tải dữ liệu kho hàng. Vui lòng làm mới trang.",
+    "addIngredient": "+ Thêm Nguyên Liệu",
+    "addIngredientTitle": "Thêm Nguyên Liệu",
+    "editIngredientTitle": "Sửa Nguyên Liệu",
+    "ingredientNameViLabel": "Tên (Tiếng Việt)",
+    "ingredientNameEnLabel": "Tên (English)",
+    "ingredientSubtitleViLabel": "Nhãn phân loại (Tiếng Việt)",
+    "ingredientSubtitleEnLabel": "Nhãn phân loại (English)",
+    "ingredientUnitLabel": "Đơn Vị",
+    "ingredientUnitPlaceholder": "VD: kg, lon, lít",
+    "ingredientIconLabel": "Biểu Tượng",
+    "ingredientRequiredFieldsError": "Vui lòng nhập đầy đủ thông tin và ngưỡng cảnh báo hợp lệ.",
+    "ingredientSaveError": "Lưu nguyên liệu thất bại. Vui lòng thử lại.",
+    "edit": "Sửa",
+    "cancel": "Hủy",
+    "save": "Lưu"
   },
   "AdminTables": {
     "title": "Quản Lý Bàn",

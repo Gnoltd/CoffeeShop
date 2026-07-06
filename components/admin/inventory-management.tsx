@@ -2,11 +2,12 @@
 
 import { useState } from "react"
 import { useTranslations } from "next-intl"
-import { Coffee, Droplet, Wheat, Candy, Boxes, TriangleAlert, History } from "lucide-react"
+import { Coffee, Droplet, Wheat, Candy, Boxes, TriangleAlert, History, Plus, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useInventory, type IngredientIcon, type InventoryLogReason } from "@/hooks/useInventory"
+import { useInventory, type Ingredient, type IngredientIcon, type InventoryLogReason } from "@/hooks/useInventory"
 import { StockAdjustForm } from "@/components/admin/stock-adjust-form"
+import { IngredientForm } from "@/components/admin/ingredient-form"
 
 const ICONS: Record<IngredientIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -36,9 +37,11 @@ type Tab = "ingredients" | "logs"
 
 export function InventoryManagement({ locale }: { locale: string }) {
   const t = useTranslations("AdminInventory")
-  const { ingredients, logs, isLoading, error, adjustStock, setOutOfStock } = useInventory()
+  const { ingredients, logs, isLoading, error, adjustStock, setOutOfStock, addIngredient, updateIngredientDetails } =
+    useInventory()
   const [tab, setTab] = useState<Tab>("ingredients")
   const [editingId, setEditingId] = useState<string | null>(null)
+  const [formMode, setFormMode] = useState<{ type: "add" } | { type: "edit"; ingredient: Ingredient } | null>(null)
 
   const lowStockCount = ingredients.filter((i) => i.stock < i.threshold).length
   const lastUpdated = logs[0]?.timestamp
@@ -46,7 +49,13 @@ export function InventoryManagement({ locale }: { locale: string }) {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
-      <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
+        <Button className="h-10 gap-2" onClick={() => setFormMode({ type: "add" })}>
+          <Plus className="h-4 w-4" />
+          {t("addIngredient")}
+        </Button>
+      </div>
 
       {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("loadError")}</p>}
 
@@ -169,9 +178,20 @@ export function InventoryManagement({ locale }: { locale: string }) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <Button size="sm" variant="outline" className="h-8" onClick={() => setEditingId(ingredient.id)}>
-                        {t("adjustStock")}
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => setFormMode({ type: "edit", ingredient })}
+                          aria-label={t("edit")}
+                          title={t("edit")}
+                          className="rounded-lg p-2 text-secondary transition-colors hover:bg-secondary/10"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <Button size="sm" variant="outline" className="h-8" onClick={() => setEditingId(ingredient.id)}>
+                          {t("adjustStock")}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 )
@@ -231,6 +251,21 @@ export function InventoryManagement({ locale }: { locale: string }) {
           onRemove={(amount) => adjustStock(editingIngredient.id, -amount, "waste")}
           onMarkOutOfStock={() => setOutOfStock(editingIngredient.id)}
           onClose={() => setEditingId(null)}
+        />
+      )}
+
+      {formMode && (
+        <IngredientForm
+          initialIngredient={formMode.type === "edit" ? formMode.ingredient : undefined}
+          onCancel={() => setFormMode(null)}
+          onSave={async (input) => {
+            if (formMode.type === "edit") {
+              await updateIngredientDetails(formMode.ingredient.id, input)
+            } else {
+              await addIngredient(input)
+            }
+            setFormMode(null)
+          }}
         />
       )}
     </div>

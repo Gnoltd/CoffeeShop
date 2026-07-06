@@ -393,7 +393,22 @@
     "orderDeductionReason": "Order",
     "logsEmpty": "No restock activity yet.",
     "loadingIngredients": "Loading ingredients…",
-    "loadError": "Failed to load inventory data. Try refreshing."
+    "loadError": "Failed to load inventory data. Try refreshing.",
+    "addIngredient": "+ Add Ingredient",
+    "addIngredientTitle": "Add Ingredient",
+    "editIngredientTitle": "Edit Ingredient",
+    "ingredientNameViLabel": "Name (Vietnamese)",
+    "ingredientNameEnLabel": "Name (English)",
+    "ingredientSubtitleViLabel": "Category label (Vietnamese)",
+    "ingredientSubtitleEnLabel": "Category label (English)",
+    "ingredientUnitLabel": "Unit",
+    "ingredientUnitPlaceholder": "e.g. kg, cans, liters",
+    "ingredientIconLabel": "Icon",
+    "ingredientRequiredFieldsError": "Please fill in all fields with a valid threshold.",
+    "ingredientSaveError": "Failed to save ingredient. Try again.",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "save": "Save"
   },
   "AdminTables": {
     "title": "Tables",
