@@ -12,7 +12,7 @@ const COLUMNS: {
   icon: typeof ListTodo
   iconClass?: string
 }[] = [
-  { status: "new", headerClass: "bg-zinc-500", labelKey: "columnNew", icon: ListTodo },
+  { status: "paid", headerClass: "bg-zinc-500", labelKey: "columnNew", icon: ListTodo },
   { status: "preparing", headerClass: "bg-amber-600", labelKey: "columnPreparing", icon: RefreshCw, iconClass: "animate-spin [animation-duration:3s]" },
   { status: "ready", headerClass: "bg-green-600", labelKey: "columnReady", icon: CheckCheck },
 ]
@@ -93,14 +93,14 @@ export function KitchenBoard({
                             <div
                               className={cn(
                                 "text-xl font-bold",
-                                column.status === "new" && "text-primary",
+                                column.status === "paid" && "text-primary",
                                 column.status === "preparing" && "text-amber-600"
                               )}
                             >
                               {formatElapsed(order.createdAt, now)}
                             </div>
                             <div className="text-[10px] font-bold uppercase text-muted-foreground">
-                              {column.status === "new" ? t("elapsedTimeCaption") : t("preparingTimeCaption")}
+                              {column.status === "paid" ? t("elapsedTimeCaption") : t("preparingTimeCaption")}
                             </div>
                           </>
                         )}
@@ -121,15 +121,8 @@ export function KitchenBoard({
                             >
                               {locale === "vi" ? item.nameVi : item.nameEn}
                             </p>
-                            {item.noteVi && (
-                              <p className="text-sm font-medium italic text-secondary">
-                                {locale === "vi" ? item.noteVi : item.noteEn}
-                              </p>
-                            )}
-                            {item.isSignature && (
-                              <span className="mt-1 inline-block rounded bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                                {t("signatureItem")}
-                              </span>
+                            {item.note && (
+                              <p className="text-sm font-medium italic text-secondary">{item.note}</p>
                             )}
                           </div>
                         </div>
@@ -140,12 +133,12 @@ export function KitchenBoard({
                       onClick={() => onAdvance(order.id)}
                       className={cn(
                         "flex w-full items-center justify-center gap-2 rounded-b-xl py-3 text-base font-bold text-white transition-all active:scale-[0.99]",
-                        column.status === "new" && "bg-primary hover:brightness-110",
+                        column.status === "paid" && "bg-primary hover:brightness-110",
                         column.status === "preparing" && "bg-amber-600 hover:brightness-110",
                         column.status === "ready" && "bg-green-600 hover:brightness-110"
                       )}
                     >
-                      {column.status === "new" && (
+                      {column.status === "paid" && (
                         <>
                           <Play className="h-4 w-4" /> {t("startPreparing")}
                         </>

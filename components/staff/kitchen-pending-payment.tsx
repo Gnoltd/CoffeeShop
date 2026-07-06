@@ -1,0 +1,38 @@
+"use client"
+
+import { useTranslations } from "next-intl"
+import { Banknote } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import type { KdsOrder } from "@/hooks/useKitchenOrders"
+
+export function KitchenPendingPayment({
+  orders,
+  onConfirm,
+}: {
+  orders: KdsOrder[]
+  onConfirm: (orderId: string) => Promise<void>
+}) {
+  const t = useTranslations("KitchenDisplay")
+
+  return (
+    <div className="shrink-0 rounded-xl border border-amber-300 bg-amber-50 p-3 dark:bg-amber-950/20">
+      <h3 className="mb-2 flex items-center gap-2 text-sm font-bold text-amber-800 dark:text-amber-300">
+        <Banknote className="h-4 w-4" />
+        {t("awaitingPaymentTitle", { count: orders.length })}
+      </h3>
+      <div className="flex flex-wrap gap-2">
+        {orders.map((order) => (
+          <div key={order.id} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm">
+            <span className="font-bold">#{order.id}</span>
+            <span className="text-muted-foreground">
+              {order.orderType === "pickup" ? t("pickup") : t("table", { table: order.table ?? "" })}
+            </span>
+            <Button size="sm" className="h-7" onClick={() => onConfirm(order.id)}>
+              {t("confirmCashReceived")}
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}

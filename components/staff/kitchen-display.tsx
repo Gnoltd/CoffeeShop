@@ -5,7 +5,8 @@ import { KitchenTopBar } from "@/components/staff/kitchen-top-bar"
 import { KitchenSidebar } from "@/components/staff/kitchen-sidebar"
 import { KitchenStatsFooter } from "@/components/staff/kitchen-stats-footer"
 import { KitchenBoard } from "@/components/staff/kitchen-board"
-import { useKitchenOrders, NEXT_STATUS } from "@/hooks/useKitchenOrders"
+import { KitchenPendingPayment } from "@/components/staff/kitchen-pending-payment"
+import { useKitchenOrders } from "@/hooks/useKitchenOrders"
 
 function formatDuration(ms: number): string {
   const totalSeconds = Math.max(0, Math.floor(ms / 1000))
@@ -15,7 +16,7 @@ function formatDuration(ms: number): string {
 }
 
 export function KitchenDisplay() {
-  const { orders, advance: advanceShared } = useKitchenOrders()
+  const { orders, pendingPaymentOrders, advance: advanceShared, confirmCashPayment } = useKitchenOrders()
   const [now, setNow] = useState(() => Date.now())
   const [completedCount, setCompletedCount] = useState(0)
   const [completedDurations, setCompletedDurations] = useState<number[]>([])
@@ -25,14 +26,14 @@ export function KitchenDisplay() {
     return () => clearInterval(interval)
   }, [])
 
-  function advance(orderId: string) {
+  async function advance(orderId: string) {
     const order = orders.find((o) => o.id === orderId)
-    if (order && !NEXT_STATUS[order.status]) {
+    if (order && order.status === "ready") {
       const duration = Date.now() - order.createdAt
       setCompletedCount((count) => count + 1)
       setCompletedDurations((durations) => [...durations, duration])
     }
-    advanceShared(orderId)
+    await advanceShared(orderId)
   }
 
   const avgTimeLabel =
@@ -46,6 +47,9 @@ export function KitchenDisplay() {
       <div className="flex flex-1 overflow-hidden">
         <KitchenSidebar completedCount={completedCount} avgTimeLabel={avgTimeLabel} />
         <div className="flex flex-1 flex-col gap-3 overflow-hidden p-3">
+          {pendingPaymentOrders.length > 0 && (
+            <KitchenPendingPayment orders={pendingPaymentOrders} onConfirm={confirmCashPayment} />
+          )}
           <div className="flex-1 overflow-hidden">
             <KitchenBoard orders={orders} now={now} onAdvance={advance} />
           </div>
