@@ -209,3 +209,9 @@ export async function confirmCashPayment(supabase: SupabaseClient, orderId: stri
   const { error } = await supabase.from("orders").update({ status: "paid", payment_status: "paid" }).eq("id", orderId)
   if (error) throw error
 }
+
+export async function cancelPendingOrder(supabase: SupabaseClient, orderId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("cancel_pending_order", { p_order_id: orderId })
+  if (error) throw error
+  return data as boolean
+}

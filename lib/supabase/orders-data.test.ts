@@ -7,6 +7,7 @@ import {
   getKitchenOrders,
   advanceOrderStatus,
   confirmCashPayment,
+  cancelPendingOrder,
 } from "./orders-data"
 
 describe("getOrderForTracking", () => {
@@ -129,5 +130,25 @@ describe("confirmCashPayment", () => {
 
     await confirmCashPayment(supabase, "ord-1")
     expect(updateSpy).toHaveBeenCalledWith({ status: "paid", payment_status: "paid" })
+  })
+})
+
+describe("cancelPendingOrder", () => {
+  it("calls the RPC with the order id and returns its boolean result", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: true, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    const result = await cancelPendingOrder(supabase, "ord-1")
+
+    expect(rpcSpy).toHaveBeenCalledWith("cancel_pending_order", { p_order_id: "ord-1" })
+    expect(result).toBe(true)
+  })
+
+  it("returns false when the RPC reports the order wasn't cancellable", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: false, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    const result = await cancelPendingOrder(supabase, "ord-2")
+    expect(result).toBe(false)
   })
 })
