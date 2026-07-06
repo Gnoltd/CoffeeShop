@@ -27,6 +27,7 @@ declare
   v_date_from date := coalesce(p_date_from, v_date_to - 7);
   v_from date := least(v_date_from, v_date_to);
   v_to date := greatest(v_date_from, v_date_to);
+  v_statuses order_status[] := coalesce(p_statuses, array['completed', 'cancelled']::order_status[]);
   v_rows json;
   v_total bigint;
 begin
@@ -34,7 +35,7 @@ begin
   from public.orders o
   left join public.tables tb on tb.id = o.table_id
   left join public.profiles p on p.id = o.customer_id
-  where o.status = any(p_statuses)
+  where o.status = any(v_statuses)
     and o.created_at::date between v_from and v_to
     and (p_order_type is null or o.order_type = p_order_type)
     and (
@@ -59,7 +60,7 @@ begin
     from public.orders o
     left join public.tables tb on tb.id = o.table_id
     left join public.profiles p on p.id = o.customer_id
-    where o.status = any(p_statuses)
+    where o.status = any(v_statuses)
       and o.created_at::date between v_from and v_to
       and (p_order_type is null or o.order_type = p_order_type)
       and (
