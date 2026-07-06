@@ -9,13 +9,17 @@ import { formatVND } from "@/lib/format"
 import { useOrders, type OrderStatus } from "@/hooks/useOrders"
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
+  pending_payment: "bg-muted text-muted-foreground",
+  paid: "bg-blue-100 text-blue-800",
   preparing: "bg-amber-100 text-amber-800",
   ready: "bg-blue-100 text-blue-800",
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-muted text-muted-foreground",
 }
 
-const STATUS_KEYS: Record<OrderStatus, "statusPreparing" | "statusReady" | "statusCompleted" | "statusCancelled"> = {
+const STATUS_KEYS: Record<OrderStatus, "statusPendingPayment" | "statusPaid" | "statusPreparing" | "statusReady" | "statusCompleted" | "statusCancelled"> = {
+  pending_payment: "statusPendingPayment",
+  paid: "statusPaid",
   preparing: "statusPreparing",
   ready: "statusReady",
   completed: "statusCompleted",
@@ -32,7 +36,7 @@ const FILTERS: { id: Filter; labelKey: "filterAll" | "filterActive" | "filterCom
 
 function matchesFilter(status: OrderStatus, filter: Filter): boolean {
   if (filter === "all") return true
-  if (filter === "active") return status === "preparing" || status === "ready"
+  if (filter === "active") return status === "pending_payment" || status === "paid" || status === "preparing" || status === "ready"
   return status === "completed" || status === "cancelled"
 }
 
@@ -46,10 +50,10 @@ function formatOrderDate(timestamp: number, locale: string): string {
 export function OrderHistory() {
   const locale = useLocale()
   const t = useTranslations("OrderHistory")
-  const { orders } = useOrders()
+  const { myOrders, isLoadingMyOrders } = useOrders()
   const [filter, setFilter] = useState<Filter>("all")
 
-  const sorted = useMemo(() => [...orders].sort((a, b) => b.createdAt - a.createdAt), [orders])
+  const sorted = useMemo(() => [...myOrders].sort((a, b) => b.createdAt - a.createdAt), [myOrders])
   const filtered = sorted.filter((order) => matchesFilter(order.status, filter))
 
   return (
@@ -70,7 +74,9 @@ export function OrderHistory() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoadingMyOrders ? (
+        <p className="py-16 text-center text-muted-foreground">{t("loading")}</p>
+      ) : filtered.length === 0 ? (
         <p className="py-16 text-center text-muted-foreground">{t("empty")}</p>
       ) : (
         <div className="flex flex-col gap-3">

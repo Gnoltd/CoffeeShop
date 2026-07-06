@@ -179,11 +179,14 @@
     "filterActive": "Active",
     "filterCompleted": "Completed",
     "itemCount": "{count, plural, one {# item} other {# items}}",
+    "statusPendingPayment": "Awaiting Payment",
+    "statusPaid": "Order Confirmed",
     "statusPreparing": "Preparing",
     "statusReady": "Ready",
     "statusCompleted": "Completed",
     "statusCancelled": "Cancelled",
-    "empty": "No orders yet."
+    "empty": "No orders yet.",
+    "loading": "Loading your orders…"
   },
   "OrderTracking": {
     "orderId": "Order ID",

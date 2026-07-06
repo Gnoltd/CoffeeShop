@@ -179,11 +179,14 @@
     "filterActive": "Đang Xử Lý",
     "filterCompleted": "Hoàn Tất",
     "itemCount": "{count} món",
+    "statusPendingPayment": "Đang Chờ Thanh Toán",
+    "statusPaid": "Đã Xác Nhận Đơn",
     "statusPreparing": "Đang Pha Chế",
     "statusReady": "Sẵn Sàng",
     "statusCompleted": "Hoàn Tất",
     "statusCancelled": "Đã Hủy",
-    "empty": "Không có đơn hàng nào."
+    "empty": "Không có đơn hàng nào.",
+    "loading": "Đang tải đơn hàng của bạn…"
   },
   "OrderTracking": {
     "orderId": "Mã Đơn Hàng",
