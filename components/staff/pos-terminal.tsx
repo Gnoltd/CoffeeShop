@@ -102,10 +102,10 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
     try {
       const { data, error: invokeError } = await supabase.functions.invoke("place-order", {
         body: {
-          orderType: orderType === "dine-in" ? "dine-in" : "pickup",
+          orderType: orderType === "dine-in" ? "dine_in" : "pickup",
           tableId: orderType === "dine-in" ? (selectedTable?.id ?? null) : null,
           pickupTime: null,
-          paymentMethod: "cash",
+          paymentMethod: paymentMethod === "card" ? "stripe" : "cash",
           promoCode: null,
           redeemLoyaltyPoints: 0,
           paymentCollected: true,
@@ -297,7 +297,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
             </label>
             <div className="grid grid-cols-3 gap-2">
               {(["cash", "card", "vnpay"] as PaymentMethod[]).map((method) => {
-                const enabled = method === "cash"
+                const enabled = method === "cash" || method === "card"
                 return (
                   <button
                     key={method}
