@@ -38,13 +38,22 @@ does for active orders).
   display (`#A1B2C3D4`). Already wired into every existing order-id
   display site (Order Tracking, Order History, Kitchen Board, Pending
   Payment list).
-- **A real gap found while researching this spec:** the customer-facing
-  `get_order_for_tracking()` RPC (migration `0014`) only returns a row
-  when `customer_id = auth.uid()` or `customer_id is null` (guest) — it
-  has no staff/manager/admin bypass. It **cannot** be reused for this
-  feature's detail page. The detail page instead uses a plain RLS-gated
-  table select (see below), which staff can already do without touching
-  that customer-facing function at all.
+- **Correction from an earlier read of this code:** `get_order_for_tracking()`
+  (migration `0014`) *does* already include a staff/manager/admin bypass
+  (`o.customer_id = auth.uid() or o.customer_id is null or
+  public.current_user_role() in ('staff', 'manager', 'admin')`) — an
+  initial partial read of the file during brainstorming had missed the
+  third clause and wrongly concluded staff couldn't call it at all. Staff
+  *can* call it and get a row back. The real reason this feature still
+  needs its own `getOrderHistoryDetail` query, not a reuse of that RPC, is
+  a **data-shape** gap, not an authorization one: `get_order_for_tracking`'s
+  returned JSON (`OrderForTracking`) has no `payment_method`,
+  `payment_status`, or customer name/phone fields — all required by this
+  page's detail view — and extending that customer-facing function's
+  return shape for a staff-only concern would be the wrong place to add
+  it. The detail page instead uses its own plain RLS-gated table select
+  (see below), which staff can already do without touching that
+  customer-facing function at all.
 - A Stitch mockup for the list page was generated in this pass (project
   `4654820544595168289`, screen `6a268dd335ce45099f557f8260cb1527`, design
   system `assets/7846627771704298063`), matching the existing "KDS Board"
