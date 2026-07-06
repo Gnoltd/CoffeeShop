@@ -21,20 +21,23 @@ Supabase query wiring (see "Building the rest" below) — **Login, Signup,
 and Logout are the first slice now backed by real Supabase Auth**, not
 mock data (see "Landing, Auth, and remaining customer pages" below).
 
-**Now built:** the Supabase database — 13 migrations
-(`supabase/migrations/0001`-`0013`) are applied to the live hosted project
+**Now built:** the Supabase database — 15 migrations
+(`supabase/migrations/0001`-`0015`) are applied to the live hosted project
 (`qhiypdqnrnzndxdwqxbx`), every table has RLS enabled, and a real admin
 account exists (`profiles.role = 'admin'`). Real Supabase Auth now backs
 Login/Signup/Logout. Menu data (items/categories/sizes/modifier
 groups/extras) is real — migrations `0008`/`0009` and
 `lib/supabase/menu-data.ts`, see "Customer ordering flow" below.
-Inventory (ingredients/stock/logs/recipes) and Tables
-(directory/location/occupied/scan-count/QR tokens) are also real, with
-**live Realtime sync** across sessions — migrations `0010`/`0011` and
-`0012`/`0013` respectively, `lib/supabase/inventory-data.ts`/
-`lib/supabase/tables-data.ts`, see "Admin pages"/"Table identity flow"
-below. **Still not built:** Edge Functions, Stripe/VNPay integration, and
-— outside of auth, menu, inventory, and tables — every other mock data
+Inventory (ingredients/stock/logs/recipes), Tables
+(directory/location/occupied/scan-count/QR tokens), and Orders (Cash
+payment end-to-end, unifying customer tracking with staff POS/Kitchen
+Display) are also real, with **live Realtime sync** across sessions —
+migrations `0010`/`0011`, `0012`/`0013`, and `0014`/`0015` respectively;
+`lib/supabase/inventory-data.ts`/`lib/supabase/tables-data.ts`/
+`lib/supabase/orders-data.ts`; see "Admin pages"/"Table identity
+flow"/"Real orders + Realtime" below. **Still not built:** Stripe/VNPay
+integration (their own two follow-up specs to the Orders work), and
+— outside of auth, menu, inventory, tables, and orders — every other mock data
 source in the app (orders, staff accounts) is still waiting on real
 queries (+ Realtime) replacing the various `use*` hooks. See each feature
 section
@@ -468,6 +471,99 @@ page is responsible for its own top-level chrome.
   authenticated session (no live Supabase yet, and no browser automation
   tool in this environment) — same caveat as the Food Cost Calculator.
 
+## Real orders + Realtime (2026-07-06, core, Cash-only)
+
+Third "make all data real-time" sub-project — unifies what used to be
+two disconnected mock systems (`hooks/useOrders.tsx` for customer
+Checkout/Tracking/History, `hooks/useKitchenOrders.tsx` for staff
+POS/Kitchen Display) into one real `orders` schema (migrations
+`0005`-`0007`, already applied) with live Realtime. Design:
+`docs/superpowers/specs/2026-07-06-orders-realtime-design.md`. Plan:
+`docs/superpowers/plans/2026-07-06-orders-realtime.md`. Stripe/VNPay are
+explicitly out of scope here (separate future specs) — Checkout's Card/
+VNPay buttons are disabled+tooltip; only Cash is real end-to-end.
+
+- **`place_order`** (migration `0014`, `security definer`) — the one
+  place order money values are computed. Takes a JSON cart payload,
+  looks up real prices from `menu_items`/`menu_item_sizes`/`modifiers`
+  server-side (never trusts a client-supplied price), recomputes the
+  promo-code discount and validates any redeemed loyalty points against
+  the real balance, and inserts `orders`+`order_items`+
+  `order_item_modifiers` atomically. Always inserts at
+  `payment_status='pending'`, then a genuine second `update` to `'paid'`
+  when payment was already collected (POS) — required because
+  `handle_order_paid` (migration `0007`) is a `before update` trigger
+  and cannot fire on `insert`. `order_items` gained a `note` column in
+  this same migration — the real schema had nowhere to store a
+  customer's free-text per-item note until this was caught while
+  designing the function.
+- **`get_order_for_tracking`** (`security definer`) — the only way a
+  guest (or anyone) reads a single order for tracking. Deliberately
+  *not* a broad RLS SELECT policy: a `customer_id is null` policy would
+  let any guest bulk-read every other guest's order, since RLS gates by
+  row predicate, not by "did you ask for this specific id." A
+  single-row lookup function with the id as a required parameter closes
+  that hole while still letting a guest see their own order.
+- **`place-order` Edge Function** — real now (was a comment-only stub),
+  a thin wrapper calling `place_order` with the service-role key so the
+  RPC's own internal authorization is the real boundary. Two real bugs
+  found only by testing through an actual browser (not curl, which
+  skips both of these): (1) no CORS handling at all — the browser's
+  preflight `OPTIONS` request was flatly rejected; (2)
+  `supabase.functions.invoke()` always attaches *some* `Authorization`
+  header, even for a guest — for a guest it's the client's own
+  publishable key (`sb_publishable_...`), not a JWT, and forwarding that
+  blindly broke `auth.uid()` resolution ("Expected 3 parts in JWT; got
+  1"). Fixed by only forwarding the header when it's actually
+  JWT-shaped. `verify_jwt` is disabled on this function (a guest has no
+  JWT at all to verify).
+- **Realtime — two real bugs found only by testing through the actual
+  UI, not direct SQL/RPC calls:**
+  1. Migration `0014` added the RPCs but never added `orders` to the
+     `supabase_realtime` publication (unlike Inventory's/Tables'
+     migrations, which each did this themselves) — neither customer
+     tracking nor Kitchen Display received any live update at all until
+     migration `0015` fixed it.
+  2. `order-tracking.tsx`'s single-order subscription used a
+     `filter: 'id=eq.X'` clause, which does not reliably combine with
+     RLS-gated `postgres_changes` — confirmed directly with `supabase-js`
+     that an identical subscription with no filter received events
+     correctly while the filtered one received nothing. Fixed by
+     subscribing with no filter and checking the delivered payload's id
+     client-side (the same no-filter-then-refetch shape
+     `useOrders.tsx`/`useKitchenOrders.tsx` already used successfully).
+  3. A **known, deliberate gap, not a bug**: a guest's own tracking page
+     has no Realtime path at all (RLS would have to allow bulk guest
+     visibility to make it work, which is exactly the leak
+     `get_order_for_tracking` avoids) — it polls `get_order_for_tracking`
+     every 10 seconds instead, clearly labeled in the UI as polling.
+     Logged-in customers and staff get true Realtime.
+- **Cash's two real payment-collection moments**: self-checkout Cash
+  ("pay at pickup") starts at `pending_payment`/`pending` — staff
+  confirms cash received later via a new **Awaiting Payment** list,
+  present on both `components/staff/kitchen-pending-payment.tsx`
+  (shared by Kitchen Display and POS) with a "Confirm Cash Received"
+  action (`confirmCashPayment` — a plain `update`, no RPC needed, since
+  staff already satisfies `orders_update_staff`). POS-charged Cash is
+  collected in person immediately, so `place_order`'s
+  `paymentCollected: true` flag skips straight to `paid` — no Awaiting
+  Payment step for a POS sale.
+- Kitchen Display's board now maps the real 6-state `order_status` enum:
+  `pending_payment` (Awaiting Payment list) → `paid` ("New" column) →
+  `preparing` → `ready` → `completed` (a real status update now, not
+  just deleting the order from local state) → `cancelled`. The
+  decorative mock `noteVi`/`noteEn`/`isSignature` fields (no real
+  backing ever existed for them) are gone — real `order_items.note` is
+  a single free-text string, not a bilingual pair.
+- Order Tracking's old `FALLBACK_ORDER` mock (shown for any id not in
+  the local store) is gone — an unknown/inaccessible id now shows a real
+  "Order Not Found" state instead of fabricated data.
+- `supabase/functions/place-order` writing real code (previously a
+  single comment line) surfaced that the root `tsconfig.json` had been
+  silently type-checking Deno Edge Function files with the main Next.js
+  project's compiler options — fixed by excluding `supabase/functions`
+  from the main tsconfig (Edge Functions are a separate Deno runtime).
+
 ## Admin pages (`/admin/dashboard`, `/menu`, `/inventory`, `/tables`, `/staff`, `/settings`)
 
 Real, interactive pages ported from `design/stitch-exports/12-admin-dashboard.html`
@@ -819,18 +915,18 @@ real, menu data is real (`docs/superpowers/plans/2026-07-05-menu-data-migration.
 — schema, seed, and every consumer rewired to `lib/supabase/menu-data.ts`,
 `lib/mock-data/menu.ts` deleted), the Profile auth-gate + role-based
 navigation is shipped, menu item extras/modifiers are admin-configurable,
-and — as of 2026-07-06 — **Inventory and Tables are the first two of the
-"make all data real-time" sub-projects to ship** (real Supabase data +
-Realtime + admin-configurable recipes for Inventory, see the Admin pages
-section above; real table directory + a guest-writable scan-count RPC
-for Tables, see "Table identity flow" above). Edge Functions
-(`place-order`, `stripe-webhook`, `vnpay-ipn`, `vnpay-return` — full code
-in the scaffold plan doc's Task 11) are still comment-only stubs, and the
-remaining "make all data real-time" sub-projects — **Orders (+ unifying
-customer Checkout/Tracking with staff POS/Kitchen Display) and Staff
-accounts**, in that order per `daily.md` — still need their mock/local-
-Context data replaced with real Supabase queries (+ Realtime where it
-matters). The app is also live on Vercel
+and — as of 2026-07-06 — **Inventory, Tables, and Orders (core, Cash-only)
+are the first three of the "make all data real-time" sub-projects to
+ship** (real Supabase data + Realtime + admin-configurable recipes for
+Inventory, see the Admin pages section above; real table directory + a
+guest-writable scan-count RPC for Tables, see "Table identity flow"
+above; real order placement/tracking/KDS unification for Orders, see
+"Real orders + Realtime" above). The `place-order` Edge Function is real
+now (Cash path); `stripe-webhook`/`vnpay-ipn`/`vnpay-return` are still
+comment-only stubs, each becoming its own follow-up spec to the Orders
+work. The remaining "make all data real-time" sub-project — **Staff
+accounts** — still needs its mock/local array replaced with real
+`profiles` queries. The app is also live on Vercel
 (see "Deployment" above) — verify against the live URL, not localhost.
 When adding any genuinely new page/feature beyond what's already built,
 follow the same pattern used throughout: shared brand tokens (no
