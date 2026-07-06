@@ -21,27 +21,28 @@ Supabase query wiring (see "Building the rest" below) — **Login, Signup,
 and Logout are the first slice now backed by real Supabase Auth**, not
 mock data (see "Landing, Auth, and remaining customer pages" below).
 
-**Now built:** the Supabase database — 15 migrations
-(`supabase/migrations/0001`-`0015`) are applied to the live hosted project
+**Now built:** the Supabase database — 17 migrations
+(`supabase/migrations/0001`-`0017`) are applied to the live hosted project
 (`qhiypdqnrnzndxdwqxbx`), every table has RLS enabled, and a real admin
 account exists (`profiles.role = 'admin'`). Real Supabase Auth now backs
 Login/Signup/Logout. Menu data (items/categories/sizes/modifier
 groups/extras) is real — migrations `0008`/`0009` and
 `lib/supabase/menu-data.ts`, see "Customer ordering flow" below.
 Inventory (ingredients/stock/logs/recipes), Tables
-(directory/location/occupied/scan-count/QR tokens), and Orders (Cash
+(directory/location/occupied/scan-count/QR tokens), Orders (Cash
 payment end-to-end, unifying customer tracking with staff POS/Kitchen
-Display) are also real, with **live Realtime sync** across sessions —
-migrations `0010`/`0011`, `0012`/`0013`, and `0014`/`0015` respectively;
+Display), and Staff accounts (real Supabase Auth account creation, an
+`is_active` disable mechanism, a real staff directory) are also real,
+with **live Realtime sync** across sessions — migrations `0010`/`0011`,
+`0012`/`0013`, `0014`/`0015`, and `0016`/`0017` respectively;
 `lib/supabase/inventory-data.ts`/`lib/supabase/tables-data.ts`/
-`lib/supabase/orders-data.ts`; see "Admin pages"/"Table identity
-flow"/"Real orders + Realtime" below. **Still not built:** Stripe/VNPay
-integration (their own two follow-up specs to the Orders work), and
-— outside of auth, menu, inventory, tables, and orders — every other mock data
-source in the app (orders, staff accounts) is still waiting on real
-queries (+ Realtime) replacing the various `use*` hooks. See each feature
-section
-below for exactly what's mocked and what's a documented (not hidden) gap.
+`lib/supabase/orders-data.ts`/`lib/supabase/staff-data.ts`; see "Admin
+pages"/"Table identity flow"/"Real orders + Realtime"/"Staff accounts +
+Realtime" below. This completes all four sub-projects of the "make all
+data real-time" initiative. **Still not built:** Stripe/VNPay
+integration (their own two follow-up specs to the Orders work) — the
+only remaining deferred backend work. See each feature section below
+for exactly what's mocked and what's a documented (not hidden) gap.
 
 ## Stack
 
@@ -814,6 +815,98 @@ for the table directory, not `localStorage` mock rows. Design:
   reactively, or gating Checkout's initial render on `TablesProvider`
   finishing hydration) whenever Checkout itself is revisited.
 
+## Staff accounts + Realtime (2026-07-06, core)
+
+Fourth and final sub-project of the "make all data real-time" initiative
+— replaces Admin Staff's local mock array with real Supabase Auth
+accounts + a real `profiles` directory + Realtime. Design:
+`docs/superpowers/specs/2026-07-06-staff-accounts-realtime-design.md`.
+Plan: `docs/superpowers/plans/2026-07-06-staff-accounts-realtime.md`.
+
+- **`is_active` disable mechanism, not Auth banning.** Migration `0016`
+  adds `profiles.is_active` (default `true`) and changes
+  `current_user_role()` to `select case when is_active then role else
+  'customer' end ...` — disabling a staff/manager/admin account doesn't
+  touch their Supabase Auth login at all; it just makes every RLS check
+  and role-gated read resolve them as a plain `customer` while
+  `is_active = false`. Chosen over actually banning/locking the Auth
+  account because a real disabled employee still walks in and orders
+  coffee as a customer — there's no separate logout/ban step, and
+  no stale-session risk, since role is never cached client-side and is
+  re-resolved on every request.
+- **`get_staff_members()`** (migration `0016`, `security definer`) — the
+  only controlled read path for a staff directory. `auth.users` is a
+  protected schema with no client-facing email column on `profiles`, so
+  this function joins the two server-side and returns `id`/`full_name`/
+  `phone`/`role`/`is_active`/`email`, gated to callers whose own
+  `current_user_role()` is staff/manager/admin.
+- **`create-staff-account` Edge Function** — creates a real,
+  login-capable Supabase Auth account for a new hire (`profiles` rows
+  can only ever be created via the `handle_new_user` trigger on
+  `auth.users` insert, so this can't be a plain table insert). Uses
+  `auth.admin.createUser({ email_confirm: true, ... })` to skip sending
+  any confirmation email at all — deliberately sidesteps this project's
+  already-documented shared-email-sender rate limit rather than hitting
+  it again — and returns a randomly generated one-time password for the
+  admin to relay to the new hire out of band (shown once in Admin
+  Staff's UI via a copyable panel, never emailed, never stored).
+  `verify_jwt` stays enabled (the default) here, unlike `place-order` —
+  there's no guest use case, only an already-authenticated admin ever
+  calls it.
+- **Real bug found via live end-to-end testing, not guessed:** the
+  Edge Function's service-role client bypasses RLS but **not** the
+  `on_profile_role_change` trigger (migration `0001`) — triggers fire
+  regardless of RLS bypass, and the trigger's own `current_user_role()`
+  check resolves `auth.uid()` as `null` for a service-role connection
+  with no forwarded JWT, so it correctly (from its own logic) rejected
+  the very first role assignment on a brand-new account. Fixed with
+  migration `0017`'s `set_initial_staff_role(p_user_id, p_role)` — a
+  `security definer` function using `session_replication_role = replica`
+  to skip triggers for just that one `UPDATE`, granted only to
+  `service_role` (never `authenticated`/`anon` — it has no authorization
+  check of its own, relying entirely on only the already-admin-gated
+  Edge Function being able to call it).
+- **A real bug found in two — then a third — pre-existing files that
+  bypass `current_user_role()` entirely**, discovered by auditing every
+  role-read call site before writing the plan (two), then again during
+  live verification (a third, missed the first time): `middleware.ts`'s
+  `resolveRole()`, `lib/get-current-role.ts`'s `getCurrentRole()`, and
+  `components/auth/login-form.tsx`'s post-login redirect all did a raw
+  `.select("role")` on `profiles` directly instead of calling the SQL
+  function, so none of them would have respected `is_active` without
+  being fixed directly. All three now do
+  `.select("role, is_active")` and return `is_active ? role :
+  "customer"`. The login-form gap wasn't a security hole (middleware
+  still gates the actual pages) but would have briefly redirected a
+  disabled account toward its old role home before getting bounced back.
+- `lib/supabase/staff-data.ts` — query layer (DI'd like `menu-data.ts`
+  etc.): `getStaffMembers`, `updateStaffMember` (plain `profiles`
+  update — safe for `full_name`/`is_active`/non-initial `role` changes,
+  since the trigger only blocks a role change from a non-admin caller,
+  and only an admin session ever calls this), `createStaffAccount`
+  (invokes the Edge Function).
+- `components/admin/staff-accounts.tsx` + `staff-member-form.tsx` —
+  real data + an unfiltered `postgres_changes` subscription on
+  `profiles` (refetch via `getStaffMembers()`, same pattern as every
+  other Realtime hook this initiative added — a column filter doesn't
+  reliably combine with RLS-gated `postgres_changes`). Add Staff shows
+  the generated password once in a dismissable panel with a copy
+  button; Edit Staff disables the email field (not editable post-
+  creation) and disables the active-toggle on the logged-in admin's own
+  row (an admin can't lock themselves out).
+- Verified live end-to-end with Playwright against the real deployment:
+  created a real throwaway account, logged into it from a fresh browser
+  context and confirmed it landed on `/staff/pos`, confirmed the new row
+  appeared via Realtime on a second admin tab with no reload, disabled
+  it and confirmed the still-logged-in session was redirected away from
+  `/staff/pos` on its very next request (role re-resolves server-side,
+  no stale-session risk) with the global role badge switching to
+  "Khách Hàng"/Guest styling, re-enabled it and confirmed access came
+  back with no re-login needed, and confirmed the real admin's own row
+  has a disabled lock button. Cleaned up the throwaway account
+  afterward; confirmed the real admin's own `is_active` was never
+  touched by the test.
+
 ## Database (`supabase/migrations/`)
 
 **Built and applied.** All 7 migrations have real SQL (from the plan doc's
@@ -851,6 +944,18 @@ Full entity list: spec Section 2.
   (seeds the 6 tables that used to be `hooks/useTables.tsx`'s hardcoded
   mock rows). See "Table identity flow" above for the resulting query
   module (`lib/supabase/tables-data.ts`) and Realtime wiring.
+- Two more after that, by `docs/superpowers/plans/2026-07-06-staff-accounts-realtime.md`:
+  `0016_staff_active_and_directory_fn` (`profiles.is_active`, an updated
+  `current_user_role()` that downgrades a disabled account to
+  `'customer'`, the `get_staff_members()` directory function, and adding
+  `profiles` to the `supabase_realtime` publication) and
+  `0017_staff_role_bypass_fn` (`set_initial_staff_role()`, a
+  `service_role`-only RPC that skips the `on_profile_role_change`
+  trigger via `session_replication_role` for a new account's first role
+  assignment — see "Staff accounts + Realtime" above for why the
+  trigger blocked that assignment in the first place). See that section
+  for the resulting query module (`lib/supabase/staff-data.ts`), the
+  `create-staff-account` Edge Function, and Realtime wiring.
 - pgcrypto was already installed on this project (needed for
   `gen_random_uuid()`/`gen_random_bytes()`) — no `create extension` step
   was actually required, despite the plan doc flagging it as a risk.
@@ -915,18 +1020,20 @@ real, menu data is real (`docs/superpowers/plans/2026-07-05-menu-data-migration.
 — schema, seed, and every consumer rewired to `lib/supabase/menu-data.ts`,
 `lib/mock-data/menu.ts` deleted), the Profile auth-gate + role-based
 navigation is shipped, menu item extras/modifiers are admin-configurable,
-and — as of 2026-07-06 — **Inventory, Tables, and Orders (core, Cash-only)
-are the first three of the "make all data real-time" sub-projects to
-ship** (real Supabase data + Realtime + admin-configurable recipes for
-Inventory, see the Admin pages section above; real table directory + a
-guest-writable scan-count RPC for Tables, see "Table identity flow"
-above; real order placement/tracking/KDS unification for Orders, see
-"Real orders + Realtime" above). The `place-order` Edge Function is real
+and — as of 2026-07-06 — **all four "make all data real-time"
+sub-projects are now shipped: Inventory, Tables, Orders (core,
+Cash-only), and Staff accounts.** Inventory has real Supabase data +
+Realtime + admin-configurable recipes (see the Admin pages section
+above); Tables has a real table directory + a guest-writable scan-count
+RPC (see "Table identity flow" above); Orders has real order
+placement/tracking/KDS unification (see "Real orders + Realtime"
+above); Staff accounts has real Supabase Auth account creation, an
+`is_active` disable mechanism, and a real staff directory (see "Staff
+accounts + Realtime" above). The `place-order` Edge Function is real
 now (Cash path); `stripe-webhook`/`vnpay-ipn`/`vnpay-return` are still
 comment-only stubs, each becoming its own follow-up spec to the Orders
-work. The remaining "make all data real-time" sub-project — **Staff
-accounts** — still needs its mock/local array replaced with real
-`profiles` queries. The app is also live on Vercel
+work — this is the only remaining deferred follow-up from the whole
+"make all data real-time" initiative. The app is also live on Vercel
 (see "Deployment" above) — verify against the live URL, not localhost.
 When adding any genuinely new page/feature beyond what's already built,
 follow the same pattern used throughout: shared brand tokens (no
