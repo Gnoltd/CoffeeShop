@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { CreditCard, Banknote, QrCode, TableIcon, Sparkles } from "lucide-react"
 import { Link, useRouter } from "@/i18n/navigation"
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
+import { cancelPendingOrder } from "@/lib/supabase/orders-data"
 import { useCart } from "@/hooks/useCart"
 import { useTables } from "@/hooks/useTables"
 
@@ -18,7 +20,7 @@ type OrderType = "pickup" | "dine-in"
 type PaymentMethod = "stripe" | "cash" | "vnpay"
 
 const PAYMENT_OPTIONS: { id: PaymentMethod; icon: typeof CreditCard; labelKey: "payStripe" | "payCash"; enabled: boolean }[] = [
-  { id: "stripe", icon: CreditCard, labelKey: "payStripe", enabled: false },
+  { id: "stripe", icon: CreditCard, labelKey: "payStripe", enabled: true },
   { id: "cash", icon: Banknote, labelKey: "payCash", enabled: true },
 ]
 
@@ -39,6 +41,8 @@ export function CheckoutView() {
   const [redeemValuePerPoint, setRedeemValuePerPoint] = useState(0)
   const [isPlacing, setIsPlacing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const searchParams = useSearchParams()
+  const [canceledNotice, setCanceledNotice] = useState(false)
 
   // One fixed redemption chunk per toggle-on, same UX as the old mock's
   // single "50 points for X đ" option — only the VND-per-point conversion
@@ -59,6 +63,16 @@ export function CheckoutView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  useEffect(() => {
+    const canceledOrderId = searchParams.get("stripeCanceled")
+    if (!canceledOrderId) return
+    cancelPendingOrder(supabase, canceledOrderId).finally(() => {
+      setCanceledNotice(true)
+      router.replace("/checkout")
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const tableNumber = activeTable?.number ?? FALLBACK_TABLE_NUMBER
   const canRedeem = pointsBalance >= REDEEM_CHUNK_POINTS
   const loyaltyDiscount = redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS * redeemValuePerPoint : 0
@@ -74,11 +88,13 @@ export function CheckoutView() {
         body: {
           orderType: orderType === "dine-in" ? "dine_in" : "pickup",
           tableId: orderType === "dine-in" ? (activeTable?.id ?? null) : null,
+          tableNumber: orderType === "dine-in" ? tableNumber : null,
           pickupTime: orderType === "pickup" ? pickupTime : null,
           paymentMethod,
           promoCode,
           redeemLoyaltyPoints: redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS : 0,
           paymentCollected: false,
+          locale,
           items: items.map((item) => ({
             menuItemId: item.menuItemId,
             sizeId: item.size?.id ?? null,
@@ -89,6 +105,10 @@ export function CheckoutView() {
         },
       })
       if (invokeError || data?.error) throw invokeError ?? new Error(data.error)
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl
+        return
+      }
       clear()
       if (orderType === "dine-in") {
         router.push(`/orders/${data.orderId}?table=${encodeURIComponent(tableNumber)}`)
@@ -96,7 +116,7 @@ export function CheckoutView() {
         router.push(`/orders/${data.orderId}`)
       }
     } catch {
-      setError(t("placeOrderError"))
+      setError(paymentMethod === "stripe" ? t("cardPaymentUnavailable") : t("placeOrderError"))
       setIsPlacing(false)
     }
   }
@@ -278,6 +298,11 @@ export function CheckoutView() {
         </div>
       </section>
 
+      {canceledNotice && (
+        <p className="mx-auto mb-2 max-w-2xl rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
+          {t("paymentCanceledNotice")}
+        </p>
+      )}
       {error && (
         <p className="mx-auto mb-2 max-w-2xl rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
       )}

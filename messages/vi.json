@@ -170,6 +170,8 @@
     "paymentMethodComingSoon": "Sắp có — chưa khả dụng",
     "loyaltyGuestTooltip": "Đăng nhập để tích và đổi điểm thưởng",
     "placeOrderError": "Đặt hàng thất bại. Vui lòng thử lại.",
+    "cardPaymentUnavailable": "Không thể thanh toán bằng thẻ cho đơn này — vui lòng dùng Tiền Mặt.",
+    "paymentCanceledNotice": "Đã hủy thanh toán — giỏ hàng của bạn vẫn còn, hãy thử phương thức khác.",
     "placeOrder": "Đặt Hàng",
     "emptyCart": "Giỏ hàng trống — hãy thêm món trước khi thanh toán.",
     "browseMenu": "Xem Thực Đơn"

@@ -170,6 +170,8 @@
     "paymentMethodComingSoon": "Coming soon — not available yet",
     "loyaltyGuestTooltip": "Log in to earn and redeem loyalty points",
     "placeOrderError": "Failed to place order. Try again.",
+    "cardPaymentUnavailable": "Card payment isn't available for this order — try Cash.",
+    "paymentCanceledNotice": "Payment cancelled — your cart is still here, try another method.",
     "placeOrder": "Place Order",
     "emptyCart": "Your cart is empty — add items before checking out.",
     "browseMenu": "Browse Menu"
