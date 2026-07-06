@@ -1,42 +1,17 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import {
-  CookingPot,
-  Check,
-  PackageCheck,
-  CircleCheckBig,
-  Clock,
-  TableIcon,
-  ShoppingBag,
-  Store,
-  Phone,
+  CookingPot, Check, PackageCheck, CircleCheckBig, Clock, TableIcon, ShoppingBag, Store, Phone,
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { formatVND } from "@/lib/format"
 import { cn } from "@/lib/utils"
-import { useOrders, type OrderRecord, type OrderStatus } from "@/hooks/useOrders"
+import { createClient } from "@/lib/supabase/client"
+import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
 
-/**
- * No `orders` table / Realtime yet. Looks up the real order placed through
- * Checkout (hooks/useOrders.tsx) by id — real items, notes, discount, and
- * table when found. Falls back to a fixed mock order (matching the
- * approved Stitch mockup's example numbers) for any id not in the local
- * store, e.g. a stale link or a directly-typed URL.
- */
 const MOCK_SHOP_PHONE = "+84281234567"
-
-const FALLBACK_ORDER: Omit<OrderRecord, "id" | "table"> = {
-  createdAt: Date.now(),
-  orderType: "dine-in",
-  items: [
-    { nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", quantity: 1, unitPrice: 35000 },
-    { nameVi: "Bánh Mì Que", nameEn: "Crispy Breadsticks", quantity: 2, unitPrice: 15000 },
-  ],
-  subtotal: 65000,
-  discount: 5000,
-  total: 60000,
-  status: "preparing",
-}
+const GUEST_POLL_INTERVAL_MS = 10000
 
 const STEPS = [
   { key: "stepPaid", icon: Check },
@@ -46,13 +21,17 @@ const STEPS = [
 ] as const
 
 const STATUS_STEP: Record<OrderStatus, number> = {
+  pending_payment: -1,
+  paid: 0,
   preparing: 1,
   ready: 2,
   completed: 3,
-  cancelled: 0,
+  cancelled: -1,
 }
 
-const STATUS_LABEL_KEY: Record<OrderStatus, "statusPreparing" | "statusReady" | "statusCompleted" | "statusCancelled"> = {
+const STATUS_LABEL_KEY: Record<OrderStatus, string> = {
+  pending_payment: "statusPendingPayment",
+  paid: "statusPaid",
   preparing: "statusPreparing",
   ready: "statusReady",
   completed: "statusCompleted",
@@ -62,13 +41,80 @@ const STATUS_LABEL_KEY: Record<OrderStatus, "statusPreparing" | "statusReady" | 
 export function OrderTracking({ orderId, table }: { orderId: string; table?: string }) {
   const locale = useLocale()
   const t = useTranslations("OrderTracking")
-  const { orders } = useOrders()
+  const { getOrder } = useOrders()
+  const [supabase] = useState(() => createClient())
 
-  const found = orders.find((o) => o.id === orderId)
-  const order: OrderRecord = found ?? { ...FALLBACK_ORDER, id: orderId, table: table ?? "04" }
+  const [order, setOrder] = useState<OrderForTracking | null | undefined>(undefined)
+  const [isGuestPolling, setIsGuestPolling] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    let pollInterval: ReturnType<typeof setInterval> | undefined
+    let channel: ReturnType<typeof supabase.channel> | undefined
+
+    async function load() {
+      const found = await getOrder(orderId)
+      if (cancelled) return
+      setOrder(found)
+      if (!found) return
+
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        // No session at all — this can only be a guest's own order (the
+        // RPC already refused anything else). Realtime's authorization
+        // is gated by the same RLS a direct SELECT would need, which a
+        // guest never satisfies, so there is no live-push option here —
+        // poll instead.
+        setIsGuestPolling(true)
+        pollInterval = setInterval(async () => {
+          const refreshed = await getOrder(orderId)
+          if (!cancelled) setOrder(refreshed)
+        }, GUEST_POLL_INTERVAL_MS)
+        return
+      }
+
+      // Logged-in customer (own order, matches orders_select_own) or
+      // staff (matches orders_select_staff) — both are genuinely visible
+      // to Realtime under existing RLS, so subscribe for real.
+      channel = supabase
+        .channel(`order-tracking-${orderId}`)
+        .on(
+          "postgres_changes",
+          { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
+          async () => {
+            const refreshed = await getOrder(orderId)
+            if (!cancelled) setOrder(refreshed)
+          }
+        )
+        .subscribe((status) => {
+          if (status !== "SUBSCRIBED" && status !== "CLOSED") {
+            console.warn(`Order tracking realtime subscription status: ${status}`)
+          }
+        })
+    }
+    load()
+
+    return () => {
+      cancelled = true
+      if (pollInterval) clearInterval(pollInterval)
+      if (channel) supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId])
+
+  if (order === undefined) return null
+
+  if (order === null) {
+    return (
+      <div className="mx-auto flex min-h-[50vh] max-w-md flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-lg font-bold text-card-foreground">{t("notFoundTitle")}</p>
+        <p className="text-sm text-muted-foreground">{t("notFoundMessage")}</p>
+      </div>
+    )
+  }
 
   const currentStep = STATUS_STEP[order.status]
-  const progressPercent = (currentStep / (STEPS.length - 1)) * 100
+  const progressPercent = currentStep < 0 ? 0 : (currentStep / (STEPS.length - 1)) * 100
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-4 sm:px-6">
@@ -85,6 +131,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
             {t("etaLabel")}
           </p>
         )}
+        {isGuestPolling && <p className="mt-2 text-[11px] text-muted-foreground">{t("guestPollingNote")}</p>}
       </section>
 
       <section className="mt-8 px-2">
@@ -128,7 +175,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
           </div>
           <div>
             <h4 className="text-sm font-bold text-card-foreground">
-              {order.orderType === "dine-in" ? t("tableLabel", { table: order.table ?? "" }) : t("pickupBadge")}
+              {order.orderType === "dine-in" ? t("tableLabel", { table: order.table ?? table ?? "" }) : t("pickupBadge")}
             </h4>
             {order.orderType === "dine-in" && (
               <p className="text-xs text-muted-foreground">{t("dineInBadge")}</p>
