@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl"
 import { Banknote } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { formatOrderId } from "@/lib/format"
 import type { KdsOrder } from "@/hooks/useKitchenOrders"
 
 export function KitchenPendingPayment({
@@ -23,7 +24,7 @@ export function KitchenPendingPayment({
       <div className="flex flex-wrap gap-2">
         {orders.map((order) => (
           <div key={order.id} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-sm">
-            <span className="font-bold">#{order.id}</span>
+            <span className="font-bold">#{formatOrderId(order.id)}</span>
             <span className="text-muted-foreground">
               {order.orderType === "pickup" ? t("pickup") : t("table", { table: order.table ?? "" })}
             </span>

@@ -25,6 +25,10 @@ export function formatDateVN(date: Date): string {
   return `${day}/${month}/${year}`
 }
 
+export function formatOrderId(id: string): string {
+  return id.slice(0, 8).toUpperCase()
+}
+
 export function formatPhoneVN(phone: string): string {
   const digits = phone.replace(/\D/g, "")
 

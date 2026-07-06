@@ -5,7 +5,7 @@ import {
   CookingPot, Check, PackageCheck, CircleCheckBig, Clock, TableIcon, ShoppingBag, Store, Phone,
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
-import { formatVND } from "@/lib/format"
+import { formatOrderId, formatVND } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
@@ -127,7 +127,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
     <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-4 sm:px-6">
       <section className="relative overflow-hidden rounded-xl border bg-muted p-6 text-center shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-widest text-secondary">{t("orderId")}</p>
-        <h2 className="mb-4 text-3xl font-bold text-primary">#{order.id}</h2>
+        <h2 className="mb-4 text-3xl font-bold text-primary">#{formatOrderId(order.id)}</h2>
         <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-primary/15">
           <CookingPot className="h-12 w-12 text-primary" />
         </div>

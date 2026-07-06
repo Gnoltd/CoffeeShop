@@ -3,6 +3,7 @@
 import { useLocale, useTranslations } from "next-intl"
 import { Play, CheckCircle2, PackageCheck, Utensils, ShoppingBag, ListTodo, RefreshCw, CheckCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatOrderId } from "@/lib/format"
 import type { KdsStatus, KdsOrder } from "@/hooks/useKitchenOrders"
 
 const COLUMNS: {
@@ -68,7 +69,7 @@ export function KitchenBoard({
                       )}
                     >
                       <div>
-                        <h3 className="text-xl font-black text-card-foreground">#{order.id}</h3>
+                        <h3 className="text-xl font-black text-card-foreground">#{formatOrderId(order.id)}</h3>
                         <span
                           className={cn(
                             "mt-1 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold",

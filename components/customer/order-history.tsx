@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { ChevronRight } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
-import { formatVND } from "@/lib/format"
+import { formatOrderId, formatVND } from "@/lib/format"
 import { useOrders, type OrderStatus } from "@/hooks/useOrders"
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
@@ -92,7 +92,7 @@ export function OrderHistory() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-card-foreground">#{order.id}</span>
+                    <span className="font-bold text-card-foreground">#{formatOrderId(order.id)}</span>
                     <span
                       className={cn(
                         "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold",
