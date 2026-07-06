@@ -289,6 +289,41 @@ export async function createModifierGroup(
   }
 }
 
+export async function updateModifierGroup(
+  supabase: SupabaseClient,
+  groupId: string,
+  input: ModifierGroupInput
+): Promise<MenuModifierGroup> {
+  const { error: groupError } = await supabase
+    .from("modifier_groups")
+    .update({ name_vi: input.nameVi, name_en: input.nameEn })
+    .eq("id", groupId)
+  if (groupError) throw groupError
+
+  const { data: modifierRow, error: modifierError } = await supabase
+    .from("modifiers")
+    .update({ name_vi: input.nameVi, name_en: input.nameEn, price_delta: input.priceDelta })
+    .eq("modifier_group_id", groupId)
+    .select("id, name_vi, name_en, price_delta")
+    .single()
+  if (modifierError) throw modifierError
+
+  return {
+    id: groupId,
+    nameVi: input.nameVi,
+    nameEn: input.nameEn,
+    required: false,
+    options: [
+      {
+        id: modifierRow.id,
+        nameVi: modifierRow.name_vi,
+        nameEn: modifierRow.name_en,
+        priceDelta: modifierRow.price_delta,
+      },
+    ],
+  }
+}
+
 export async function setItemModifierGroups(
   supabase: SupabaseClient,
   itemId: string,

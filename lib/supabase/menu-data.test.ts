@@ -6,6 +6,7 @@ import { createMenuItem } from "./menu-data"
 import { getModifierGroups } from "./menu-data"
 import { createModifierGroup } from "./menu-data"
 import { setItemModifierGroups } from "./menu-data"
+import { updateModifierGroup } from "./menu-data"
 
 function fakeSupabase(rows: unknown[]) {
   return {
@@ -270,5 +271,43 @@ describe("setItemModifierGroups", () => {
 
     expect(deleteEqSpy).toHaveBeenCalledWith("menu_item_id", "item-1")
     expect(insertSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe("updateModifierGroup", () => {
+  it("updates the group's names then its one modifier's names/price", async () => {
+    const groupUpdateEqSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const modifierUpdateEqSpy = vi.fn(() => ({
+      select: () => ({
+        single: () =>
+          Promise.resolve({
+            data: { id: "mod-1", name_vi: "Thêm Shot Đậm", name_en: "Extra Strong Shot", price_delta: 12000 },
+            error: null,
+          }),
+      }),
+    }))
+    const supabase = {
+      from: (table: string) => {
+        if (table === "modifier_groups") return { update: () => ({ eq: groupUpdateEqSpy }) }
+        if (table === "modifiers") return { update: () => ({ eq: modifierUpdateEqSpy }) }
+        throw new Error(`unexpected table ${table}`)
+      },
+    } as unknown as SupabaseClient
+
+    const result = await updateModifierGroup(supabase, "grp-1", {
+      nameVi: "Thêm Shot Đậm",
+      nameEn: "Extra Strong Shot",
+      priceDelta: 12000,
+    })
+
+    expect(groupUpdateEqSpy).toHaveBeenCalledWith("id", "grp-1")
+    expect(modifierUpdateEqSpy).toHaveBeenCalledWith("modifier_group_id", "grp-1")
+    expect(result).toEqual({
+      id: "grp-1",
+      nameVi: "Thêm Shot Đậm",
+      nameEn: "Extra Strong Shot",
+      required: false,
+      options: [{ id: "mod-1", nameVi: "Thêm Shot Đậm", nameEn: "Extra Strong Shot", priceDelta: 12000 }],
+    })
   })
 })
