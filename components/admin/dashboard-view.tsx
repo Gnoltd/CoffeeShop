@@ -37,7 +37,7 @@ const MOCK_BEST_SELLERS = [
 
 export function DashboardView({ locale }: { locale: string }) {
   const t = useTranslations("Dashboard")
-  const { ingredients, restock } = useInventory()
+  const { ingredients, restock, isLoading } = useInventory()
   const lowStock = ingredients.filter((i) => i.stock < i.threshold)
 
   return (
@@ -157,7 +157,13 @@ export function DashboardView({ locale }: { locale: string }) {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {lowStock.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
+                    {t("loadingInventory")}
+                  </td>
+                </tr>
+              ) : lowStock.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">
                     {t("noLowStock")}

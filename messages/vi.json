@@ -307,7 +307,8 @@
     "critical": "Sắp Hết",
     "restock": "Nhập Kho",
     "viewAllItems": "Xem Tất Cả Món",
-    "noLowStock": "Không có món nào sắp hết hàng."
+    "noLowStock": "Không có món nào sắp hết hàng.",
+    "loadingInventory": "Đang tải kho hàng…"
   },
   "AdminMenu": {
     "title": "Quản Lý Thực Đơn",
@@ -389,7 +390,10 @@
     "restockReason": "Nhập Kho",
     "adjustmentReason": "Điều Chỉnh",
     "wasteReason": "Đã Xuất",
-    "logsEmpty": "Chưa có hoạt động nhập kho nào."
+    "orderDeductionReason": "Đơn Hàng",
+    "logsEmpty": "Chưa có hoạt động nhập kho nào.",
+    "loadingIngredients": "Đang tải nguyên liệu…",
+    "loadError": "Không thể tải dữ liệu kho hàng. Vui lòng làm mới trang."
   },
   "AdminTables": {
     "title": "Quản Lý Bàn",

@@ -22,17 +22,21 @@ function formatLogTime(timestamp: number, locale: string): string {
   })
 }
 
-const REASON_LABEL_KEYS: Record<InventoryLogReason, "restockReason" | "adjustmentReason" | "wasteReason"> = {
+const REASON_LABEL_KEYS: Record<
+  InventoryLogReason,
+  "restockReason" | "adjustmentReason" | "wasteReason" | "orderDeductionReason"
+> = {
   restock: "restockReason",
   adjustment: "adjustmentReason",
   waste: "wasteReason",
+  order_deduction: "orderDeductionReason",
 }
 
 type Tab = "ingredients" | "logs"
 
 export function InventoryManagement({ locale }: { locale: string }) {
   const t = useTranslations("AdminInventory")
-  const { ingredients, logs, adjustStock, setOutOfStock } = useInventory()
+  const { ingredients, logs, isLoading, error, adjustStock, setOutOfStock } = useInventory()
   const [tab, setTab] = useState<Tab>("ingredients")
   const [editingId, setEditingId] = useState<string | null>(null)
 
@@ -43,6 +47,8 @@ export function InventoryManagement({ locale }: { locale: string }) {
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
+
+      {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("loadError")}</p>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
@@ -113,7 +119,14 @@ export function InventoryManagement({ locale }: { locale: string }) {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {ingredients.map((ingredient) => {
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-6 text-center text-muted-foreground">
+                    {t("loadingIngredients")}
+                  </td>
+                </tr>
+              ) : (
+                ingredients.map((ingredient) => {
                 const Icon = ICONS[ingredient.icon]
                 const isOut = ingredient.stock <= 0
                 const isLow = !isOut && ingredient.stock < ingredient.threshold
@@ -162,7 +175,8 @@ export function InventoryManagement({ locale }: { locale: string }) {
                     </td>
                   </tr>
                 )
-              })}
+                })
+              )}
             </tbody>
           </table>
         </div>

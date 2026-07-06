@@ -307,7 +307,8 @@
     "critical": "Critical",
     "restock": "Restock",
     "viewAllItems": "View All Items",
-    "noLowStock": "No items are low on stock."
+    "noLowStock": "No items are low on stock.",
+    "loadingInventory": "Loading inventory…"
   },
   "AdminMenu": {
     "title": "Manage Menu",
@@ -389,7 +390,10 @@
     "restockReason": "Restock",
     "adjustmentReason": "Adjustment",
     "wasteReason": "Removed",
-    "logsEmpty": "No restock activity yet."
+    "orderDeductionReason": "Order",
+    "logsEmpty": "No restock activity yet.",
+    "loadingIngredients": "Loading ingredients…",
+    "loadError": "Failed to load inventory data. Try refreshing."
   },
   "AdminTables": {
     "title": "Tables",

@@ -1,159 +1,158 @@
 "use client"
 
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/client"
+import {
+  adjustStock as adjustStockQuery,
+  createIngredient,
+  getIngredients,
+  getInventoryLogs,
+  mapIngredientRow,
+  mapInventoryLogRow,
+  updateIngredient as updateIngredientQuery,
+  type Ingredient,
+  type IngredientIcon,
+  type IngredientInput,
+  type IngredientRow,
+  type InventoryLog,
+  type InventoryLogReason,
+} from "@/lib/supabase/inventory-data"
 
-export type IngredientIcon = "coffee" | "droplet" | "wheat" | "candy"
-
-export type Ingredient = {
-  id: string
-  nameVi: string
-  nameEn: string
-  subtitleVi: string
-  subtitleEn: string
-  unit: string
-  stock: number
-  threshold: number
-  icon: IngredientIcon
-}
-
-export type InventoryLogReason = "restock" | "adjustment" | "waste"
-
-export type InventoryLog = {
-  id: string
-  ingredientId: string
-  ingredientNameVi: string
-  ingredientNameEn: string
-  change: number
-  reason: InventoryLogReason
-  timestamp: number
-}
-
-/** No `ingredients`/`inventory_logs` tables yet — fixed mock data matching the Stitch mockup's example values. */
-const INITIAL_INGREDIENTS: Ingredient[] = [
-  {
-    id: "robusta-beans",
-    nameVi: "Hạt Robusta Đặc Sản",
-    nameEn: "Coffee Beans (Roasted)",
-    subtitleVi: "Nguyên liệu",
-    subtitleEn: "Raw material",
-    unit: "kg",
-    stock: 5.2,
-    threshold: 10,
-    icon: "coffee",
-  },
-  {
-    id: "condensed-milk",
-    nameVi: "Sữa Đặc Ông Thọ",
-    nameEn: "Condensed Milk",
-    subtitleVi: "Hàng tiêu dùng",
-    subtitleEn: "Consumable",
-    unit: "lon / cans",
-    stock: 24,
-    threshold: 12,
-    icon: "droplet",
-  },
-  {
-    id: "creamer-powder",
-    nameVi: "Bột Kem Béo",
-    nameEn: "Creamer Powder",
-    subtitleVi: "Nguyên liệu",
-    subtitleEn: "Raw material",
-    unit: "kg",
-    stock: 8.5,
-    threshold: 5,
-    icon: "wheat",
-  },
-  {
-    id: "white-sugar",
-    nameVi: "Đường Cát Trắng",
-    nameEn: "White Sugar",
-    subtitleVi: "Nguyên liệu",
-    subtitleEn: "Raw material",
-    unit: "kg",
-    stock: 2.1,
-    threshold: 15,
-    icon: "candy",
-  },
-]
+export type { Ingredient, IngredientIcon, IngredientInput, InventoryLog, InventoryLogReason }
 
 type InventoryContextValue = {
   ingredients: Ingredient[]
   logs: InventoryLog[]
-  restock: (id: string) => void
-  adjustStock: (id: string, change: number, reason: InventoryLogReason) => void
-  setOutOfStock: (id: string) => void
+  isLoading: boolean
+  error: string | null
+  restock: (id: string) => Promise<void>
+  adjustStock: (id: string, change: number, reason: InventoryLogReason) => Promise<void>
+  setOutOfStock: (id: string) => Promise<void>
+  addIngredient: (input: IngredientInput) => Promise<void>
+  updateIngredientDetails: (id: string, input: IngredientInput) => Promise<void>
 }
 
 const InventoryContext = createContext<InventoryContextValue | null>(null)
 
-const INGREDIENTS_STORAGE_KEY = "phadincoffee-inventory-ingredients"
-const LOGS_STORAGE_KEY = "phadincoffee-inventory-logs"
+type InventoryLogRow = {
+  id: string
+  ingredient_id: string
+  change_quantity: number
+  reason: InventoryLogReason
+  created_at: string
+}
 
 export function InventoryProvider({ children }: { children: ReactNode }) {
-  const [ingredients, setIngredients] = useState<Ingredient[]>(INITIAL_INGREDIENTS)
+  const [supabase] = useState(() => createClient())
+  const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [logs, setLogs] = useState<InventoryLog[]>([])
-  const [hydrated, setHydrated] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const ingredientsRef = useRef<Ingredient[]>([])
 
   useEffect(() => {
-    try {
-      const storedIngredients = window.localStorage.getItem(INGREDIENTS_STORAGE_KEY)
-      if (storedIngredients) setIngredients(JSON.parse(storedIngredients))
-      const storedLogs = window.localStorage.getItem(LOGS_STORAGE_KEY)
-      if (storedLogs) setLogs(JSON.parse(storedLogs))
-    } catch {
-      // ignore malformed/unavailable storage
-    } finally {
-      setHydrated(true)
+    ingredientsRef.current = ingredients
+  }, [ingredients])
+
+  useEffect(() => {
+    let cancelled = false
+
+    Promise.all([getIngredients(supabase), getInventoryLogs(supabase)])
+      .then(([ingredientRows, logRows]) => {
+        if (cancelled) return
+        setIngredients(ingredientRows)
+        setLogs(logRows)
+      })
+      .catch(() => {
+        if (!cancelled) setError("load-failed")
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    const channel = supabase
+      .channel("inventory-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "ingredients" },
+        (payload: RealtimePostgresChangesPayload<IngredientRow>) => {
+          if (payload.eventType === "DELETE") {
+            const oldId = (payload.old as { id?: string }).id
+            if (!oldId) return
+            setIngredients((prev) => prev.filter((i) => i.id !== oldId))
+            return
+          }
+          const mapped = mapIngredientRow(payload.new as IngredientRow)
+          setIngredients((prev) =>
+            prev.some((i) => i.id === mapped.id)
+              ? prev.map((i) => (i.id === mapped.id ? mapped : i))
+              : [...prev, mapped]
+          )
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "inventory_logs" },
+        (payload: RealtimePostgresChangesPayload<InventoryLogRow>) => {
+          const row = payload.new as InventoryLogRow
+          const ingredient = ingredientsRef.current.find((i) => i.id === row.ingredient_id)
+          setLogs((prev) => [mapInventoryLogRow(row, ingredient?.nameVi ?? "", ingredient?.nameEn ?? ""), ...prev])
+        }
+      )
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
+          console.warn(`Inventory realtime subscription status: ${status}`)
+        }
+      })
+
+    return () => {
+      cancelled = true
+      supabase.removeChannel(channel)
     }
+    // Runs once on mount; `supabase` is a stable client held in state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  useEffect(() => {
-    if (!hydrated) return
-    window.localStorage.setItem(INGREDIENTS_STORAGE_KEY, JSON.stringify(ingredients))
-  }, [ingredients, hydrated])
-
-  useEffect(() => {
-    if (!hydrated) return
-    window.localStorage.setItem(LOGS_STORAGE_KEY, JSON.stringify(logs))
-  }, [logs, hydrated])
-
-  function adjustStock(id: string, change: number, reason: InventoryLogReason) {
-    const ingredient = ingredients.find((i) => i.id === id)
-    if (!ingredient || change === 0) return
-    const clampedChange = Math.round(Math.max(change, -ingredient.stock) * 100) / 100
-
-    setIngredients((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, stock: Math.max(0, Math.round((i.stock + clampedChange) * 100) / 100) } : i))
-    )
-    setLogs((prev) => [
-      {
-        id: `log-${Date.now()}`,
-        ingredientId: id,
-        ingredientNameVi: ingredient.nameVi,
-        ingredientNameEn: ingredient.nameEn,
-        change: clampedChange,
-        reason,
-        timestamp: Date.now(),
-      },
-      ...prev,
-    ])
+  async function restock(id: string) {
+    const ingredient = ingredientsRef.current.find((i) => i.id === id)
+    if (!ingredient) return
+    await adjustStockQuery(supabase, id, ingredient.threshold, "restock")
   }
 
-  /** Quick one-tap restock (Dashboard's low-stock widget) — tops up by the low-stock threshold. */
-  function restock(id: string) {
-    const ingredient = ingredients.find((i) => i.id === id)
-    if (!ingredient) return
-    adjustStock(id, ingredient.threshold, "restock")
+  async function adjustStock(id: string, change: number, reason: InventoryLogReason) {
+    if (change === 0) return
+    await adjustStockQuery(supabase, id, change, reason)
   }
 
-  function setOutOfStock(id: string) {
-    const ingredient = ingredients.find((i) => i.id === id)
+  async function setOutOfStock(id: string) {
+    const ingredient = ingredientsRef.current.find((i) => i.id === id)
     if (!ingredient) return
-    adjustStock(id, -ingredient.stock, "adjustment")
+    await adjustStockQuery(supabase, id, -ingredient.stock, "adjustment")
+  }
+
+  async function addIngredient(input: IngredientInput) {
+    await createIngredient(supabase, input)
+  }
+
+  async function updateIngredientDetails(id: string, input: IngredientInput) {
+    await updateIngredientQuery(supabase, id, input)
   }
 
   return (
-    <InventoryContext.Provider value={{ ingredients, logs, restock, adjustStock, setOutOfStock }}>
+    <InventoryContext.Provider
+      value={{
+        ingredients,
+        logs,
+        isLoading,
+        error,
+        restock,
+        adjustStock,
+        setOutOfStock,
+        addIngredient,
+        updateIngredientDetails,
+      }}
+    >
       {children}
     </InventoryContext.Provider>
   )
