@@ -16,9 +16,23 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2"
 
+// The browser calls this cross-origin (app on vercel.app, function on
+// supabase.co) via supabase.functions.invoke, which sends a CORS
+// preflight OPTIONS request first — found live via Playwright when a
+// real browser call failed with a CORS error despite curl working fine
+// (curl never sends a preflight, so this was invisible to direct testing).
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+}
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders })
+  }
+
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 })
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: corsHeaders })
   }
 
   try {
@@ -38,14 +52,17 @@ Deno.serve(async (req) => {
     const { data, error } = await serviceClient.rpc("place_order", { p_payload: payload })
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 400 })
+      return new Response(JSON.stringify({ error: error.message }), { status: 400, headers: corsHeaders })
     }
 
     return new Response(JSON.stringify(data), {
       status: 200,
-      headers: { "Content-Type": "application/json" },
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
     })
   } catch {
-    return new Response(JSON.stringify({ error: "Unexpected error placing order" }), { status: 500 })
+    return new Response(JSON.stringify({ error: "Unexpected error placing order" }), {
+      status: 500,
+      headers: corsHeaders,
+    })
   }
 })
