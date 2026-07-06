@@ -39,10 +39,12 @@ with **live Realtime sync** across sessions — migrations `0010`/`0011`,
 `lib/supabase/orders-data.ts`/`lib/supabase/staff-data.ts`; see "Admin
 pages"/"Table identity flow"/"Real orders + Realtime"/"Staff accounts +
 Realtime" below. This completes all four sub-projects of the "make all
-data real-time" initiative. **Still not built:** Stripe/VNPay
-integration (their own two follow-up specs to the Orders work) — the
-only remaining deferred backend work. See each feature section below
-for exactly what's mocked and what's a documented (not hidden) gap.
+data real-time" initiative. **Stripe payment integration is now real**
+(migration `0018`, the extended `place-order` and new `stripe-webhook`
+Edge Functions) — see "Stripe payment integration" below. **Still not
+built:** VNPay integration (its own follow-up spec) — the only
+remaining deferred backend work. See each feature section below for
+exactly what's mocked and what's a documented (not hidden) gap.
 
 ## Stack
 
@@ -480,9 +482,10 @@ Checkout/Tracking/History, `hooks/useKitchenOrders.tsx` for staff
 POS/Kitchen Display) into one real `orders` schema (migrations
 `0005`-`0007`, already applied) with live Realtime. Design:
 `docs/superpowers/specs/2026-07-06-orders-realtime-design.md`. Plan:
-`docs/superpowers/plans/2026-07-06-orders-realtime.md`. Stripe/VNPay are
-explicitly out of scope here (separate future specs) — Checkout's Card/
-VNPay buttons are disabled+tooltip; only Cash is real end-to-end.
+`docs/superpowers/plans/2026-07-06-orders-realtime.md`. Stripe/VNPay were
+explicitly out of scope for this sub-project (separate future specs) —
+Stripe is now real, see "Stripe payment integration" below; VNPay's
+Checkout button is still disabled+tooltip.
 
 - **`place_order`** (migration `0014`, `security definer`) — the one
   place order money values are computed. Takes a JSON cart payload,
@@ -564,6 +567,99 @@ VNPay buttons are disabled+tooltip; only Cash is real end-to-end.
   silently type-checking Deno Edge Function files with the main Next.js
   project's compiler options — fixed by excluding `supabase/functions`
   from the main tsconfig (Edge Functions are a separate Deno runtime).
+
+## Stripe payment integration (2026-07-07, core)
+
+Follow-up to Real Orders + Realtime, per the sequencing agreed there
+(Cash → Stripe → VNPay). Design:
+`docs/superpowers/specs/2026-07-07-stripe-payment-integration-design.md`.
+Plan: `docs/superpowers/plans/2026-07-07-stripe-payment-integration.md`.
+Checkout's Card button and POS's Card button are both real now; VNPay
+remains its own separate, still-pending follow-up.
+
+- **A real pre-existing bug found and fixed first**: `checkout-view.tsx`
+  and `pos-terminal.tsx` both sent the client's hyphenated `"dine-in"`
+  state straight to `place_order`, which casts it directly to the
+  `order_type` enum (`pickup | dine_in`, underscore) — confirmed live
+  that `'dine-in'::order_type` throws. **Every dine-in order placed via
+  Checkout or POS was failing**, regardless of payment method, until
+  this fix (both now translate to `dine_in` before the RPC call).
+- **`place-order` Edge Function (extended, not replaced)** — after
+  `place_order` inserts the order as before, if `paymentMethod ===
+  "stripe"` and `paymentCollected` isn't already `true` (the customer
+  online-checkout case, not POS), it also creates a real Stripe Checkout
+  Session via raw `fetch` against Stripe's REST API (form-urlencoded, no
+  Stripe SDK — matches this project's dependency-free Edge Functions).
+  **VND is a Stripe zero-decimal currency** — the integer total is sent
+  as-is, never multiplied by 100. Session `expires_at` is set to 30
+  minutes (Stripe's minimum), not the 24h default, so an abandoned
+  checkout doesn't leave a `pending_payment` row around for a full day.
+  `success_url`/`cancel_url` are built **server-side** from a `SITE_URL`
+  Supabase secret + a client-supplied `locale` (validated against
+  `vi`/`en`) — never a raw client-supplied URL, which would be an
+  open-redirect vector on a payment flow. Returns `{ orderId, total,
+  checkoutUrl }` when a session was created.
+- **`stripe-webhook` Edge Function (real now, was a stub)** — verifies
+  Stripe's signature manually via Web Crypto (HMAC-SHA256), not the
+  Stripe SDK. `checkout.session.completed` flips the matching order (by
+  `metadata.order_id`) to `status='paid', payment_status='paid'` via a
+  plain service-role `UPDATE` guarded by `payment_status = 'pending'`;
+  `checkout.session.expired` flips it to `cancelled` under the same
+  guard. Both guards, plus `handle_order_paid`'s own `old is distinct
+  from 'paid'` check, make Stripe's automatic webhook retries a safe
+  no-op rather than a double inventory deduction or double loyalty
+  award. `verify_jwt` disabled — Stripe's signature is the real trust
+  boundary, there's no Supabase session on this request at all.
+- **`cancel_pending_order(p_order_id uuid)`** (migration `0018`,
+  `security definer`) — lets a customer self-cancel their own
+  still-pending order (backing out of Stripe's hosted page) without
+  waiting for the 30-minute expiry webhook. Mirrors
+  `get_order_for_tracking`'s guest-safe pattern: only affects a row
+  still `pending_payment`; a logged-in customer must own it, a guest
+  order (`customer_id is null`) can be cancelled by anyone holding that
+  exact unguessable UUID (same trust model already established for
+  guest tracking). `lib/supabase/orders-data.ts`'s `cancelPendingOrder()`
+  is the query-layer wrapper, called directly from `checkout-view.tsx`
+  (not through an Edge Function — same pattern `useOrders.tsx` already
+  uses for guest-safe RPCs).
+- **Checkout flow**: cart is **not** cleared when a `checkoutUrl` comes
+  back — only Cash clears immediately, since Stripe's redirect to
+  `success_url` (`/orders/{orderId}`, reusing the existing Order
+  Tracking route) is the real confirmation point. Backing out of
+  Stripe's page redirects to `cancel_url`
+  (`/checkout?stripeCanceled={orderId}`), which `checkout-view.tsx`
+  detects on mount, calls `cancelPendingOrder`, shows a "payment
+  cancelled" notice, and leaves the cart intact for a retry.
+- **POS's Card option** reuses the `payment_method = 'stripe'` enum
+  value to mean "card" — there's no separate `'card'` enum value, same
+  overloading `'cash'` already has for both online pay-at-pickup and
+  in-person POS cash. POS sends `paymentCollected: true`, so
+  `place-order` skips the Stripe branch entirely and marks the order
+  paid immediately — money was already collected via a physical card
+  terminal outside this app; no Stripe Terminal integration exists
+  (that would be its own future project).
+- **A real webhook misconfiguration found during live verification, not
+  a code bug**: the Stripe Dashboard webhook endpoint was initially
+  pointed at the Vercel frontend URL instead of the Supabase Edge
+  Function URL (`https://qhiypdqnrnzndxdwqxbx.supabase.co/functions/v1/stripe-webhook`),
+  so zero deliveries ever reached `stripe-webhook` — confirmed via Edge
+  Function logs showing no invocations at all in the window after a
+  real payment. After correcting the URL, deliveries arrived but still
+  failed — `STRIPE_WEBHOOK_SECRET` had never actually been set as a
+  **Supabase Edge Function secret** (a separate store from Vercel's env
+  vars/`.env.local` — this is the second time this exact gotcha has
+  bitten this project, see `SITE_URL`/`STRIPE_SECRET_KEY` above). Root
+  cause was confirmed (not guessed) by temporarily having the function
+  return non-sensitive diagnostic booleans (`hasSignatureHeader`,
+  `hasWebhookSecret`) in its response body — reverted once confirmed.
+  Verified live end-to-end afterward: a real Stripe test payment →
+  webhook fires → order flips to `paid` → loyalty points awarded
+  correctly (checked directly via `loyalty_points_earned`) — the ordered
+  item happened to have zero recipe ingredients configured, so no
+  inventory deduction was expected or seen, not a bug.
+- **Explicitly out of scope**: refunds/disputes (handled manually via
+  the Stripe Dashboard), Stripe Terminal for a real in-person
+  Stripe-processed card reader, VNPay (separate future spec).
 
 ## Admin pages (`/admin/dashboard`, `/menu`, `/inventory`, `/tables`, `/staff`, `/settings`)
 
@@ -975,12 +1071,17 @@ Full entity list: spec Section 2.
   `alter table public.profiles disable trigger on_profile_role_change;`
   around the one-time `UPDATE ... SET role = 'admin'`, then re-enabled it
   immediately after. Only ever needed once, for the first admin.
+- One more after that, by `docs/superpowers/plans/2026-07-07-stripe-payment-integration.md`:
+  `0018_cancel_pending_order_fn` (the guest-safe `cancel_pending_order()`
+  RPC — see "Stripe payment integration" above).
 
 ## Edge Functions (`supabase/functions/`)
 
-Not yet built — `place-order`, `stripe-webhook`, `vnpay-ipn`, `vnpay-return`
-are still comment-only `index.ts` stubs. Full handler code (with tests) is
-in the plan doc's Task 11.
+`place-order` (real, now also creates a Stripe Checkout Session for
+online card payment — see "Stripe payment integration" above) and
+`stripe-webhook` (real, verifies Stripe's signature and confirms/cancels
+orders) are both live. `vnpay-ipn`/`vnpay-return` are still comment-only
+`index.ts` stubs, pending VNPay's own follow-up spec.
 
 ## Deployment (Vercel)
 
@@ -999,9 +1100,21 @@ the source of truth for "does the feature actually work."
   `NEXT_PUBLIC_SITE_URL`, `VNPAY_RETURN_URL` (set to the real domain for
   Production/Preview, `localhost:3000` for Development — not read by any
   code yet), and `SUPABASE_SECRET_KEY`/`STRIPE_SECRET_KEY`/
-  `VNPAY_TMN_CODE`/`VNPAY_HASH_SECRET` (real values, synced ahead of the
-  code that will read them). `STRIPE_WEBHOOK_SECRET` stays empty — no
-  Stripe webhook endpoint exists yet to generate one against.
+  `STRIPE_WEBHOOK_SECRET`/`VNPAY_TMN_CODE`/`VNPAY_HASH_SECRET` (real
+  values, kept here for reference even though `STRIPE_SECRET_KEY`/
+  `STRIPE_WEBHOOK_SECRET` are actually read from **Supabase Edge
+  Function secrets**, not Vercel's — see the next bullet).
+- **Supabase Edge Function secrets (`Deno.env`) are a separate store from
+  Vercel's env vars — syncing a variable to Vercel does not make it
+  available inside an Edge Function.** Bit this project twice during the
+  Stripe integration: `STRIPE_SECRET_KEY` and a new Edge-Function-only
+  `SITE_URL` (the production domain, distinct from `NEXT_PUBLIC_SITE_URL`
+  which is `localhost:3000` in `.env.local`) had to be set directly via
+  the Supabase Dashboard (Edge Functions → Secrets) or `supabase secrets
+  set`, and initially `STRIPE_WEBHOOK_SECRET` was missed there too,
+  silently breaking the webhook until caught via diagnostics — see
+  "Stripe payment integration" above. No MCP tool in this project manages
+  Supabase Edge Function secrets.
 - **Supabase Auth's "URL Configuration" (Site URL + Redirect URLs
   allow-list) is a Dashboard-only setting** — no MCP tool exposes it. Site
   URL must be `https://phadincoffee.vercel.app` and Redirect URLs must
@@ -1029,12 +1142,13 @@ RPC (see "Table identity flow" above); Orders has real order
 placement/tracking/KDS unification (see "Real orders + Realtime"
 above); Staff accounts has real Supabase Auth account creation, an
 `is_active` disable mechanism, and a real staff directory (see "Staff
-accounts + Realtime" above). The `place-order` Edge Function is real
-now (Cash path); `stripe-webhook`/`vnpay-ipn`/`vnpay-return` are still
-comment-only stubs, each becoming its own follow-up spec to the Orders
-work — this is the only remaining deferred follow-up from the whole
-"make all data real-time" initiative. The app is also live on Vercel
-(see "Deployment" above) — verify against the live URL, not localhost.
+accounts + Realtime" above). **Stripe payment integration is also now
+real** (see "Stripe payment integration" above) — customer Checkout's
+Card button and POS's Card button both work end-to-end, verified live.
+`vnpay-ipn`/`vnpay-return` are still comment-only stubs, pending VNPay's
+own follow-up spec — this is the only remaining deferred payment work.
+The app is also live on Vercel (see "Deployment" above) — verify
+against the live URL, not localhost.
 When adding any genuinely new page/feature beyond what's already built,
 follow the same pattern used throughout: shared brand tokens (no
 hardcoded hex), `useTranslations`/`getTranslations` for every label with
