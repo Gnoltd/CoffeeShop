@@ -449,8 +449,9 @@ page is responsible for its own top-level chrome.
     a "System Online" indicator + disabled+tooltip notification/settings
     icons (no notification system or staff settings page exist).
   - `kitchen-sidebar.tsx` — Terminal name/label (decorative, matches the
-    Stitch mockup 1:1) + inert "Live Orders" (current page) / disabled+tooltip
-    "Order History" (no staff-facing route) / "Inventory" (manager/admin-only,
+    Stitch mockup 1:1) + real "Live Orders"/"Order History" nav `Link`s
+    (mutually exclusive active-highlight via `usePathname()`, see "Staff
+    Order History" below) / disabled+tooltip "Inventory" (manager/admin-only,
     a staff-role user can't reach `/admin/inventory`) nav items + a **real**
     Shift Stats box: `completedCount` and average completion time are
     genuinely tracked in `kitchen-display.tsx`'s state as orders get
@@ -473,6 +474,64 @@ page is responsible for its own top-level chrome.
   changes, but couldn't verify the pages' own rendering against a real
   authenticated session (no live Supabase yet, and no browser automation
   tool in this environment) — same caveat as the Food Cost Calculator.
+
+## Staff Order History (`/staff/orders/history`, `/staff/orders/history/[orderId]`)
+
+Real, reachable from the Kitchen Display sidebar's now-real "Order
+History" link (previously disabled+tooltip). Design:
+`docs/superpowers/specs/2026-07-07-staff-order-history-design.md`. Plan:
+`docs/superpowers/plans/2026-07-07-staff-order-history.md`. A different
+surface from the customer-facing Order History (`hooks/useOrders.tsx`'s
+`getMyOrders()`, one customer's own orders) — this one is staff-wide
+lookup across every order, primarily for "a customer asks about their
+order" rather than a live board (that's what the Kitchen Display board
+already covers for active orders).
+
+- **`get_order_history()`** (migration `0019`, `security invoker` — RLS
+  already grants staff/manager/admin full read on
+  `orders`/`tables`/`profiles`, no bypass needed) does search/filter/
+  pagination in one round trip: matches a single search box against the
+  short order-id prefix (`formatOrderId`'s first-8-hex-chars convention),
+  table number, or customer name/phone; defaults to the last 7 days and
+  `completed`/`cancelled` statuses when not otherwise filtered, enforced
+  **inside** the function so a client bug can't pull active orders or the
+  whole table's history. **Real bug found only by live Playwright
+  verification, not direct SQL**: a Postgres function parameter's
+  `default` only applies when the argument is *omitted*, not when
+  explicitly sent as JSON `null` — which PostgREST's RPC call always
+  does. `p_statuses` was binding to real `null`, making
+  `status = any(null)` match zero rows regardless of how many
+  completed/cancelled orders actually existed (confirmed: a direct SQL
+  call showed 12 matching rows while the browser's identical-looking RPC
+  call returned an empty array). Fixed by `coalesce`-ing `p_statuses` to
+  its intended default inside the function body instead of relying on
+  the parameter's own `default` clause.
+- `lib/supabase/orders-data.ts` gained `getOrderHistory`/
+  `getOrderHistoryDetail` — the detail query is a plain RLS-gated select
+  (not a reuse of the customer-facing `get_order_for_tracking` RPC, which
+  *does* already have a staff/manager/admin bypass clause — an initial
+  partial read during this feature's design had wrongly concluded
+  otherwise — but its returned shape has no `payment_method`/
+  `payment_status`/customer fields, which this page needs).
+- `hooks/useOrderHistory.tsx` — a **plain hook, not a Context/Provider**
+  (unlike `useKitchenOrders`/`useInventory`/`useTables`) since nothing
+  else in the app shares this data. Subscribes unfiltered to `orders`
+  `postgres_changes` and refetches the current page on any change, same
+  "a column filter doesn't reliably combine with RLS-gated
+  `postgres_changes`" pattern every other Realtime hook here already
+  uses.
+- `components/staff/order-history-list.tsx` — debounced (~300ms) search,
+  date range (default last 7 days), status/order-type filters, a
+  paginated table, and an empty state distinct from the loading state.
+  Any filter change resets to page 1.
+- `components/staff/order-history-detail.tsx` — items with notes,
+  subtotal/discount/total, payment method/status, customer name (or
+  "Guest" for a guest checkout order). The detail page route calls
+  Next's `notFound()` for an unknown/inaccessible order id, same pattern
+  as the Product Detail Page.
+- New `StaffOrderHistory` translation namespace (kept separate from the
+  customer-facing `OrderHistory` namespace, since labels genuinely
+  differ) in both `messages/vi.json`/`messages/en.json`.
 
 ## Real orders + Realtime (2026-07-06, core, Cash-only)
 
