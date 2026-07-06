@@ -10,11 +10,12 @@ export async function getCurrentRole(supabase: SupabaseClient): Promise<string |
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, is_active")
       .eq("id", user.id)
       .single()
 
-    return profile?.role ?? null
+    if (!profile) return null
+    return profile.is_active ? profile.role : "customer"
   } catch {
     return null
   }
