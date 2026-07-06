@@ -16,24 +16,24 @@ intentionally works differently).
 describes the FE-only, pre-Supabase state from an earlier phase of the
 project. CLAUDE.md is the actively-maintained structural map and should
 be treated as authoritative for current reality; this file has drifted
-since the backend work started. As of the latest session: all 9 DB
-migrations are applied to the live hosted Supabase project, Login/Signup/
-Logout are real (Supabase Auth), menu data is real
-(`docs/superpowers/plans/2026-07-05-menu-data-migration.md`,
-`lib/mock-data/menu.ts` deleted), the Profile auth-gate + role-based
-navigation feature is fully shipped (`docs/superpowers/specs/2026-07-06-profile-auth-role-nav-design.md`,
-`docs/superpowers/plans/2026-07-06-profile-auth-role-nav.md`), and five
-live bugs the user found (login redirect race, missing Admin→POS/KDS
-nav, non-clickable logo, incomplete role-status badge, Inventory
-resetting on locale switch) have all been fixed and verified live. The
-app is deployed live on Vercel at `https://phadincoffee.vercel.app` (see
-CLAUDE.md's "Deployment" section). Tables, orders, and staff accounts are
-still mock, same as described below — Inventory is real client-side
-state now (persisted to `localStorage`) but still not Supabase-backed.
-A menu item extras/modifiers admin-configuration feature is mid-brainstorm,
-and a much larger "make all data real-time" project is queued after it.
-See `daily.md` for the most recent session's full work and the next-session
-starting point.
+since the backend work started and is kept only as a historical log —
+do not use the sections below as a live task list.
+
+**Current reality (as of the end of the 2026-07-06 session):** all 17
+DB migrations are applied to the live hosted Supabase project.
+Login/Signup/Logout are real (Supabase Auth). Menu, Inventory, Tables,
+Orders (core, Cash-only), and Staff accounts are all real Supabase data
+with live Realtime — this was the full scope of the "make all data
+real-time" initiative (Inventory → Tables → Orders → Staff accounts),
+and **all four sub-projects are now shipped**. The app is deployed live
+on Vercel at `https://phadincoffee.vercel.app` (see CLAUDE.md's
+"Deployment" section). The only deliberately deferred backend work is
+Stripe/VNPay payment integration (Checkout's Card/VNPay buttons are
+still disabled+tooltip; only Cash is real end-to-end) — each is its own
+planned follow-up spec, not yet started. See `daily.md` for the current
+open/not-started task list and known gaps; it is kept short and
+recap-free by design, so check it first before this file for "what's
+left."
 
 **All FE pages from the original design are now genuinely real, interactive
 UI** — none are translated-placeholder-only anymore. This was previously
@@ -674,39 +674,15 @@ found `03-cart.html`'s promo-code row had never been built at all.
 
 ## Next steps (superseded — see daily.md for the current one)
 
-*Stale — kept for history, not a live plan.* The paragraph below predates
-the backend work; items 1-2 are now done (DB schema/RLS/Auth/menu data
-are real, see CLAUDE.md), and item 6 (rename `middleware.ts` to
-`proxy.ts`) is still pending but now also affects the new
-`lib/middleware-rules.ts` it depends on. For what's actually next
-(finishing the menu item extras/modifiers brainstorm, then the "all data
-real-time" project), read `daily.md`'s "Next session starts here" section
-instead of this list.
-
-The originally agreed FE priority order (theme → customer → staff → admin)
-is now **fully done**. Remaining work is backend and polish, roughly in
-this order:
-
-1. Execute the DB schema/RLS/trigger/Edge Function tasks from the
-   implementation plan (Tasks 3-11) — fully unaffected by the frontend/i18n
-   work. Once `menu_items`/`ingredients`/`orders`/`profiles`/`tables`/etc.
-   exist, replace every mock data source with real Supabase queries:
-   `lib/mock-data/menu.ts` (Menu, POS, Admin Menu), the Order Tracking and
-   Kitchen Display mocks (+ Realtime for both), Admin Dashboard's stats,
-   Admin Inventory's ingredients, Admin Tables' QR tokens, Admin Staff's
-   accounts, and Admin Settings' shop/loyalty rates.
-2. Wire real Supabase env vars once local Supabase is running (`npx supabase start`)
-   so middleware actually resolves roles instead of falling back to anonymous —
-   this also unblocks direct (not just indirect) verification of bilingual
-   rendering and interactivity on every auth-gated page.
-3. Business logic (Stripe/VNPay integration, real order placement, Realtime
-   wiring for order status and the Kitchen Display queue).
-4. Wire up the disabled "not implemented yet" buttons once their backing
-   tables exist: Admin Menu's "Add New Item" + per-row Edit, Admin Tables'
-   "Add Table" + real QR image generation/download, Admin Staff's
-   "Add Staff". Also revisit POS to add size/modifier selection (currently
-   adds at base price only).
-5. Add Vitest/RTL test setup (skipped so far) — including a regression test
-   for the force-dynamic/locale-caching bug so it can't silently reappear.
-6. Rename `middleware.ts` to `proxy.ts` at some point (Next.js 16
-   deprecation warning, non-blocking).
+*Fully stale — kept for history only, not a live plan.* Every item below
+predates the backend work and is now resolved: 1-2 (DB schema/RLS/Auth/
+menu data) are done; 4 (Add New Item/Add Table/Add Staff, POS
+size/modifier selection) is done; the Stripe/VNPay half of item 3 is the
+**only genuinely open item left** anywhere in this list, and it's
+tracked live in `daily.md`, not here. Item 5 (Vitest/RTL) is partially
+done — the `lib/supabase/*.ts` query layers and role-resolution helpers
+have tests, component-level tests were never added. Item 6 (rename
+`middleware.ts` → `proxy.ts`) is still genuinely pending. For the actual
+current task list, always read `daily.md` — this section is left
+untouched below purely as a historical record of what the plan looked
+like before the backend existed.
