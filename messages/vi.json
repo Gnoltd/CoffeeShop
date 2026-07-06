@@ -167,6 +167,9 @@
     "payCash": "Tiền Mặt",
     "total": "Thanh Toán",
     "discountApplied": "(-{amount} Tích Điểm)",
+    "paymentMethodComingSoon": "Sắp có — chưa khả dụng",
+    "loyaltyGuestTooltip": "Đăng nhập để tích và đổi điểm thưởng",
+    "placeOrderError": "Đặt hàng thất bại. Vui lòng thử lại.",
     "placeOrder": "Đặt Hàng",
     "emptyCart": "Giỏ hàng trống — hãy thêm món trước khi thanh toán.",
     "browseMenu": "Xem Thực Đơn"

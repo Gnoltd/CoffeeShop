@@ -1,81 +1,103 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { CreditCard, Banknote, QrCode, TableIcon, Sparkles } from "lucide-react"
 import { Link, useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
+import { createClient } from "@/lib/supabase/client"
 import { useCart } from "@/hooks/useCart"
 import { useTables } from "@/hooks/useTables"
-import { useOrders, type OrderRecord } from "@/hooks/useOrders"
 
-/**
- * Loyalty numbers are mocked (no loyalty_settings table yet — see
- * docs/superpowers/plans/2026-07-04-coffee-shop-scaffold.md Task 4). Real
- * defaults agreed for the DB: 10,000 VND spent = 1 point earned,
- * 100 points = 10,000 VND redeemed. The redeem option shown here (50
- * points for 10,000đ) matches the approved Stitch mockup's example values.
- */
-const MOCK_POINTS_BALANCE = 150
-const MOCK_REDEEM_POINTS = 50
-const MOCK_REDEEM_AMOUNT = 10000
 /** Fallback shown only when Dine-in is picked manually without scanning a table's QR code first. */
 const FALLBACK_TABLE_NUMBER = "04"
 
 type OrderType = "pickup" | "dine-in"
 type PaymentMethod = "stripe" | "cash" | "vnpay"
 
-const PAYMENT_OPTIONS: { id: PaymentMethod; icon: typeof CreditCard; labelKey: "payStripe" | "payCash" }[] = [
-  { id: "stripe", icon: CreditCard, labelKey: "payStripe" },
-  { id: "cash", icon: Banknote, labelKey: "payCash" },
+const PAYMENT_OPTIONS: { id: PaymentMethod; icon: typeof CreditCard; labelKey: "payStripe" | "payCash"; enabled: boolean }[] = [
+  { id: "stripe", icon: CreditCard, labelKey: "payStripe", enabled: false },
+  { id: "cash", icon: Banknote, labelKey: "payCash", enabled: true },
 ]
 
 export function CheckoutView() {
   const locale = useLocale()
   const t = useTranslations("Checkout")
   const router = useRouter()
-  const { items, subtotal, promoDiscount, clear } = useCart()
+  const [supabase] = useState(() => createClient())
+  const { items, subtotal, promoCode, promoDiscount, clear } = useCart()
   const { activeTable } = useTables()
-  const { addOrder } = useOrders()
 
   const [orderType, setOrderType] = useState<OrderType>(activeTable ? "dine-in" : "pickup")
   const [pickupTime, setPickupTime] = useState("asap")
   const [redeemLoyalty, setRedeemLoyalty] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [pointsBalance, setPointsBalance] = useState(0)
+  const [redeemValuePerPoint, setRedeemValuePerPoint] = useState(0)
+  const [isPlacing, setIsPlacing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // One fixed redemption chunk per toggle-on, same UX as the old mock's
+  // single "50 points for X đ" option — only the VND-per-point conversion
+  // becomes real (loyalty_settings.redeem_value_vnd_per_point), not a
+  // hardcoded 10,000đ.
+  const REDEEM_CHUNK_POINTS = 50
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return
+      setIsLoggedIn(true)
+      const { data: profile } = await supabase.from("profiles").select("loyalty_points_balance").eq("id", user.id).single()
+      if (profile) setPointsBalance(profile.loyalty_points_balance)
+    })
+    supabase.from("loyalty_settings").select("redeem_value_vnd_per_point").eq("id", 1).single().then(({ data }) => {
+      if (data) setRedeemValuePerPoint(data.redeem_value_vnd_per_point)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const tableNumber = activeTable?.number ?? FALLBACK_TABLE_NUMBER
-  const loyaltyDiscount = redeemLoyalty ? MOCK_REDEEM_AMOUNT : 0
+  const canRedeem = pointsBalance >= REDEEM_CHUNK_POINTS
+  const loyaltyDiscount = redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS * redeemValuePerPoint : 0
   const discount = promoDiscount + loyaltyDiscount
   const total = Math.max(subtotal - discount, 0)
 
-  function handlePlaceOrder() {
+  async function handlePlaceOrder() {
     if (items.length === 0 || !paymentMethod) return
-    const mockOrderId = `PDC-${Math.floor(1000 + Math.random() * 9000)}`
-    const order: OrderRecord = {
-      id: mockOrderId,
-      createdAt: Date.now(),
-      orderType,
-      table: orderType === "dine-in" ? tableNumber : undefined,
-      items: items.map((item) => ({
-        nameVi: item.nameVi,
-        nameEn: item.nameEn,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        note: item.note,
-      })),
-      subtotal,
-      discount,
-      total,
-      status: "preparing",
-    }
-    addOrder(order)
-    clear()
-    if (orderType === "dine-in") {
-      router.push(`/orders/${mockOrderId}?table=${encodeURIComponent(tableNumber)}`)
-    } else {
-      router.push(`/orders/${mockOrderId}`)
+    setError(null)
+    setIsPlacing(true)
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("place-order", {
+        body: {
+          orderType,
+          tableId: orderType === "dine-in" ? (activeTable?.id ?? null) : null,
+          pickupTime: orderType === "pickup" ? pickupTime : null,
+          paymentMethod,
+          promoCode,
+          redeemLoyaltyPoints: redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS : 0,
+          paymentCollected: false,
+          items: items.map((item) => ({
+            menuItemId: item.menuItemId,
+            sizeId: item.size?.id ?? null,
+            modifierIds: item.modifiers.map((m) => m.optionId),
+            quantity: item.quantity,
+            note: item.note ?? null,
+          })),
+        },
+      })
+      if (invokeError || data?.error) throw invokeError ?? new Error(data.error)
+      clear()
+      if (orderType === "dine-in") {
+        router.push(`/orders/${data.orderId}?table=${encodeURIComponent(tableNumber)}`)
+      } else {
+        router.push(`/orders/${data.orderId}`)
+      }
+    } catch {
+      setError(t("placeOrderError"))
+      setIsPlacing(false)
     }
   }
 
@@ -187,44 +209,56 @@ export function CheckoutView() {
           <h2 className="font-bold text-card-foreground">{t("loyaltyPoints")}</h2>
           <Sparkles className="h-6 w-6 text-accent-foreground/70" />
         </div>
-        <p className="text-sm text-muted-foreground">{t("pointsBalance", { points: MOCK_POINTS_BALANCE })}</p>
-        <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
-          <span className="text-sm font-medium text-card-foreground">
-            {t("redeemLabel", { points: MOCK_REDEEM_POINTS, amount: formatVND(MOCK_REDEEM_AMOUNT) })}
-          </span>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={redeemLoyalty}
-            onClick={() => setRedeemLoyalty((prev) => !prev)}
-            className={cn(
-              "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-              redeemLoyalty ? "bg-primary" : "bg-muted-foreground/30"
-            )}
-          >
-            <span
-              className={cn(
-                "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                redeemLoyalty ? "translate-x-5" : "translate-x-0"
-              )}
-            />
-          </button>
-        </div>
+        {isLoggedIn ? (
+          <>
+            <p className="text-sm text-muted-foreground">{t("pointsBalance", { points: pointsBalance })}</p>
+            <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
+              <span className="text-sm font-medium text-card-foreground">
+                {t("redeemLabel", { points: REDEEM_CHUNK_POINTS, amount: formatVND(REDEEM_CHUNK_POINTS * redeemValuePerPoint) })}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={redeemLoyalty}
+                disabled={!canRedeem}
+                onClick={() => setRedeemLoyalty((prev) => !prev)}
+                className={cn(
+                  "relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40",
+                  redeemLoyalty ? "bg-primary" : "bg-muted-foreground/30"
+                )}
+              >
+                <span
+                  className={cn(
+                    "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                    redeemLoyalty ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground" title={t("loyaltyGuestTooltip")}>
+            {t("loyaltyGuestTooltip")}
+          </p>
+        )}
       </section>
 
       <section className="mb-6 space-y-2">
         <h2 className="font-bold text-card-foreground">{t("paymentMethod")}</h2>
         <div className="grid grid-cols-3 gap-2">
-          {PAYMENT_OPTIONS.map(({ id, icon: Icon, labelKey }) => (
+          {PAYMENT_OPTIONS.map(({ id, icon: Icon, labelKey, enabled }) => (
             <button
               key={id}
               type="button"
+              disabled={!enabled}
+              title={enabled ? undefined : t("paymentMethodComingSoon")}
               onClick={() => setPaymentMethod(id)}
               className={cn(
                 "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
                 paymentMethod === id
                   ? "border-primary bg-primary/5 text-primary"
-                  : "border-transparent bg-muted text-muted-foreground"
+                  : "border-transparent bg-muted text-muted-foreground",
+                !enabled && "opacity-50"
               )}
             >
               <Icon className="h-7 w-7" />
@@ -233,13 +267,10 @@ export function CheckoutView() {
           ))}
           <button
             type="button"
+            disabled
+            title={t("paymentMethodComingSoon")}
             onClick={() => setPaymentMethod("vnpay")}
-            className={cn(
-              "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
-              paymentMethod === "vnpay"
-                ? "border-primary bg-primary/5 text-primary"
-                : "border-transparent bg-muted text-muted-foreground"
-            )}
+            className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground opacity-50 transition-colors"
           >
             <QrCode className="h-7 w-7" />
             <span className="text-xs font-bold">VNPay</span>
@@ -247,6 +278,9 @@ export function CheckoutView() {
         </div>
       </section>
 
+      {error && (
+        <p className="mx-auto mb-2 max-w-2xl rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+      )}
       <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t bg-card px-6 py-4 shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.1)]">
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground">{t("total")}</span>
@@ -259,7 +293,7 @@ export function CheckoutView() {
         </div>
         <Button
           onClick={handlePlaceOrder}
-          disabled={!paymentMethod}
+          disabled={!paymentMethod || isPlacing}
           className="h-12 rounded-xl px-8 text-base font-bold"
         >
           {t("placeOrder")}

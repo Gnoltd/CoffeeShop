@@ -167,6 +167,9 @@
     "payCash": "Cash",
     "total": "Total",
     "discountApplied": "(-{amount} Loyalty)",
+    "paymentMethodComingSoon": "Coming soon — not available yet",
+    "loyaltyGuestTooltip": "Log in to earn and redeem loyalty points",
+    "placeOrderError": "Failed to place order. Try again.",
     "placeOrder": "Place Order",
     "emptyCart": "Your cart is empty — add items before checking out.",
     "browseMenu": "Browse Menu"
