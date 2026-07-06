@@ -105,7 +105,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
           orderType: orderType === "dine-in" ? "dine_in" : "pickup",
           tableId: orderType === "dine-in" ? (selectedTable?.id ?? null) : null,
           pickupTime: null,
-          paymentMethod: paymentMethod === "card" ? "stripe" : "cash",
+          paymentMethod: paymentMethod === "card" ? "stripe" : paymentMethod === "vnpay" ? "vnpay" : "cash",
           promoCode: null,
           redeemLoyaltyPoints: 0,
           paymentCollected: true,
@@ -297,7 +297,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
             </label>
             <div className="grid grid-cols-3 gap-2">
               {(["cash", "card", "vnpay"] as PaymentMethod[]).map((method) => {
-                const enabled = method === "cash" || method === "card"
+                const enabled = method === "cash" || method === "card" || method === "vnpay"
                 return (
                   <button
                     key={method}
