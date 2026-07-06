@@ -26,6 +26,19 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 }
 
+// supabase.functions.invoke() always attaches *some* Authorization
+// header, even for a guest with no session — in that case it's the
+// client's own publishable key (e.g. "sb_publishable_..."), not a JWT.
+// Forwarding that opaque value on to a Postgres connection makes
+// auth.uid() fail ("Expected 3 parts in JWT; got 1") instead of just
+// resolving to null like a guest should — found live via Playwright.
+// Only forward it when it's actually JWT-shaped (a real logged-in
+// customer's access token); otherwise let the service-role client run
+// with no forwarded identity, which is exactly what a guest needs.
+function isJwtShaped(token: string): boolean {
+  return token.split(".").length === 3
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders })
@@ -38,15 +51,18 @@ Deno.serve(async (req) => {
   try {
     const payload = await req.json()
     const authHeader = req.headers.get("Authorization")
+    const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice("Bearer ".length) : null
+    const forwardedAuthHeader = bearerToken && isJwtShaped(bearerToken) ? authHeader : null
 
     // The service-role client's own calls bypass RLS — place_order itself
     // re-derives auth.uid() internally via the forwarded Authorization
-    // header on this same request, so a guest's null identity is handled
-    // correctly by the RPC, not by any check in this function.
+    // header on this same request (when there is a real one), so a
+    // guest's null identity is handled correctly by the RPC, not by any
+    // check in this function.
     const serviceClient = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      { global: { headers: authHeader ? { Authorization: authHeader } : {} } }
+      { global: { headers: forwardedAuthHeader ? { Authorization: forwardedAuthHeader } : {} } }
     )
 
     const { data, error } = await serviceClient.rpc("place_order", { p_payload: payload })
