@@ -5,15 +5,9 @@ import { useTranslations } from "next-intl"
 import { User, Lock, LockOpen, Plus, Pencil, Users, UserCheck, UserX } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { StaffMemberForm, type StaffMember, type StaffRole } from "@/components/admin/staff-member-form"
-
-/** No `profiles` table yet — fixed mock accounts matching the Stitch mockup's example roles. */
-const INITIAL_STAFF: StaffMember[] = [
-  { id: "PC-8821", name: "Nguyễn Thu Hà", email: "thuha.nguyen@phadincoffee.vn", role: "admin", active: true },
-  { id: "PC-7732", name: "Lê Hoàng Nam", email: "nam.le@phadincoffee.vn", role: "manager", active: true },
-  { id: "PC-6510", name: "Trần Minh Khôi", email: "khoi.tran@phadincoffee.vn", role: "staff", active: false },
-  { id: "PC-6488", name: "Phạm Bảo Ngọc", email: "ngoc.pham@phadincoffee.vn", role: "staff", active: true },
-]
+import { createClient } from "@/lib/supabase/client"
+import { getStaffMembers, updateStaffMember, createStaffAccount, type StaffMember, type StaffRole } from "@/lib/supabase/staff-data"
+import { StaffMemberForm } from "@/components/admin/staff-member-form"
 
 const ROLE_STYLES: Record<StaffRole, string> = {
   admin: "border-primary/20 bg-primary/10 text-primary",
@@ -27,9 +21,52 @@ type FormMode = { type: "add" } | { type: "edit"; member: StaffMember } | null
 
 export function StaffAccounts() {
   const t = useTranslations("AdminStaff")
-  const [staff, setStaff] = useState(INITIAL_STAFF)
+  const [supabase] = useState(() => createClient())
+  const [staff, setStaff] = useState<StaffMember[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [formMode, setFormMode] = useState<FormMode>(null)
   const [currentPage, setCurrentPage] = useState(1)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [createdPassword, setCreatedPassword] = useState<string | null>(null)
+
+  async function refetch() {
+    const rows = await getStaffMembers(supabase)
+    setStaff(rows)
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!cancelled) setCurrentUserId(user?.id ?? null)
+    })
+
+    refetch()
+      .catch(() => {
+        if (!cancelled) setError(t("loadError"))
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+
+    const channel = supabase
+      .channel("staff-accounts-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        if (!cancelled) refetch()
+      })
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
+          console.warn(`Staff accounts realtime subscription status: ${status}`)
+        }
+      })
+
+    return () => {
+      cancelled = true
+      supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     setCurrentPage(1)
@@ -39,19 +76,43 @@ export function StaffAccounts() {
   const pageStart = (currentPage - 1) * PAGE_SIZE
   const pagedStaff = useMemo(() => staff.slice(pageStart, pageStart + PAGE_SIZE), [staff, pageStart])
 
-  const activeCount = staff.filter((member) => member.active).length
+  const activeCount = staff.filter((member) => member.isActive).length
 
-  function toggleActive(id: string) {
-    setStaff((prev) => prev.map((member) => (member.id === id ? { ...member, active: !member.active } : member)))
+  async function toggleActive(member: StaffMember) {
+    setError(null)
+    try {
+      await updateStaffMember(supabase, member.id, {
+        fullName: member.fullName,
+        role: member.role,
+        isActive: !member.isActive,
+      })
+    } catch {
+      setError(t("saveError"))
+    }
   }
 
-  function saveMember(member: StaffMember) {
-    setStaff((prev) =>
-      prev.some((existing) => existing.id === member.id)
-        ? prev.map((existing) => (existing.id === member.id ? member : existing))
-        : [member, ...prev]
-    )
-    setFormMode(null)
+  async function saveMember(input: { fullName: string; email: string; role: StaffRole; isActive: boolean }) {
+    setError(null)
+    try {
+      if (formMode?.type === "edit") {
+        await updateStaffMember(supabase, formMode.member.id, {
+          fullName: input.fullName,
+          role: input.role,
+          isActive: input.isActive,
+        })
+        setFormMode(null)
+      } else {
+        const result = await createStaffAccount(supabase, {
+          fullName: input.fullName,
+          email: input.email,
+          role: input.role,
+        })
+        setFormMode(null)
+        setCreatedPassword(result.temporaryPassword)
+      }
+    } catch {
+      setError(t("saveError"))
+    }
   }
 
   const roleLabel = (role: StaffRole) =>
@@ -67,9 +128,29 @@ export function StaffAccounts() {
         </Button>
       </div>
 
+      {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
+
+      {createdPassword && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+          <div>
+            <p className="text-sm font-bold text-card-foreground">{t("passwordCreatedTitle")}</p>
+            <p className="font-mono text-sm text-primary">{createdPassword}</p>
+            <p className="text-xs text-muted-foreground">{t("passwordCreatedNote")}</p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => navigator.clipboard.writeText(createdPassword)}
+          >
+            {t("copyPassword")}
+          </Button>
+        </div>
+      )}
+
       {formMode && (
         <StaffMemberForm
           initialMember={formMode.type === "edit" ? formMode.member : undefined}
+          disableActiveToggle={formMode.type === "edit" && formMode.member.id === currentUserId}
           onCancel={() => setFormMode(null)}
           onSave={saveMember}
         />
@@ -119,64 +200,72 @@ export function StaffAccounts() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {pagedStaff.map((member) => (
-              <tr key={member.id} className={cn(!member.active && "opacity-60")}>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                      <User className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="font-bold text-card-foreground">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">ID: {member.id}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
-                <td className="px-4 py-3">
-                  <span
-                    className={cn(
-                      "rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide",
-                      ROLE_STYLES[member.role]
-                    )}
-                  >
-                    {roleLabel(member.role)}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-1.5">
-                    <span className={cn("h-2 w-2 rounded-full", member.active ? "bg-green-500" : "bg-muted-foreground")} />
-                    <span className="text-card-foreground">{member.active ? t("active") : t("disabled")}</span>
-                  </div>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex justify-end gap-1">
-                    <button
-                      type="button"
-                      onClick={() => setFormMode({ type: "edit", member })}
-                      aria-label={t("edit")}
-                      title={t("edit")}
-                      className="rounded-lg p-2 text-secondary transition-colors hover:bg-secondary/10"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleActive(member.id)}
-                      className={cn(
-                        "rounded-lg p-2 transition-colors",
-                        member.active
-                          ? "text-destructive hover:bg-destructive/10"
-                          : "text-green-600 hover:bg-green-100"
-                      )}
-                      title={member.active ? t("disabled") : t("active")}
-                    >
-                      {member.active ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
-                    </button>
-                  </div>
+            {isLoading ? (
+              <tr>
+                <td colSpan={5} className="px-4 py-6 text-center text-muted-foreground">
+                  {t("loading")}
                 </td>
               </tr>
-            ))}
+            ) : (
+              pagedStaff.map((member) => (
+                <tr key={member.id} className={cn(!member.isActive && "opacity-60")}>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                        <User className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-bold text-card-foreground">{member.fullName}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">{member.email}</td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={cn(
+                        "rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide",
+                        ROLE_STYLES[member.role]
+                      )}
+                    >
+                      {roleLabel(member.role)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className={cn("h-2 w-2 rounded-full", member.isActive ? "bg-green-500" : "bg-muted-foreground")} />
+                      <span className="text-card-foreground">{member.isActive ? t("active") : t("disabled")}</span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 text-right">
+                    <div className="flex justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setFormMode({ type: "edit", member })}
+                        aria-label={t("edit")}
+                        title={t("edit")}
+                        className="rounded-lg p-2 text-secondary transition-colors hover:bg-secondary/10"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => toggleActive(member)}
+                        disabled={member.id === currentUserId}
+                        className={cn(
+                          "rounded-lg p-2 transition-colors disabled:pointer-events-none disabled:opacity-30",
+                          member.isActive
+                            ? "text-destructive hover:bg-destructive/10"
+                            : "text-green-600 hover:bg-green-100"
+                        )}
+                        title={member.id === currentUserId ? t("cannotDisableSelf") : member.isActive ? t("disabled") : t("active")}
+                      >
+                        {member.isActive ? <Lock className="h-4 w-4" /> : <LockOpen className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
 

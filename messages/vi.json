@@ -476,7 +476,15 @@
     "inactiveCount": "Đã Khóa",
     "showingItems": "Hiển thị {start}-{end} trong {total} nhân viên",
     "previous": "Trước",
-    "next": "Sau"
+    "next": "Sau",
+    "loading": "Đang tải nhân viên…",
+    "loadError": "Không thể tải danh sách nhân viên. Vui lòng làm mới trang.",
+    "saveError": "Lưu thất bại. Vui lòng thử lại.",
+    "passwordCreatedTitle": "Đã tạo tài khoản — sao chép mật khẩu này ngay",
+    "passwordCreatedNote": "Mật khẩu này sẽ không hiển thị lại. Hãy gửi cho nhân viên mới một cách an toàn.",
+    "copyPassword": "Sao Chép",
+    "emailNotEditable": "Không thể thay đổi email sau khi tài khoản đã được tạo",
+    "cannotDisableSelf": "Bạn không thể khóa tài khoản của chính mình"
   },
   "AdminSettings": {
     "shopInfo": "Thông Tin Cửa Hàng",

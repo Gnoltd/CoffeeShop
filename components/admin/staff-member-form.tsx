@@ -6,47 +6,44 @@ import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import type { StaffMember, StaffRole } from "@/lib/supabase/staff-data"
 
-export type StaffRole = "admin" | "manager" | "staff"
-
-export type StaffMember = {
-  id: string
-  name: string
-  email: string
-  role: StaffRole
-  active: boolean
-}
+export type { StaffMember, StaffRole }
 
 export function StaffMemberForm({
   initialMember,
+  disableActiveToggle,
   onCancel,
   onSave,
 }: {
   initialMember?: StaffMember
+  disableActiveToggle?: boolean
   onCancel: () => void
-  onSave: (member: StaffMember) => void
+  onSave: (input: { fullName: string; email: string; role: StaffRole; isActive: boolean }) => Promise<void>
 }) {
   const t = useTranslations("AdminStaff")
   const isEditing = Boolean(initialMember)
 
-  const [name, setName] = useState(initialMember?.name ?? "")
+  const [fullName, setFullName] = useState(initialMember?.fullName ?? "")
   const [email, setEmail] = useState(initialMember?.email ?? "")
   const [role, setRole] = useState<StaffRole>(initialMember?.role ?? "staff")
-  const [active, setActive] = useState(initialMember?.active ?? true)
+  const [isActive, setIsActive] = useState(initialMember?.isActive ?? true)
   const [error, setError] = useState<string | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
 
-  function handleSave() {
-    if (!name.trim() || !email.trim()) {
+  async function handleSave() {
+    if (!fullName.trim() || !email.trim()) {
       setError(t("requiredFieldsError"))
       return
     }
-    onSave({
-      id: initialMember?.id ?? `PC-${Math.floor(1000 + Math.random() * 9000)}`,
-      name: name.trim(),
-      email: email.trim(),
-      role,
-      active,
-    })
+    setError(null)
+    setIsSaving(true)
+    try {
+      await onSave({ fullName: fullName.trim(), email: email.trim(), role, isActive })
+    } catch {
+      setError(t("saveError"))
+      setIsSaving(false)
+    }
   }
 
   return (
@@ -73,12 +70,19 @@ export function StaffMemberForm({
 
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">{t("name")}</label>
-            <Input value={name} onChange={(e) => setName(e.target.value)} className="h-10" />
+            <Input value={fullName} onChange={(e) => setFullName(e.target.value)} className="h-10" />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-muted-foreground">{t("email")}</label>
-            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="h-10" />
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isEditing}
+              className="h-10 disabled:opacity-60"
+              title={isEditing ? t("emailNotEditable") : undefined}
+            />
           </div>
 
           <div className="space-y-1.5">
@@ -94,33 +98,39 @@ export function StaffMemberForm({
             </select>
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-3">
-            <span className="text-sm font-medium text-card-foreground">{t("activeToggle")}</span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={active}
-              onClick={() => setActive((prev) => !prev)}
-              className={cn(
-                "relative h-6 w-11 rounded-full transition-colors",
-                active ? "bg-primary" : "bg-muted-foreground/30"
-              )}
-            >
-              <span
+          {isEditing && (
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <span className="text-sm font-medium text-card-foreground">{t("activeToggle")}</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={isActive}
+                disabled={disableActiveToggle}
+                onClick={() => setIsActive((prev) => !prev)}
+                title={disableActiveToggle ? t("cannotDisableSelf") : undefined}
                 className={cn(
-                  "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                  active ? "translate-x-5" : "translate-x-0"
+                  "relative h-6 w-11 rounded-full transition-colors disabled:opacity-40",
+                  isActive ? "bg-primary" : "bg-muted-foreground/30"
                 )}
-              />
-            </button>
-          </div>
+              >
+                <span
+                  className={cn(
+                    "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                    isActive ? "translate-x-5" : "translate-x-0"
+                  )}
+                />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-end gap-2 border-t px-6 py-4">
           <Button variant="outline" onClick={onCancel}>
             {t("cancel")}
           </Button>
-          <Button onClick={handleSave}>{t("save")}</Button>
+          <Button onClick={handleSave} disabled={isSaving}>
+            {t("save")}
+          </Button>
         </div>
       </div>
     </div>

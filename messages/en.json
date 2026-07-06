@@ -476,7 +476,15 @@
     "inactiveCount": "Disabled",
     "showingItems": "Showing {start}-{end} of {total} staff",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "loading": "Loading staff…",
+    "loadError": "Failed to load staff accounts. Try refreshing.",
+    "saveError": "Failed to save. Try again.",
+    "passwordCreatedTitle": "Account created — copy this password now",
+    "passwordCreatedNote": "This won't be shown again. Share it with the new hire securely.",
+    "copyPassword": "Copy",
+    "emailNotEditable": "Email can't be changed after an account is created",
+    "cannotDisableSelf": "You can't disable your own account"
   },
   "AdminSettings": {
     "shopInfo": "Shop Info",
