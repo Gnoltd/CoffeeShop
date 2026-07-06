@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl"
 import { CookingPot, Gauge, History, Boxes } from "lucide-react"
+import { Link, usePathname } from "@/i18n/navigation"
 
 export function KitchenSidebar({
   completedCount,
@@ -11,6 +12,8 @@ export function KitchenSidebar({
   avgTimeLabel: string
 }) {
   const t = useTranslations("KitchenDisplay")
+  const pathname = usePathname()
+  const isHistoryActive = pathname === "/staff/orders/history"
 
   return (
     <aside className="flex w-64 shrink-0 flex-col border-r bg-muted/40 py-4">
@@ -25,19 +28,28 @@ export function KitchenSidebar({
       </div>
 
       <nav className="flex-1 space-y-1 px-2">
-        <div className="flex items-center gap-3 rounded-lg bg-secondary/20 px-4 py-3 font-bold text-secondary">
+        <Link
+          href="/staff/orders"
+          className={
+            !isHistoryActive
+              ? "flex items-center gap-3 rounded-lg bg-secondary/20 px-4 py-3 font-bold text-secondary"
+              : "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
+          }
+        >
           <Gauge className="h-4 w-4" />
           {t("liveOrders")}
-        </div>
-        <button
-          type="button"
-          disabled
-          title="Not implemented yet — no staff-facing order history route"
-          className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground opacity-60"
+        </Link>
+        <Link
+          href="/staff/orders/history"
+          className={
+            isHistoryActive
+              ? "flex items-center gap-3 rounded-lg bg-secondary/20 px-4 py-3 font-bold text-secondary"
+              : "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
+          }
         >
           <History className="h-4 w-4" />
           {t("orderHistoryNav")}
-        </button>
+        </Link>
         <button
           type="button"
           disabled
