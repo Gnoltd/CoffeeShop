@@ -72,7 +72,7 @@ export function CheckoutView() {
     try {
       const { data, error: invokeError } = await supabase.functions.invoke("place-order", {
         body: {
-          orderType,
+          orderType: orderType === "dine-in" ? "dine_in" : "pickup",
           tableId: orderType === "dine-in" ? (activeTable?.id ?? null) : null,
           pickupTime: orderType === "pickup" ? pickupTime : null,
           paymentMethod,
