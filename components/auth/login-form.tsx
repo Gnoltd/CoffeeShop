@@ -40,10 +40,10 @@ export function LoginForm() {
     if (data.user) {
       const { data: profile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, is_active")
         .eq("id", data.user.id)
         .single()
-      role = profile?.role ?? null
+      role = profile ? (profile.is_active ? profile.role : "customer") : null
     }
 
     router.push(ROLE_HOME[role ?? "customer"] ?? "/menu")
