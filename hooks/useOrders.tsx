@@ -1,115 +1,71 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { getMyOrders, getOrderForTracking, type OrderForTracking } from "@/lib/supabase/orders-data"
 
-export type OrderStatus = "preparing" | "ready" | "completed" | "cancelled"
-
-export type OrderRecordItem = {
-  nameVi: string
-  nameEn: string
-  quantity: number
-  unitPrice: number
-  note?: string
-}
-
-export type OrderRecord = {
-  id: string
-  createdAt: number
-  orderType: "pickup" | "dine-in"
-  table?: string
-  items: OrderRecordItem[]
-  subtotal: number
-  discount: number
-  total: number
-  status: OrderStatus
-}
-
-/**
- * No `orders` table yet — seeded with fixed historical mock orders so
- * Order History has something to show on first load. Placing a real order
- * through Checkout prepends a genuine `OrderRecord` (real items, notes,
- * discount, table) via `addOrder`, so Order Tracking and Order History
- * both reflect what was actually ordered instead of a disconnected mock.
- */
-const SEED_ORDERS: OrderRecord[] = [
-  {
-    id: "PDC-9821",
-    createdAt: new Date(2026, 6, 5, 14, 32).getTime(),
-    orderType: "pickup",
-    items: [{ nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", quantity: 1, unitPrice: 29000 }],
-    subtotal: 29000,
-    discount: 0,
-    total: 29000,
-    status: "preparing",
-  },
-  {
-    id: "PDC-9815",
-    createdAt: new Date(2026, 6, 5, 12, 15).getTime(),
-    orderType: "dine-in",
-    table: "2",
-    items: [
-      { nameVi: "Cà Phê Trứng", nameEn: "Egg Coffee", quantity: 1, unitPrice: 45000 },
-      { nameVi: "Bánh Croissant Bơ", nameEn: "Butter Croissant", quantity: 1, unitPrice: 28000 },
-    ],
-    subtotal: 73000,
-    discount: 0,
-    total: 73000,
-    status: "ready",
-  },
-  {
-    id: "PDC-9788",
-    createdAt: new Date(2026, 6, 3, 9, 45).getTime(),
-    orderType: "pickup",
-    items: [
-      { nameVi: "Trà Vải", nameEn: "Lychee Tea", quantity: 1, unitPrice: 35000 },
-      { nameVi: "Bánh Mì Que", nameEn: "Crispy Breadsticks", quantity: 1, unitPrice: 19000 },
-    ],
-    subtotal: 54000,
-    discount: 0,
-    total: 54000,
-    status: "completed",
-  },
-  {
-    id: "PDC-9750",
-    createdAt: new Date(2026, 6, 1, 16, 20).getTime(),
-    orderType: "pickup",
-    items: [{ nameVi: "Bạc Xỉu", nameEn: "White Coffee", quantity: 1, unitPrice: 32000 }],
-    subtotal: 32000,
-    discount: 0,
-    total: 32000,
-    status: "cancelled",
-  },
-  {
-    id: "PDC-9712",
-    createdAt: new Date(2026, 5, 28, 8, 30).getTime(),
-    orderType: "dine-in",
-    table: "4",
-    items: [
-      { nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", quantity: 2, unitPrice: 29000 },
-      { nameVi: "Bánh Mì Que", nameEn: "Crispy Breadsticks", quantity: 1, unitPrice: 19000 },
-    ],
-    subtotal: 77000,
-    discount: 0,
-    total: 77000,
-    status: "completed",
-  },
-]
+export type { OrderForTracking }
+export type OrderStatus = OrderForTracking["status"]
 
 type OrdersContextValue = {
-  orders: OrderRecord[]
-  addOrder: (order: OrderRecord) => void
+  myOrders: OrderForTracking[]
+  isLoadingMyOrders: boolean
+  getOrder: (orderId: string) => Promise<OrderForTracking | null>
 }
 
 const OrdersContext = createContext<OrdersContextValue | null>(null)
 
 export function OrdersProvider({ children }: { children: ReactNode }) {
-  const [orders, setOrders] = useState<OrderRecord[]>(SEED_ORDERS)
+  const [supabase] = useState(() => createClient())
+  const [myOrders, setMyOrders] = useState<OrderForTracking[]>([])
+  const [isLoadingMyOrders, setIsLoadingMyOrders] = useState(true)
 
-  function addOrder(order: OrderRecord) {
-    setOrders((prev) => [order, ...prev])
+  useEffect(() => {
+    let cancelled = false
+
+    getMyOrders(supabase)
+      .then((rows) => {
+        if (!cancelled) setMyOrders(rows)
+      })
+      .catch(() => {
+        // Order History is gated to logged-in customers already; an
+        // error here (e.g. no session) just leaves the list empty.
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingMyOrders(false)
+      })
+
+    const channel = supabase
+      .channel("my-orders-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        // Realtime confirms *that* a row visible to this session changed;
+        // re-fetching the small "my orders" list is simpler and cheap
+        // enough than hand-merging a partial payload against joined
+        // table/menu_item names this component doesn't have inline.
+        getMyOrders(supabase).then((rows) => {
+          if (!cancelled) setMyOrders(rows)
+        })
+      })
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
+          console.warn(`My-orders realtime subscription status: ${status}`)
+        }
+      })
+
+    return () => {
+      cancelled = true
+      supabase.removeChannel(channel)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function getOrder(orderId: string): Promise<OrderForTracking | null> {
+    return getOrderForTracking(supabase, orderId)
   }
 
-  return <OrdersContext.Provider value={{ orders, addOrder }}>{children}</OrdersContext.Provider>
+  return (
+    <OrdersContext.Provider value={{ myOrders, isLoadingMyOrders, getOrder }}>{children}</OrdersContext.Provider>
+  )
 }
 
 export function useOrders(): OrdersContextValue {
