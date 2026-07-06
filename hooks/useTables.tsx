@@ -1,67 +1,57 @@
 "use client"
 
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
+import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/client"
 import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  type ReactNode,
-} from "react"
+  createTable as createTableQuery,
+  getTableByToken,
+  getTables,
+  incrementScanCount,
+  mapTableRow,
+  regenerateQrToken as regenerateQrTokenQuery,
+  renameTable as renameTableQuery,
+  setTableOccupied,
+  updateTableLocation,
+  type TableInput,
+  type TableRecord,
+  type TableRow,
+} from "@/lib/supabase/tables-data"
 
-export type TableRecord = {
-  id: string
-  number: string
-  qrToken: string
-  locationVi: string
-  locationEn: string
-  isOccupied: boolean
-  scanCount: number
-}
+export type { TableRecord, TableInput }
 
 type TablesContextValue = {
   tables: TableRecord[]
-  addTable: () => void
-  renameTable: (id: string, number: string) => void
-  updateLocation: (id: string, locationVi: string, locationEn: string) => void
-  toggleOccupied: (id: string) => void
-  regenerateToken: (id: string) => void
+  addTable: (input: TableInput) => Promise<void>
+  renameTable: (id: string, number: string) => Promise<void>
+  updateLocation: (id: string, locationVi: string, locationEn: string) => Promise<void>
+  toggleOccupied: (id: string) => Promise<void>
+  regenerateToken: (id: string) => Promise<void>
   activeTable: TableRecord | null
-  setActiveTableByToken: (token: string) => TableRecord | null
+  setActiveTableByToken: (token: string) => Promise<TableRecord | null>
   clearActiveTable: () => void
 }
 
 const TablesContext = createContext<TablesContextValue | null>(null)
 
-const TABLES_STORAGE_KEY = "phadincoffee-tables"
 const ACTIVE_TABLE_STORAGE_KEY = "phadincoffee-active-table"
 
-/**
- * Fixed, easy-to-type demo tokens so this can actually be tested by
- * visiting /table/table-1, /table/table-2, etc. — real tokens (once the
- * `tables` table exists) would be opaque random strings, not this readable.
- */
-const DEFAULT_TABLES: TableRecord[] = [
-  { id: "t1", number: "1", qrToken: "table-1", locationVi: "Khu vực cửa sổ", locationEn: "Window Area", isOccupied: false, scanCount: 0 },
-  { id: "t2", number: "2", qrToken: "table-2", locationVi: "Khu trung tâm", locationEn: "Center Hall", isOccupied: true, scanCount: 0 },
-  { id: "t3", number: "3", qrToken: "table-3", locationVi: "Tầng 1 - Ban công", locationEn: "Floor 1 - Balcony", isOccupied: false, scanCount: 0 },
-  { id: "t4", number: "4", qrToken: "table-4", locationVi: "Tầng 1 - Trong nhà", locationEn: "Floor 1 - Indoor", isOccupied: false, scanCount: 0 },
-  { id: "t5", number: "5", qrToken: "table-5", locationVi: "Khu vực Bar", locationEn: "Bar Area", isOccupied: false, scanCount: 0 },
-  { id: "t6", number: "6", qrToken: "table-6", locationVi: "Sân vườn", locationEn: "Garden", isOccupied: false, scanCount: 0 },
-]
-
-function randomToken(): string {
-  return Math.random().toString(36).slice(2, 10)
-}
-
 export function TablesProvider({ children }: { children: ReactNode }) {
-  const [tables, setTables] = useState<TableRecord[]>(DEFAULT_TABLES)
+  const [supabase] = useState(() => createClient())
+  const [tables, setTables] = useState<TableRecord[]>([])
   const [activeTable, setActiveTable] = useState<TableRecord | null>(null)
   const [hydrated, setHydrated] = useState(false)
+  const tablesRef = useRef<TableRecord[]>([])
 
   useEffect(() => {
+    tablesRef.current = tables
+  }, [tables])
+
+  // activeTable persistence is unchanged from before this hook was
+  // rewritten — it must survive a VI/EN locale switch, which remounts
+  // this whole provider (see the design spec's Section 3).
+  useEffect(() => {
     try {
-      const storedTables = window.localStorage.getItem(TABLES_STORAGE_KEY)
-      if (storedTables) setTables(JSON.parse(storedTables))
       const storedActive = window.localStorage.getItem(ACTIVE_TABLE_STORAGE_KEY)
       if (storedActive) setActiveTable(JSON.parse(storedActive))
     } catch {
@@ -73,11 +63,6 @@ export function TablesProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!hydrated) return
-    window.localStorage.setItem(TABLES_STORAGE_KEY, JSON.stringify(tables))
-  }, [tables, hydrated])
-
-  useEffect(() => {
-    if (!hydrated) return
     if (activeTable) {
       window.localStorage.setItem(ACTIVE_TABLE_STORAGE_KEY, JSON.stringify(activeTable))
     } else {
@@ -85,57 +70,76 @@ export function TablesProvider({ children }: { children: ReactNode }) {
     }
   }, [activeTable, hydrated])
 
-  function addTable() {
-    const highestNumber = tables.reduce((max, table) => {
-      const parsed = Number(table.number)
-      return Number.isFinite(parsed) ? Math.max(max, parsed) : max
-    }, 0)
-    const nextNumber = String(highestNumber + 1)
+  useEffect(() => {
+    let cancelled = false
 
-    setTables((prev) => [
-      ...prev,
-      {
-        id: `t-${Date.now()}`,
-        number: nextNumber,
-        qrToken: randomToken(),
-        locationVi: "",
-        locationEn: "",
-        isOccupied: false,
-        scanCount: 0,
-      },
-    ])
+    getTables(supabase).then((rows) => {
+      if (!cancelled) setTables(rows)
+    })
+
+    const channel = supabase
+      .channel("tables-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "tables" },
+        (payload: RealtimePostgresChangesPayload<TableRow>) => {
+          if (payload.eventType === "DELETE") {
+            const oldId = (payload.old as { id?: string }).id
+            if (!oldId) return
+            setTables((prev) => prev.filter((t) => t.id !== oldId))
+            return
+          }
+          const mapped = mapTableRow(payload.new as TableRow)
+          setTables((prev) =>
+            prev.some((t) => t.id === mapped.id) ? prev.map((t) => (t.id === mapped.id ? mapped : t)) : [...prev, mapped]
+          )
+        }
+      )
+      .subscribe((status) => {
+        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
+          console.warn(`Tables realtime subscription status: ${status}`)
+        }
+      })
+
+    return () => {
+      cancelled = true
+      supabase.removeChannel(channel)
+    }
+    // Runs once on mount; `supabase` is a stable client held in state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function addTable(input: TableInput) {
+    await createTableQuery(supabase, input)
   }
 
-  function renameTable(id: string, number: string) {
-    setTables((prev) => prev.map((table) => (table.id === id ? { ...table, number } : table)))
+  async function renameTable(id: string, number: string) {
+    await renameTableQuery(supabase, id, number)
     setActiveTable((prev) => (prev?.id === id ? { ...prev, number } : prev))
   }
 
-  function updateLocation(id: string, locationVi: string, locationEn: string) {
-    setTables((prev) =>
-      prev.map((table) => (table.id === id ? { ...table, locationVi, locationEn } : table))
-    )
+  async function updateLocation(id: string, locationVi: string, locationEn: string) {
+    await updateTableLocation(supabase, id, locationVi, locationEn)
     setActiveTable((prev) => (prev?.id === id ? { ...prev, locationVi, locationEn } : prev))
   }
 
-  function toggleOccupied(id: string) {
-    setTables((prev) =>
-      prev.map((table) => (table.id === id ? { ...table, isOccupied: !table.isOccupied } : table))
-    )
+  async function toggleOccupied(id: string) {
+    const table = tablesRef.current.find((t) => t.id === id)
+    if (!table) return
+    await setTableOccupied(supabase, id, !table.isOccupied)
   }
 
-  function regenerateToken(id: string) {
-    setTables((prev) =>
-      prev.map((table) => (table.id === id ? { ...table, qrToken: randomToken() } : table))
-    )
+  async function regenerateToken(id: string) {
+    await regenerateQrTokenQuery(supabase, id)
   }
 
-  function setActiveTableByToken(token: string): TableRecord | null {
-    const found = tables.find((table) => table.qrToken === token) ?? null
+  async function setActiveTableByToken(token: string): Promise<TableRecord | null> {
+    const found = await getTableByToken(supabase, token)
     if (found) {
-      setTables((prev) =>
-        prev.map((table) => (table.id === found.id ? { ...table, scanCount: table.scanCount + 1 } : table))
-      )
+      incrementScanCount(supabase, found.id).catch(() => {
+        // A missed scan-count increment is a cosmetic admin-stat miss,
+        // not something worth failing table resolution over.
+      })
     }
     setActiveTable(found)
     return found
