@@ -2,15 +2,22 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { UploadCloud, X, Plus } from "lucide-react"
+import { UploadCloud, X, Plus, Pencil } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
-import { createModifierGroup, getModifierGroups } from "@/lib/supabase/menu-data"
+import { createModifierGroup, getModifierGroups, updateModifierGroup } from "@/lib/supabase/menu-data"
 import type { MenuCategory, MenuIcon, MenuItem, MenuItemInput, MenuModifierGroup } from "@/lib/supabase/menu-data"
-import { getIngredients, getMenuItemIngredients, type Ingredient, type RecipeEntry } from "@/lib/supabase/inventory-data"
+import {
+  getIngredients,
+  getMenuItemIngredients,
+  getModifierIngredients,
+  setModifierIngredients,
+  type Ingredient,
+  type RecipeEntry,
+} from "@/lib/supabase/inventory-data"
 import { RecipeChecklist, type RecipeSelection } from "@/components/admin/recipe-checklist"
 
 const ICON_OPTIONS: MenuIcon[] = ["coffee", "cup-soda", "cookie", "milk"]
@@ -60,6 +67,14 @@ export function MenuItemForm({
   const [newExtraNameEn, setNewExtraNameEn] = useState("")
   const [newExtraPrice, setNewExtraPrice] = useState("")
   const [extrasError, setExtrasError] = useState<string | null>(null)
+
+  const [editingExtraId, setEditingExtraId] = useState<string | null>(null)
+  const [editExtraNameVi, setEditExtraNameVi] = useState("")
+  const [editExtraNameEn, setEditExtraNameEn] = useState("")
+  const [editExtraPrice, setEditExtraPrice] = useState("")
+  const [editExtraRecipe, setEditExtraRecipe] = useState<RecipeSelection>({})
+  const [editExtraError, setEditExtraError] = useState<string | null>(null)
+  const [isSavingExtra, setIsSavingExtra] = useState(false)
 
   const [ingredientsList, setIngredientsList] = useState<Ingredient[]>([])
   const [selectedRecipe, setSelectedRecipe] = useState<RecipeSelection>({})
@@ -134,6 +149,52 @@ export function MenuItemForm({
       setShowAddExtraForm(false)
     } catch {
       setExtrasError(t("extraSaveError"))
+    }
+  }
+
+  async function openExtraEdit(group: MenuModifierGroup) {
+    setEditingExtraId(group.id)
+    setEditExtraNameVi(group.nameVi)
+    setEditExtraNameEn(group.nameEn)
+    setEditExtraPrice(String(group.options[0].priceDelta))
+    setEditExtraError(null)
+    const entries = await getModifierIngredients(supabase, group.options[0].id)
+    const map: RecipeSelection = {}
+    entries.forEach((entry) => {
+      map[entry.ingredientId] = entry.quantityUsed
+    })
+    setEditExtraRecipe(map)
+  }
+
+  async function handleSaveExtraEdit(group: MenuModifierGroup) {
+    const parsedPrice = Number(editExtraPrice)
+    if (!editExtraNameVi.trim() || !editExtraNameEn.trim() || !Number.isFinite(parsedPrice) || parsedPrice < 0) {
+      setEditExtraError(t("extraRequiredFieldsError"))
+      return
+    }
+    const recipeEntries = Object.entries(editExtraRecipe).map(([ingredientId, quantityUsed]) => ({
+      ingredientId,
+      quantityUsed,
+    }))
+    if (recipeEntries.some((entry) => !Number.isFinite(entry.quantityUsed) || entry.quantityUsed <= 0)) {
+      setEditExtraError(t("recipeQuantityRequiredError"))
+      return
+    }
+    setEditExtraError(null)
+    setIsSavingExtra(true)
+    try {
+      const updated = await updateModifierGroup(supabase, group.id, {
+        nameVi: editExtraNameVi.trim(),
+        nameEn: editExtraNameEn.trim(),
+        priceDelta: parsedPrice,
+      })
+      await setModifierIngredients(supabase, updated.options[0].id, recipeEntries)
+      setExtraGroups((prev) => prev.map((g) => (g.id === group.id ? updated : g)))
+      setEditingExtraId(null)
+    } catch {
+      setEditExtraError(t("extraEditSaveError"))
+    } finally {
+      setIsSavingExtra(false)
     }
   }
 
@@ -390,25 +451,87 @@ export function MenuItemForm({
               {extraGroups.map((group) => {
                 const checked = selectedExtraIds.includes(group.id)
                 const option = group.options[0]
+                const isEditingThis = editingExtraId === group.id
                 return (
-                  <label key={group.id} className="flex items-center justify-between gap-3 text-sm">
-                    <span className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() =>
-                          setSelectedExtraIds((prev) =>
-                            checked ? prev.filter((id) => id !== group.id) : [...prev, group.id]
-                          )
-                        }
-                        className="h-4 w-4 rounded border-input text-primary focus:ring-primary/40"
-                      />
-                      <span className="text-card-foreground">
-                        {group.nameVi} / {group.nameEn}
-                      </span>
-                    </span>
-                    <span className="font-medium text-primary">+{formatVND(option.priceDelta)}</span>
-                  </label>
+                  <div key={group.id} className="space-y-2">
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <label className="flex flex-1 items-center gap-2">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setSelectedExtraIds((prev) =>
+                              checked ? prev.filter((id) => id !== group.id) : [...prev, group.id]
+                            )
+                          }
+                          className="h-4 w-4 rounded border-input text-primary focus:ring-primary/40"
+                        />
+                        <span className="text-card-foreground">
+                          {group.nameVi} / {group.nameEn}
+                        </span>
+                      </label>
+                      <span className="font-medium text-primary">+{formatVND(option.priceDelta)}</span>
+                      <button
+                        type="button"
+                        onClick={() => (isEditingThis ? setEditingExtraId(null) : openExtraEdit(group))}
+                        aria-label={t("editExtra")}
+                        title={t("editExtra")}
+                        className="rounded-lg p-1.5 text-secondary transition-colors hover:bg-secondary/10"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {isEditingThis && (
+                      <div className="space-y-2 rounded-lg border border-dashed p-3">
+                        {editExtraError && (
+                          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                            {editExtraError}
+                          </p>
+                        )}
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                          <Input
+                            value={editExtraNameVi}
+                            onChange={(e) => setEditExtraNameVi(e.target.value)}
+                            className="h-9"
+                          />
+                          <Input
+                            value={editExtraNameEn}
+                            onChange={(e) => setEditExtraNameEn(e.target.value)}
+                            className="h-9"
+                          />
+                          <Input
+                            type="number"
+                            min={0}
+                            value={editExtraPrice}
+                            onChange={(e) => setEditExtraPrice(e.target.value)}
+                            className="h-9"
+                          />
+                        </div>
+                        <RecipeChecklist
+                          ingredients={ingredientsList}
+                          selected={editExtraRecipe}
+                          onChange={setEditExtraRecipe}
+                          locale={locale}
+                          emptyLabel={t("noIngredientsForRecipe")}
+                          quantityPlaceholder={t("recipeQuantityPlaceholder")}
+                        />
+                        <div className="flex justify-end gap-2">
+                          <Button type="button" variant="outline" size="sm" onClick={() => setEditingExtraId(null)}>
+                            {t("cancel")}
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => handleSaveExtraEdit(group)}
+                            disabled={isSavingExtra}
+                          >
+                            {t("saveExtra")}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>
