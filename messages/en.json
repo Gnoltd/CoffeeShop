@@ -433,7 +433,11 @@
     "locationViLabel": "Location (Vietnamese)",
     "locationEnLabel": "Location (English)",
     "markAvailable": "Mark Available",
-    "markOccupied": "Mark Occupied"
+    "markOccupied": "Mark Occupied",
+    "tableNumberLabel": "Table Number",
+    "tableNumberRequiredError": "Enter a table number.",
+    "tableNumberTakenError": "That table number is already taken.",
+    "updateError": "Failed to update table. Try again."
   },
   "AdminStaff": {
     "title": "Staff Accounts",

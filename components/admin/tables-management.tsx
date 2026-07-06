@@ -7,6 +7,7 @@ import { QrCode, Download, RefreshCw, Plus, Pencil, Check, X, Grid2x2, CircleChe
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useTables } from "@/hooks/useTables"
+import { TableForm } from "@/components/admin/table-form"
 
 export function TablesManagement() {
   const locale = useLocale()
@@ -17,6 +18,8 @@ export function TablesManagement() {
   const [draftLocationVi, setDraftLocationVi] = useState("")
   const [draftLocationEn, setDraftLocationEn] = useState("")
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({})
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const totalScans = tables.reduce((sum, table) => sum + table.scanCount, 0)
   const occupiedCount = tables.filter((table) => table.isOccupied).length
@@ -54,11 +57,16 @@ export function TablesManagement() {
     setDraftLocationEn(locationEn)
   }
 
-  function saveEditing(id: string) {
+  async function saveEditing(id: string) {
+    setError(null)
     const trimmed = draftNumber.trim()
-    if (trimmed) renameTable(id, trimmed)
-    updateLocation(id, draftLocationVi.trim(), draftLocationEn.trim())
-    setEditingId(null)
+    try {
+      if (trimmed) await renameTable(id, trimmed)
+      await updateLocation(id, draftLocationVi.trim(), draftLocationEn.trim())
+      setEditingId(null)
+    } catch {
+      setError(t("tableNumberTakenError"))
+    }
   }
 
   function cancelEditing() {
@@ -69,11 +77,13 @@ export function TablesManagement() {
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
-        <Button className="h-10 gap-2" onClick={addTable}>
+        <Button className="h-10 gap-2" onClick={() => setShowAddForm(true)}>
           <Plus className="h-4 w-4" />
           {t("addTable")}
         </Button>
       </div>
+
+      {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
@@ -119,7 +129,7 @@ export function TablesManagement() {
             >
               <button
                 type="button"
-                onClick={() => toggleOccupied(table.id)}
+                onClick={() => toggleOccupied(table.id).catch(() => setError(t("updateError")))}
                 title={table.isOccupied ? t("markAvailable") : t("markOccupied")}
                 className={cn(
                   "inline-flex items-center gap-1 self-start rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors",
@@ -226,7 +236,7 @@ export function TablesManagement() {
                   variant="outline"
                   size="sm"
                   className="h-9 flex-1 gap-1.5"
-                  onClick={() => regenerateToken(table.id)}
+                  onClick={() => regenerateToken(table.id).catch(() => setError(t("updateError")))}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                   {t("regenerateCode")}
@@ -236,6 +246,16 @@ export function TablesManagement() {
           )
         })}
       </div>
+
+      {showAddForm && (
+        <TableForm
+          onCancel={() => setShowAddForm(false)}
+          onSave={async (input) => {
+            await addTable(input)
+            setShowAddForm(false)
+          }}
+        />
+      )}
     </div>
   )
 }

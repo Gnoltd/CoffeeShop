@@ -433,7 +433,11 @@
     "locationViLabel": "Vị Trí (Tiếng Việt)",
     "locationEnLabel": "Vị Trí (English)",
     "markAvailable": "Đánh Dấu Trống",
-    "markOccupied": "Đánh Dấu Đang Dùng"
+    "markOccupied": "Đánh Dấu Đang Dùng",
+    "tableNumberLabel": "Số Bàn",
+    "tableNumberRequiredError": "Vui lòng nhập số bàn.",
+    "tableNumberTakenError": "Số bàn này đã được sử dụng.",
+    "updateError": "Cập nhật bàn thất bại. Vui lòng thử lại."
   },
   "AdminStaff": {
     "title": "Nhân Viên",
