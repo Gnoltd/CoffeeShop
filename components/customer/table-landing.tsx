@@ -13,7 +13,13 @@ export function TableLanding({ qrToken }: { qrToken: string }) {
   const [resolvedTable, setResolvedTable] = useState<TableRecord | null | undefined>(undefined)
 
   useEffect(() => {
-    setResolvedTable(setActiveTableByToken(qrToken))
+    let cancelled = false
+    setActiveTableByToken(qrToken).then((table) => {
+      if (!cancelled) setResolvedTable(table)
+    })
+    return () => {
+      cancelled = true
+    }
     // Runs once per token; setActiveTableByToken is stable within a TablesProvider lifetime.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qrToken])
