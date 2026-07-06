@@ -75,13 +75,20 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
 
       // Logged-in customer (own order, matches orders_select_own) or
       // staff (matches orders_select_staff) — both are genuinely visible
-      // to Realtime under existing RLS, so subscribe for real.
+      // to Realtime under existing RLS, so subscribe for real. No
+      // server-side `filter` here — found live that Supabase Realtime's
+      // column filters don't reliably combine with RLS-gated
+      // postgres_changes (a filtered subscription silently received
+      // nothing, while the identical subscription with no filter
+      // delivered events correctly). Filtering to this one order id is
+      // done client-side instead, on the delivered payload.
       channel = supabase
         .channel(`order-tracking-${orderId}`)
         .on(
           "postgres_changes",
-          { event: "UPDATE", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
-          async () => {
+          { event: "UPDATE", schema: "public", table: "orders" },
+          async (payload) => {
+            if ((payload.new as { id?: string })?.id !== orderId) return
             const refreshed = await getOrder(orderId)
             if (!cancelled) setOrder(refreshed)
           }
