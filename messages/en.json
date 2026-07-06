@@ -165,6 +165,7 @@
     "paymentMethod": "Payment Method",
     "payStripe": "Card",
     "payCash": "Cash",
+    "payVNPay": "VNPay",
     "total": "Total",
     "discountApplied": "(-{amount} Loyalty)",
     "paymentMethodComingSoon": "Coming soon — not available yet",

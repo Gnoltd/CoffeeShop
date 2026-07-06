@@ -19,9 +19,10 @@ const FALLBACK_TABLE_NUMBER = "04"
 type OrderType = "pickup" | "dine-in"
 type PaymentMethod = "stripe" | "cash" | "vnpay"
 
-const PAYMENT_OPTIONS: { id: PaymentMethod; icon: typeof CreditCard; labelKey: "payStripe" | "payCash"; enabled: boolean }[] = [
+const PAYMENT_OPTIONS: { id: PaymentMethod; icon: typeof CreditCard; labelKey: "payStripe" | "payCash" | "payVNPay"; enabled: boolean }[] = [
   { id: "stripe", icon: CreditCard, labelKey: "payStripe", enabled: true },
   { id: "cash", icon: Banknote, labelKey: "payCash", enabled: true },
+  { id: "vnpay", icon: QrCode, labelKey: "payVNPay", enabled: true },
 ]
 
 export function CheckoutView() {
@@ -70,6 +71,13 @@ export function CheckoutView() {
       setCanceledNotice(true)
       router.replace("/checkout")
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (searchParams.get("paymentFailed") !== "1") return
+    setCanceledNotice(true)
+    router.replace("/checkout")
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -285,16 +293,6 @@ export function CheckoutView() {
               <span className="text-xs font-bold">{t(labelKey)}</span>
             </button>
           ))}
-          <button
-            type="button"
-            disabled
-            title={t("paymentMethodComingSoon")}
-            onClick={() => setPaymentMethod("vnpay")}
-            className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground opacity-50 transition-colors"
-          >
-            <QrCode className="h-7 w-7" />
-            <span className="text-xs font-bold">VNPay</span>
-          </button>
         </div>
       </section>
 

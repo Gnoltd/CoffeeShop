@@ -165,6 +165,7 @@
     "paymentMethod": "Phương Thức Thanh Toán",
     "payStripe": "Thẻ",
     "payCash": "Tiền Mặt",
+    "payVNPay": "VNPay",
     "total": "Thanh Toán",
     "discountApplied": "(-{amount} Tích Điểm)",
     "paymentMethodComingSoon": "Sắp có — chưa khả dụng",
