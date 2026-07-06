@@ -262,7 +262,9 @@
     "payCard": "Thẻ",
     "subtotal": "Tạm Tính",
     "tax": "Thuế (8%)",
-    "charge": "Thanh Toán"
+    "charge": "Thanh Toán",
+    "paymentMethodComingSoon": "Sắp có — chưa khả dụng",
+    "chargeError": "Thanh toán thất bại. Vui lòng thử lại."
   },
   "KitchenDisplay": {
     "columnNew": "Mới",

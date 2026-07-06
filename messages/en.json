@@ -262,7 +262,9 @@
     "payCard": "Card",
     "subtotal": "Subtotal",
     "tax": "Tax (8%)",
-    "charge": "Charge"
+    "charge": "Charge",
+    "paymentMethodComingSoon": "Coming soon — not available yet",
+    "chargeError": "Failed to charge order. Try again."
   },
   "KitchenDisplay": {
     "columnNew": "New",

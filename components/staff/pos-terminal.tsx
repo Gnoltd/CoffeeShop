@@ -5,9 +5,11 @@ import { useLocale, useTranslations } from "next-intl"
 import { Coffee, CupSoda, Cookie, Milk, Search, Minus, Plus, Trash2, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
+import { createClient } from "@/lib/supabase/client"
 import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
 import { useTables } from "@/hooks/useTables"
-import { useKitchenOrders, type KdsOrder } from "@/hooks/useKitchenOrders"
+import { useKitchenOrders } from "@/hooks/useKitchenOrders"
+import { KitchenPendingPayment } from "@/components/staff/kitchen-pending-payment"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -17,10 +19,6 @@ const ICONS: Record<MenuIcon, typeof Coffee> = {
 }
 
 const TAX_RATE = 0.08
-
-function randomOrderId(): string {
-  return String(Math.floor(1000 + Math.random() * 9000))
-}
 
 type OrderLine = {
   menuItemId: string
@@ -36,8 +34,9 @@ type PaymentMethod = "cash" | "card" | "vnpay"
 export function PosTerminal({ categories, items }: { categories: MenuCategory[]; items: MenuItem[] }) {
   const locale = useLocale()
   const t = useTranslations("Pos")
+  const [supabase] = useState(() => createClient())
   const { tables } = useTables()
-  const { addOrder } = useKitchenOrders()
+  const { pendingPaymentOrders, confirmCashPayment } = useKitchenOrders()
 
   const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id ?? "")
   const [searchQuery, setSearchQuery] = useState("")
@@ -45,6 +44,8 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
   const [orderType, setOrderType] = useState<OrderType>("dine-in")
   const [selectedTableId, setSelectedTableId] = useState(tables[0]?.id ?? "")
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash")
+  const [isCharging, setIsCharging] = useState(false)
+  const [chargeError, setChargeError] = useState<string | null>(null)
 
   const selectedTable = tables.find((tbl) => tbl.id === selectedTableId) ?? tables[0]
 
@@ -94,25 +95,36 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
   const tax = Math.round(subtotal * TAX_RATE)
   const total = subtotal + tax
 
-  function handleCharge() {
+  async function handleCharge() {
     if (order.length === 0) return
-    // No orders table / payment processing yet — this simulates a completed
-    // sale by clearing the current order and pushing a real ticket onto the
-    // shared Kitchen Display board (see hooks/useKitchenOrders.tsx).
-    const kdsOrder: KdsOrder = {
-      id: randomOrderId(),
-      orderType: orderType === "dine-in" ? "dine-in" : "pickup",
-      table: orderType === "dine-in" ? selectedTable?.number : undefined,
-      items: order.map((line) => ({
-        quantity: line.quantity,
-        nameVi: line.nameVi,
-        nameEn: line.nameEn,
-      })),
-      status: "new",
-      createdAt: Date.now(),
+    setChargeError(null)
+    setIsCharging(true)
+    try {
+      const { data, error: invokeError } = await supabase.functions.invoke("place-order", {
+        body: {
+          orderType: orderType === "dine-in" ? "dine-in" : "pickup",
+          tableId: orderType === "dine-in" ? (selectedTable?.id ?? null) : null,
+          pickupTime: null,
+          paymentMethod: "cash",
+          promoCode: null,
+          redeemLoyaltyPoints: 0,
+          paymentCollected: true,
+          items: order.map((line) => ({
+            menuItemId: line.menuItemId,
+            sizeId: null,
+            modifierIds: [],
+            quantity: line.quantity,
+            note: null,
+          })),
+        },
+      })
+      if (invokeError || data?.error) throw invokeError ?? new Error(data.error)
+      setOrder([])
+    } catch {
+      setChargeError(t("chargeError"))
+    } finally {
+      setIsCharging(false)
     }
-    addOrder(kdsOrder)
-    setOrder([])
   }
 
   return (
@@ -129,6 +141,12 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
             />
           </div>
         </div>
+
+        {pendingPaymentOrders.length > 0 && (
+          <div className="px-4 pt-4">
+            <KitchenPendingPayment orders={pendingPaymentOrders} onConfirm={confirmCashPayment} />
+          </div>
+        )}
 
         <div className="flex gap-2 overflow-x-auto px-4 pt-4">
           {categories.map((category) => (
@@ -278,21 +296,27 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
               {t("payment")}
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {(["cash", "card", "vnpay"] as PaymentMethod[]).map((method) => (
-                <button
-                  key={method}
-                  type="button"
-                  onClick={() => setPaymentMethod(method)}
-                  className={cn(
-                    "rounded-lg border-2 py-2.5 text-[11px] font-bold transition-all",
-                    paymentMethod === method
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-transparent bg-muted text-muted-foreground"
-                  )}
-                >
-                  {method === "cash" ? t("payCash") : method === "card" ? t("payCard") : "VNPay"}
-                </button>
-              ))}
+              {(["cash", "card", "vnpay"] as PaymentMethod[]).map((method) => {
+                const enabled = method === "cash"
+                return (
+                  <button
+                    key={method}
+                    type="button"
+                    disabled={!enabled}
+                    title={enabled ? undefined : t("paymentMethodComingSoon")}
+                    onClick={() => setPaymentMethod(method)}
+                    className={cn(
+                      "rounded-lg border-2 py-2.5 text-[11px] font-bold transition-all",
+                      paymentMethod === method
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-transparent bg-muted text-muted-foreground",
+                      !enabled && "opacity-50"
+                    )}
+                  >
+                    {method === "cash" ? t("payCash") : method === "card" ? t("payCard") : "VNPay"}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
@@ -307,10 +331,14 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
             </div>
           </div>
 
+          {chargeError && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{chargeError}</p>
+          )}
+
           <button
             type="button"
             onClick={handleCharge}
-            disabled={order.length === 0}
+            disabled={order.length === 0 || isCharging}
             className="flex items-center justify-between rounded-xl bg-primary px-5 py-4 text-primary-foreground shadow-lg transition-transform active:scale-95 disabled:opacity-50"
           >
             <span className="flex flex-col items-start">
