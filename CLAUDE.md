@@ -21,19 +21,21 @@ Supabase query wiring (see "Building the rest" below) — **Login, Signup,
 and Logout are the first slice now backed by real Supabase Auth**, not
 mock data (see "Landing, Auth, and remaining customer pages" below).
 
-**Now built:** the Supabase database — all 7 migrations
-(`supabase/migrations/0001`-`0007`) are applied to the live hosted project
+**Now built:** the Supabase database — 11 migrations
+(`supabase/migrations/0001`-`0011`) are applied to the live hosted project
 (`qhiypdqnrnzndxdwqxbx`), every table has RLS enabled, and a real admin
 account exists (`profiles.role = 'admin'`). Real Supabase Auth now backs
-Login/Signup/Logout. Menu data (items/categories/sizes/modifier groups) is
-now real too — migrations `0008`/`0009` and `lib/supabase/menu-data.ts`,
-see "Customer ordering flow" below — the one exception to the paragraph
-above so far. **Still not built:** Edge Functions, Stripe/VNPay
-integration, Realtime, and — outside of auth and menu — every other mock
-data source in the app (inventory, tables, orders, staff accounts) is
-still waiting on real queries replacing `lib/mock-data/*` and the various
-`use*` hooks. See each feature section below for exactly what's mocked and
-what's a documented (not hidden) gap.
+Login/Signup/Logout. Menu data (items/categories/sizes/modifier
+groups/extras) is real — migrations `0008`/`0009` and
+`lib/supabase/menu-data.ts`, see "Customer ordering flow" below. Inventory
+(ingredients/stock/logs/recipes) is also real, and the first data source
+in the app with **live Realtime sync** across sessions — migrations
+`0010`/`0011` and `lib/supabase/inventory-data.ts`, see "Admin pages"
+below. **Still not built:** Edge Functions, Stripe/VNPay integration, and
+— outside of auth, menu, and inventory — every other mock data source in
+the app (tables, orders, staff accounts) is still waiting on real queries
+(+ Realtime) replacing the various `use*` hooks. See each feature section
+below for exactly what's mocked and what's a documented (not hidden) gap.
 
 ## Stack
 
@@ -499,11 +501,11 @@ header for the same reason as staff — no real auth data yet.
   - **`hooks/useInventory.tsx`** (mounted in `app/[locale]/admin/layout.tsx`,
     shared by Dashboard and Inventory): `ingredients` + a real `logs` array
     that every stock change appends to (with a real signed `change` and a
-    `reason: "restock" | "adjustment" | "waste"`, not a hardcoded label).
-    Dashboard keeps its quick one-tap `restock()` (tops up by the
-    low-stock threshold — no modal, matches a dashboard's "glance and go"
-    role). Inventory's own page uses the more general `adjustStock(id,
-    change, reason)` and `setOutOfStock(id)` via
+    `reason: "restock" | "adjustment" | "waste" | "order_deduction"`, not a
+    hardcoded label). Dashboard keeps its quick one-tap `restock()` (tops
+    up by the low-stock threshold — no modal, matches a dashboard's
+    "glance and go" role). Inventory's own page uses the more general
+    `adjustStock(id, change, reason)` and `setOutOfStock(id)` via
     `components/admin/stock-adjust-form.tsx` — a real modal where an admin
     types an amount to add or remove (stock is clamped at 0, never
     negative) or force-sets an ingredient to Out of Stock regardless of
@@ -513,6 +515,50 @@ header for the same reason as staff — no real auth data yet.
     low-stock widget and Restock button still read/write this same shared
     state — restocking from the Dashboard still removes the item from
     Inventory's low-stock table too.
+    - **Now real Supabase data with Realtime (2026-07-06), not
+      `localStorage`.** Design: `docs/superpowers/specs/2026-07-06-inventory-realtime-design.md`.
+      Plan: `docs/superpowers/plans/2026-07-06-inventory-realtime.md`.
+      `ingredients`/`inventory_logs` (migration `0004_inventory.sql`) were
+      already applied with RLS — the actual gap was bilingual columns
+      (`name_vi`/`name_en`/`subtitle_vi`/`subtitle_en`/`icon`, added by
+      migration `0010_inventory_i18n_and_stock_fn.sql`) and an admin UI,
+      which didn't exist at all. `lib/supabase/inventory-data.ts` is the
+      query layer (DI'd like `menu-data.ts`). Stock changes go through a
+      new Postgres RPC, `adjust_ingredient_stock` — a `security invoker`
+      function that locks the row, clamps the change so stock can't go
+      negative, updates it, and inserts the matching log row in one
+      atomic round trip (replaces the old mock's client-side
+      clamp-then-write, which was only ever safe with a single browser
+      tab). `hooks/useInventory.tsx` fetches once on mount and subscribes
+      to `postgres_changes` on both tables (added to the
+      `supabase_realtime` publication) — any admin's stock change,
+      rename, or new ingredient appears live on every other open
+      admin session within about a second, with no manual refresh and no
+      separate optimistic-update path (mutation functions never call
+      `setIngredients` themselves; the Realtime echo is the only code
+      path that updates local state, including for the tab that made the
+      change). Inventory gained a real **"+ Add Ingredient"** button and a
+      per-row edit pencil (`components/admin/ingredient-form.tsx`) — ingredients
+      are no longer a fixed set of 4; migration `0011_seed_inventory_data.sql`
+      seeded the original 4 mock values as real rows so nothing visually
+      changed on launch day.
+    - **Recipes are now real too, and admin-configurable.** The DB already
+      had `menu_item_ingredients`/`modifier_ingredients` (how much of an
+      ingredient a menu item or a modifier/extra consumes — feeding the
+      already-existing but previously-dead `handle_order_paid` deduction
+      trigger from migration `0007`) but zero rows and zero UI. Menu's
+      Add/Edit Item form gained a "Recipe" section (checklist + quantity
+      input per ingredient, shared `components/admin/recipe-checklist.tsx`
+      component) for the base item's own recipe. Extras — shipped
+      previous session with **create-only** UI — gained their first
+      **edit** affordance (a pencil per extra, opening an inline panel)
+      so an existing extra's name/price *and* its own ingredient usage can
+      be changed after creation; this needed a new `updateModifierGroup`
+      in `menu-data.ts`. These recipe rows have no functional effect yet
+      (the deduction trigger only fires once real order placement exists
+      — sub-project #3, "Orders," still pending) but are now real,
+      admin-authored data ready for that trigger to consume the moment
+      it does.
   - **`hooks/useTables.tsx`** gained `isOccupied` (admin-toggleable),
     `scanCount` (genuinely incremented in `setActiveTableByToken` every
     time `/table/[qrToken]` resolves a real table — not a fake "today"
@@ -650,6 +696,15 @@ Full entity list: spec Section 2.
   categories that used to live in the deleted `lib/mock-data/menu.ts`).
   Both are applied to the same hosted project; see "Customer ordering
   flow" above for the resulting query module (`lib/supabase/menu-data.ts`).
+- Two more after that, by `docs/superpowers/plans/2026-07-06-inventory-realtime.md`:
+  `0010_inventory_i18n_and_stock_fn` (bilingual `name_vi`/`name_en`/
+  `subtitle_vi`/`subtitle_en`/`icon` columns on `ingredients`, the
+  `adjust_ingredient_stock` atomic RPC, and adding `ingredients`/
+  `inventory_logs` to the `supabase_realtime` publication) and
+  `0011_seed_inventory_data` (seeds the 4 ingredients that used to be
+  `hooks/useInventory.tsx`'s hardcoded mock rows). See "Admin pages" above
+  for the resulting query module (`lib/supabase/inventory-data.ts`) and
+  Realtime wiring.
 - pgcrypto was already installed on this project (needed for
   `gen_random_uuid()`/`gen_random_bytes()`) — no `create extension` step
   was actually required, despite the plan doc flagging it as a risk.
@@ -710,23 +765,24 @@ the source of truth for "does the feature actually work."
 All `design/stitch-exports/*.html` pages have been ported — there is no
 remaining frontend UI to port from Stitch. What's left is backend: the DB
 schema/RLS is applied (see "Database" above), Login/Signup/Logout are
-real, and menu data is real (`docs/superpowers/plans/2026-07-05-menu-data-migration.md`
+real, menu data is real (`docs/superpowers/plans/2026-07-05-menu-data-migration.md`
 — schema, seed, and every consumer rewired to `lib/supabase/menu-data.ts`,
-`lib/mock-data/menu.ts` deleted); Edge Functions (`place-order`,
-`stripe-webhook`, `vnpay-ipn`, `vnpay-return` — full code in the scaffold
-plan doc's Task 11) are still comment-only stubs, and every other
-component listed in this file's feature sections still needs its mock
-data replaced with real Supabase queries (+ Realtime where noted) —
-inventory, tables, orders, and staff accounts, roughly in that order of
-how many other pages depend on them. The app is also now live on Vercel
+`lib/mock-data/menu.ts` deleted), the Profile auth-gate + role-based
+navigation is shipped, menu item extras/modifiers are admin-configurable,
+and — as of 2026-07-06 — **Inventory is the first of the "make all data
+real-time" sub-projects to ship** (real Supabase data + Realtime +
+admin-configurable recipes, see the Admin pages section above). Edge
+Functions (`place-order`, `stripe-webhook`, `vnpay-ipn`, `vnpay-return` —
+full code in the scaffold plan doc's Task 11) are still comment-only
+stubs, and the remaining "make all data real-time" sub-projects —
+**Tables, Orders (+ unifying customer Checkout/Tracking with staff
+POS/Kitchen Display), and Staff accounts**, in that order per `daily.md`
+— still need their mock/local-Context data replaced with real Supabase
+queries (+ Realtime where it matters). The app is also live on Vercel
 (see "Deployment" above) — verify against the live URL, not localhost.
-**In progress as of 2026-07-06:** a real auth gate for Profile/Order
-History/Loyalty plus role-based navigation (see the Profile section's
-"Known gap" note above) is being brainstormed — check `daily.md` for
-where that stands before starting it fresh. When
-adding any genuinely new page/feature beyond what's already built, follow
-the same pattern used throughout: shared brand tokens (no hardcoded hex),
-`useTranslations`/`getTranslations` for every label with both
-`messages/vi.json` and `messages/en.json` updated together, Base UI's
-`render` prop (not `asChild`) for polymorphic Buttons, and the "disabled +
-tooltip" convention for any action with no backing table yet.
+When adding any genuinely new page/feature beyond what's already built,
+follow the same pattern used throughout: shared brand tokens (no
+hardcoded hex), `useTranslations`/`getTranslations` for every label with
+both `messages/vi.json` and `messages/en.json` updated together, Base
+UI's `render` prop (not `asChild`) for polymorphic Buttons, and the
+"disabled + tooltip" convention for any action with no backing table yet.
