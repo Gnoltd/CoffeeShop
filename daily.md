@@ -1,38 +1,43 @@
-# Next up: user's call — payments follow-up is complete
+# Next up: camera-based QR scanning on Landing (first of three queued features)
 
 ## Status
 
-All three payment methods are now real and verified live: Cash, Stripe
-(`docs/superpowers/specs/2026-07-07-stripe-payment-integration-design.md`,
-`docs/superpowers/plans/2026-07-07-stripe-payment-integration.md`), and
-VNPay (`docs/superpowers/specs/2026-07-07-vnpay-payment-integration-design.md`,
-`docs/superpowers/plans/2026-07-07-vnpay-payment-integration.md`). This
-closes out the entire payments follow-up agreed when the Orders Realtime
-work shipped (Cash → Stripe → VNPay) — no payment-related backend work
-remains deferred. Full structural detail is in CLAUDE.md's "Stripe
-payment integration" and "VNPay payment integration" sections; this file
-only tracks what's still open.
+Payments follow-up (Cash/Stripe/VNPay) is complete — see CLAUDE.md's
+"Stripe payment integration"/"VNPay payment integration" sections.
 
-Two real bugs were found and fixed during this work, both via live
-sandbox testing rather than guessing:
-- A pre-existing dine-in `order_type` enum mismatch (Checkout/POS sent
-  hyphenated `"dine-in"`, the DB enum wants `dine_in`) that silently
-  broke every dine-in order regardless of payment method.
-- A VNPay signature encoding bug — VNPay signs with PHP
-  `urlencode()`-style encoding (`+` for spaces), not plain
-  `encodeURIComponent`'s `%20`. Root-caused by comparing against a known
-  working reference implementation, not by guessing.
+A batch of user-reported bugs and small feature requests (2026-07-08)
+has been triaged and the quick ones are done:
+- **Fixed**: Loyalty page was showing a hardcoded `1250` balance and a
+  mock transaction array instead of real `profiles.loyalty_points_balance`/
+  `loyalty_transactions` — now real (`lib/supabase/loyalty-data.ts`).
+- **Fixed**: removed the "PhaDinCoffee — demo build" footer from Profile.
+- **Shipped**: Menu's "+" quick-add now always adds directly to cart when
+  there's no size decision to make; if the item has extras it opens a
+  small extras-only popup (`components/customer/quick-add-extras-popup.tsx`)
+  instead of the full Product Detail page. Tapping the item itself still
+  opens the full page.
+- **Shipped**: admin can now toggle "Has size options" per menu item
+  (`menu_items.has_size_options`, migration `0020`) to hide the size
+  picker for single-size products regardless of how many size rows exist.
+
+Three remaining items from that same batch are real features, not quick
+fixes — user asked to tackle them **first come, first serve**, in the
+order originally reported:
 
 ## Open / not started
 
-1. **Ask the user what's next** — the payments initiative that's been
-   running since Orders Realtime is now fully complete. No specific
-   next task is queued.
-
-Two throwaway test accounts (staff/customer roles, credentials in
-`.env.local` and the gitignored `test-accounts.md`) are kept
-deliberately for the user's ongoing manual testing — not a cleanup gap,
-don't remove or flag these.
+1. **Landing's "Scan QR at Table" button** — currently disabled, no
+   camera-based QR scanning exists at all. Needs real design
+   (permissions, decode library, no-camera fallback) before building —
+   next up.
+2. **Table status visibility in Kitchen Display + Admin Dashboard,
+   auto-tied to order completion** — table occupancy (`tables.is_occupied`)
+   is currently a manual admin-only toggle, not connected to orders at
+   all. User wants an order finishing to free up its table automatically,
+   plus a real "table status" surface in both KDS and the Admin Dashboard.
+3. **Admin Dashboard using real, live data** — revenue/orders/loyalty
+   KPIs and the 7-day chart are still fixed mock numbers (documented,
+   not hidden, in CLAUDE.md). Needs real aggregation queries + Realtime.
 
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
@@ -52,3 +57,8 @@ don't remove or flag these.
 - No Vitest/RTL coverage beyond the `lib/supabase/*.ts` query layers and
   `lib/middleware-rules.ts`/`lib/get-current-role.ts` — component-level
   tests were never added (skipped so far, not a regression).
+
+Two throwaway test accounts (staff/customer roles, credentials in
+`.env.local` and the gitignored `test-accounts.md`) are kept
+deliberately for the user's ongoing manual testing — not a cleanup gap,
+don't remove or flag these.
