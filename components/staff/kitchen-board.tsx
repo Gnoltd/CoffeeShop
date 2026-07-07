@@ -4,6 +4,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { Play, CheckCircle2, PackageCheck, Utensils, ShoppingBag, ListTodo, RefreshCw, CheckCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatOrderId } from "@/lib/format"
+import { KitchenTablesColumn } from "@/components/staff/kitchen-tables-column"
 import type { KdsStatus, KdsOrder } from "@/hooks/useKitchenOrders"
 
 const COLUMNS: {
@@ -38,7 +39,7 @@ export function KitchenBoard({
   const t = useTranslations("KitchenDisplay")
 
   return (
-    <div className="grid h-full grid-cols-1 gap-4 overflow-hidden p-4 md:grid-cols-3">
+    <div className="grid h-full grid-cols-1 gap-4 overflow-hidden p-4 md:grid-cols-4">
       {COLUMNS.map((column) => {
         const columnOrders = orders.filter((o) => o.status === column.status)
         const Icon = column.icon
@@ -162,6 +163,7 @@ export function KitchenBoard({
           </section>
         )
       })}
+      <KitchenTablesColumn />
     </div>
   )
 }
