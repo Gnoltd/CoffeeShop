@@ -1,4 +1,4 @@
-# Next up: table status in KDS + Admin Dashboard (second of three queued features)
+# Next up: building table status (occupancy + cleaning) — plan approved, executing now
 
 ## Status
 
@@ -30,17 +30,32 @@ Two remaining items from that same batch are real features — user asked
 to tackle them **first come, first serve**, in the order originally
 reported:
 
-## Open / not started
+## Open / in progress
 
-1. **Table status visibility in Kitchen Display + Admin Dashboard,
-   auto-tied to order completion** — table occupancy (`tables.is_occupied`)
-   is currently a manual admin-only toggle, not connected to orders at
-   all. User wants an order finishing to free up its table automatically,
-   plus a real "table status" surface in both KDS and the Admin
-   Dashboard — next up.
+1. **Table status (occupancy + cleaning) in KDS + Admin Dashboard +
+   guest table-landing page** — design finalized after several rounds
+   of clarification, spec at
+   `docs/superpowers/specs/2026-07-08-table-status-design.md`, plan at
+   `docs/superpowers/plans/2026-07-08-table-status.md`. Final model:
+   `tables.status` becomes a 3-state enum (`available | occupied |
+   cleaning`), replacing the old `is_occupied` boolean.
+   - Occupied: automatic, via a DB trigger when a dine-in order is placed.
+   - Cleaning: automatic, via the same trigger when a table's last
+     active order finishes (`completed`/`cancelled`) — not the same
+     event as "guest left," so it never jumps straight to Available.
+   - Available: always a manual staff tap ("Cleaning Done"), from
+     either the new KDS "Tables" column (literal 4th board column,
+     mockup confirmed live in Stitch) or Admin Tables.
+   - Guests scanning a `cleaning` table's QR see a blocked message with
+     a "Notify Staff" button (new guest-safe `notify_table_cleaning`
+     RPC) if no one's cleaned it yet.
+   - Executing the implementation plan now (migration `0021`, query
+     layer, 4 UI surfaces, both locale files).
 2. **Admin Dashboard using real, live data** — revenue/orders/loyalty
    KPIs and the 7-day chart are still fixed mock numbers (documented,
    not hidden, in CLAUDE.md). Needs real aggregation queries + Realtime.
+   Not started — the new Table Status card (part of item 1) is a
+   separate, already-real addition to this same dashboard file.
 
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
