@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import QRCode from "qrcode"
-import { QrCode, Download, RefreshCw, Plus, Pencil, Check, X, Grid2x2, CircleCheck, User, ScanLine } from "lucide-react"
+import { QrCode, Download, RefreshCw, Plus, Pencil, Check, X, Grid2x2, CircleCheck, User, ScanLine, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useTables } from "@/hooks/useTables"
@@ -12,7 +12,7 @@ import { TableForm } from "@/components/admin/table-form"
 export function TablesManagement() {
   const locale = useLocale()
   const t = useTranslations("AdminTables")
-  const { tables, addTable, renameTable, updateLocation, toggleOccupied, regenerateToken } = useTables()
+  const { tables, addTable, renameTable, updateLocation, setStatus, regenerateToken } = useTables()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftNumber, setDraftNumber] = useState("")
   const [draftLocationVi, setDraftLocationVi] = useState("")
@@ -22,7 +22,9 @@ export function TablesManagement() {
   const [error, setError] = useState<string | null>(null)
 
   const totalScans = tables.reduce((sum, table) => sum + table.scanCount, 0)
-  const occupiedCount = tables.filter((table) => table.isOccupied).length
+  const availableCount = tables.filter((table) => table.status === "available").length
+  const occupiedCount = tables.filter((table) => table.status === "occupied").length
+  const cleaningCount = tables.filter((table) => table.status === "cleaning").length
 
   useEffect(() => {
     let cancelled = false
@@ -85,7 +87,7 @@ export function TablesManagement() {
 
       {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Grid2x2 className="h-5 w-5" />
@@ -101,7 +103,16 @@ export function TablesManagement() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground">{t("available")}</p>
-            <p className="text-xl font-bold text-card-foreground">{tables.length - occupiedCount}</p>
+            <p className="text-xl font-bold text-card-foreground">{availableCount}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+            <Sparkles className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground">{t("cleaning")}</p>
+            <p className="text-xl font-bold text-card-foreground">{cleaningCount}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
@@ -129,17 +140,29 @@ export function TablesManagement() {
             >
               <button
                 type="button"
-                onClick={() => toggleOccupied(table.id).catch(() => setError(t("updateError")))}
-                title={table.isOccupied ? t("markAvailable") : t("markOccupied")}
+                onClick={() => {
+                  const next =
+                    table.status === "available" ? "occupied" : table.status === "occupied" ? "cleaning" : "available"
+                  setStatus(table.id, next).catch(() => setError(t("updateError")))
+                }}
+                title={
+                  table.status === "available"
+                    ? t("markOccupied")
+                    : table.status === "occupied"
+                      ? t("markCleaning")
+                      : t("cleaningDone")
+                }
                 className={cn(
                   "inline-flex items-center gap-1 self-start rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors",
-                  table.isOccupied
-                    ? "bg-amber-100 text-amber-700 hover:bg-amber-200"
-                    : "bg-green-100 text-green-700 hover:bg-green-200"
+                  table.status === "available" && "bg-green-100 text-green-700 hover:bg-green-200",
+                  table.status === "occupied" && "bg-red-100 text-red-700 hover:bg-red-200",
+                  table.status === "cleaning" && "bg-amber-100 text-amber-700 hover:bg-amber-200"
                 )}
               >
-                {table.isOccupied ? <User className="h-3 w-3" /> : <CircleCheck className="h-3 w-3" />}
-                {table.isOccupied ? t("occupied") : t("available")}
+                {table.status === "available" && <CircleCheck className="h-3 w-3" />}
+                {table.status === "occupied" && <User className="h-3 w-3" />}
+                {table.status === "cleaning" && <Sparkles className="h-3 w-3" />}
+                {table.status === "available" ? t("available") : table.status === "occupied" ? t("occupied") : t("cleaning")}
               </button>
 
               <div className="flex h-32 w-32 items-center justify-center rounded-xl border bg-muted">
