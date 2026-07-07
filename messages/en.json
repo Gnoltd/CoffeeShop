@@ -94,7 +94,6 @@
     "languageEn": "English",
     "save": "Save",
     "cancel": "Cancel",
-    "versionFooter": "PhaDinCoffee — demo build",
     "staffAccessHeadlineStaff": "Staff Account",
     "staffAccessSubtextStaff": "You have staff access.",
     "staffAccessButtonStaff": "Go to POS",
@@ -242,8 +241,9 @@
     "viewAll": "View All",
     "earned": "Earned",
     "redeemed": "Redeemed",
-    "birthdayBonus": "Birthday Bonus",
-    "pointsUnit": "pts"
+    "adjusted": "Adjusted",
+    "pointsUnit": "pts",
+    "noHistory": "No point history yet."
   },
   "ProductDetail": {
     "addToCart": "Add to Cart",

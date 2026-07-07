@@ -1,47 +1,47 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
-import { Star, Info, Gift, ArrowRight, CheckCircle2, PartyPopper, Sparkles } from "lucide-react"
+import { Star, Info, Gift, ArrowRight, CheckCircle2, Wallet, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { formatNumber } from "@/lib/format"
+import { formatNumber, formatDateVN, formatOrderId } from "@/lib/format"
+import { createClient } from "@/lib/supabase/client"
+import { getLoyaltyBalance, getLoyaltyTransactions, type LoyaltyTransaction, type LoyaltyTransactionType } from "@/lib/supabase/loyalty-data"
 
 /**
- * No loyalty_settings/loyalty_transactions tables yet — fixed mock numbers
- * matching the approved Stitch mockup. Real rates already agreed for the DB
- * (see continuity.md): 10,000 VND spent = 1 point, 100 points = 10,000 VND
- * discount — this page's copy uses those same real rates, not placeholder ones.
+ * Tier progress has no real tier table yet — kept as a fixed mock
+ * (matches the approved Stitch mockup), documented not hidden. Balance
+ * and transaction history below are both real (profiles.loyalty_points_balance,
+ * loyalty_transactions), wired 2026-07-08 after being caught still
+ * showing a hardcoded 1250/mock rows despite Checkout already earning/
+ * redeeming real points via place_order/handle_order_paid.
  */
-const CURRENT_BALANCE = 1250
 const POINTS_TO_NEXT_TIER = 250
 const TIER_PROGRESS_PERCENT = 75
 
-type TransactionType = "earned" | "redeemed" | "birthday"
-
-type Transaction = {
-  type: TransactionType
-  date: string
-  ref: string
-  points: number
-}
-
-const MOCK_TRANSACTIONS: Transaction[] = [
-  { type: "earned", date: "03/07/2026", ref: "#PDC-9788", points: 45 },
-  { type: "redeemed", date: "01/07/2026", ref: "Voucher 10k", points: -100 },
-  { type: "earned", date: "28/06/2026", ref: "#PDC-9712", points: 120 },
-  { type: "birthday", date: "20/06/2026", ref: "Gift for you!", points: 500 },
-]
-
 const TRANSACTION_META: Record<
-  TransactionType,
-  { icon: typeof CheckCircle2; iconClass: string; amountClass: string; labelKey: "earned" | "redeemed" | "birthdayBonus" }
+  LoyaltyTransactionType,
+  { icon: typeof CheckCircle2; iconClass: string; amountClass: string; labelKey: "earned" | "redeemed" | "adjusted" }
 > = {
-  earned: { icon: CheckCircle2, iconClass: "bg-green-100 text-green-700", amountClass: "text-green-600", labelKey: "earned" },
-  redeemed: { icon: Gift, iconClass: "bg-primary/10 text-primary", amountClass: "text-primary", labelKey: "redeemed" },
-  birthday: { icon: PartyPopper, iconClass: "bg-accent/30 text-accent-foreground", amountClass: "text-accent-foreground", labelKey: "birthdayBonus" },
+  earn: { icon: CheckCircle2, iconClass: "bg-green-100 text-green-700", amountClass: "text-green-600", labelKey: "earned" },
+  redeem: { icon: Gift, iconClass: "bg-primary/10 text-primary", amountClass: "text-primary", labelKey: "redeemed" },
+  adjust: { icon: Wallet, iconClass: "bg-accent/30 text-accent-foreground", amountClass: "text-accent-foreground", labelKey: "adjusted" },
 }
 
 export function LoyaltyView() {
   const t = useTranslations("Loyalty")
+  const [supabase] = useState(() => createClient())
+  const [balance, setBalance] = useState(0)
+  const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      getLoyaltyBalance(supabase, user.id).then(setBalance)
+    })
+    getLoyaltyTransactions(supabase).then(setTransactions)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-4">
@@ -53,7 +53,7 @@ export function LoyaltyView() {
           </span>
         </div>
         <div className="mb-4 flex items-baseline gap-2">
-          <span className="text-5xl font-extrabold text-primary">{formatNumber(CURRENT_BALANCE)}</span>
+          <span className="text-5xl font-extrabold text-primary">{formatNumber(balance)}</span>
           <span className="font-bold text-primary/80">{t("pts")}</span>
         </div>
         <div className="space-y-3 rounded-xl border bg-card/60 p-4">
@@ -112,37 +112,42 @@ export function LoyaltyView() {
             <ArrowRight className="h-3.5 w-3.5" />
           </button>
         </div>
-        <div className="flex flex-col gap-2">
-          {MOCK_TRANSACTIONS.map((transaction, index) => {
-            const meta = TRANSACTION_META[transaction.type]
-            const Icon = meta.icon
-            return (
-              <div
-                key={index}
-                className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", meta.iconClass)}>
-                    <Icon className="h-5 w-5" />
+        {transactions.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">{t("noHistory")}</p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {transactions.map((transaction) => {
+              const meta = TRANSACTION_META[transaction.type]
+              const Icon = meta.icon
+              return (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", meta.iconClass)}>
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-card-foreground">{t(meta.labelKey)}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDateVN(new Date(transaction.createdAt))}
+                        {transaction.orderId && ` · #${formatOrderId(transaction.orderId)}`}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-card-foreground">{t(meta.labelKey)}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {transaction.date} · {transaction.ref}
+                  <div className="text-right">
+                    <p className={cn("font-bold", meta.amountClass)}>
+                      {transaction.pointsChange > 0 ? "+" : ""}
+                      {transaction.pointsChange}
                     </p>
+                    <p className="text-[11px] text-muted-foreground">{t("pointsUnit")}</p>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className={cn("font-bold", meta.amountClass)}>
-                    {transaction.points > 0 ? "+" : ""}
-                    {transaction.points}
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">{t("pointsUnit")}</p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </section>
     </div>
   )

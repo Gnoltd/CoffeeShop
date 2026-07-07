@@ -277,10 +277,6 @@ export function ProfileView({ role = null }: { role?: string | null }) {
           </span>
         </button>
       </section>
-
-      <p className="mt-6 text-center text-[11px] italic text-muted-foreground">
-        {t("versionFooter")}
-      </p>
     </div>
   )
 }
