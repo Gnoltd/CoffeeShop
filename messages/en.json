@@ -376,7 +376,12 @@
     "restock": "Restock",
     "viewAllItems": "View All Items",
     "noLowStock": "No items are low on stock.",
-    "loadingInventory": "Loading inventory…"
+    "loadingInventory": "Loading inventory…",
+    "tableStatus": "Table Status",
+    "tableAvailable": "Available",
+    "tableOccupied": "Occupied",
+    "tableCleaning": "Cleaning",
+    "tablesNeedCleaning": "{count} table(s) need cleaning attention"
   },
   "AdminMenu": {
     "title": "Manage Menu",

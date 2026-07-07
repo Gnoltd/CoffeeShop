@@ -376,7 +376,12 @@
     "restock": "Nhập Kho",
     "viewAllItems": "Xem Tất Cả Món",
     "noLowStock": "Không có món nào sắp hết hàng.",
-    "loadingInventory": "Đang tải kho hàng…"
+    "loadingInventory": "Đang tải kho hàng…",
+    "tableStatus": "Trạng Thái Bàn",
+    "tableAvailable": "Trống",
+    "tableOccupied": "Đang Dùng",
+    "tableCleaning": "Đang Dọn",
+    "tablesNeedCleaning": "{count} bàn cần được dọn dẹp"
   },
   "AdminMenu": {
     "title": "Quản Lý Thực Đơn",

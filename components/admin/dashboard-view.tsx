@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation"
 import { formatVND } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useInventory, type IngredientIcon } from "@/hooks/useInventory"
+import { useTables } from "@/hooks/useTables"
 
 const INGREDIENT_ICONS: Record<IngredientIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -39,6 +40,11 @@ export function DashboardView({ locale }: { locale: string }) {
   const t = useTranslations("Dashboard")
   const { ingredients, restock, isLoading } = useInventory()
   const lowStock = ingredients.filter((i) => i.stock < i.threshold)
+  const { tables } = useTables()
+  const availableCount = tables.filter((tbl) => tbl.status === "available").length
+  const occupiedCount = tables.filter((tbl) => tbl.status === "occupied").length
+  const cleaningCount = tables.filter((tbl) => tbl.status === "cleaning").length
+  const needsCleaningAttention = tables.filter((tbl) => tbl.cleaningNotifiedAt !== null).length
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -203,6 +209,31 @@ export function DashboardView({ locale }: { locale: string }) {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <h4 className="font-bold text-card-foreground">{t("tableStatus")}</h4>
+          {needsCleaningAttention > 0 && (
+            <span className="rounded-full bg-destructive/10 px-3 py-1 text-xs font-bold text-destructive">
+              {t("tablesNeedCleaning", { count: needsCleaningAttention })}
+            </span>
+          )}
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-lg bg-green-50 p-3 text-center dark:bg-green-950/20">
+            <p className="text-xl font-bold text-green-700">{availableCount}</p>
+            <p className="text-xs text-muted-foreground">{t("tableAvailable")}</p>
+          </div>
+          <div className="rounded-lg bg-red-50 p-3 text-center dark:bg-red-950/20">
+            <p className="text-xl font-bold text-red-700">{occupiedCount}</p>
+            <p className="text-xs text-muted-foreground">{t("tableOccupied")}</p>
+          </div>
+          <div className="rounded-lg bg-amber-50 p-3 text-center dark:bg-amber-950/20">
+            <p className="text-xl font-bold text-amber-700">{cleaningCount}</p>
+            <p className="text-xs text-muted-foreground">{t("tableCleaning")}</p>
+          </div>
         </div>
       </div>
     </div>
