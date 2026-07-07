@@ -29,6 +29,11 @@ sandbox testing rather than guessing:
    running since Orders Realtime is now fully complete. No specific
    next task is queued.
 
+Two throwaway test accounts (staff/customer roles, credentials in
+`.env.local` and the gitignored `test-accounts.md`) are kept
+deliberately for the user's ongoing manual testing — not a cleanup gap,
+don't remove or flag these.
+
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
 - `VNPAY_RETURN_URL` (synced to Vercel) is dead — VNPay's actual return
@@ -44,10 +49,6 @@ sandbox testing rather than guessing:
 - `next build` still prints the "middleware deprecated, use proxy"
   warning (Next.js 16.2.10). Renaming `middleware.ts` → `proxy.ts` also
   touches `lib/middleware-rules.ts`, which it depends on. Not urgent.
-- Two throwaway test accounts (staff/customer roles) exist in the live
-  Supabase project — credentials in `.env.local` and the gitignored
-  `test-accounts.md` at the repo root. Clean up once no longer needed
-  for manual testing.
 - No Vitest/RTL coverage beyond the `lib/supabase/*.ts` query layers and
   `lib/middleware-rules.ts`/`lib/get-current-role.ts` — component-level
   tests were never added (skipped so far, not a regression).
