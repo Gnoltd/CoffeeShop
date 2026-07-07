@@ -13,5 +13,9 @@ export default async function OrderHistoryDetailPage({
   const order = await getOrderHistoryDetail(supabase, orderId)
   if (!order) notFound()
 
-  return <OrderHistoryDetailView order={order} />
+  return (
+    <div className="h-full overflow-y-auto">
+      <OrderHistoryDetailView order={order} />
+    </div>
+  )
 }
