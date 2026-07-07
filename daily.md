@@ -1,4 +1,4 @@
-# Next up: camera-based QR scanning on Landing (first of three queued features)
+# Next up: table status in KDS + Admin Dashboard (second of three queued features)
 
 ## Status
 
@@ -6,7 +6,8 @@ Payments follow-up (Cash/Stripe/VNPay) is complete — see CLAUDE.md's
 "Stripe payment integration"/"VNPay payment integration" sections.
 
 A batch of user-reported bugs and small feature requests (2026-07-08)
-has been triaged and the quick ones are done:
+has been triaged. The quick fixes and the first of three real features
+are shipped:
 - **Fixed**: Loyalty page was showing a hardcoded `1250` balance and a
   mock transaction array instead of real `profiles.loyalty_points_balance`/
   `loyalty_transactions` — now real (`lib/supabase/loyalty-data.ts`).
@@ -19,23 +20,25 @@ has been triaged and the quick ones are done:
 - **Shipped**: admin can now toggle "Has size options" per menu item
   (`menu_items.has_size_options`, migration `0020`) to hide the size
   picker for single-size products regardless of how many size rows exist.
+- **Shipped**: Landing's "Scan QR at Table" is now real camera-based
+  scanning (`components/customer/qr-scanner-overlay.tsx`, `jsQR`) —
+  design: `docs/superpowers/specs/2026-07-08-camera-qr-scanning-design.md`,
+  plan: `docs/superpowers/plans/2026-07-08-camera-qr-scanning.md`. User
+  confirmed working live on a real phone.
 
-Three remaining items from that same batch are real features, not quick
-fixes — user asked to tackle them **first come, first serve**, in the
-order originally reported:
+Two remaining items from that same batch are real features — user asked
+to tackle them **first come, first serve**, in the order originally
+reported:
 
 ## Open / not started
 
-1. **Landing's "Scan QR at Table" button** — currently disabled, no
-   camera-based QR scanning exists at all. Needs real design
-   (permissions, decode library, no-camera fallback) before building —
-   next up.
-2. **Table status visibility in Kitchen Display + Admin Dashboard,
+1. **Table status visibility in Kitchen Display + Admin Dashboard,
    auto-tied to order completion** — table occupancy (`tables.is_occupied`)
    is currently a manual admin-only toggle, not connected to orders at
    all. User wants an order finishing to free up its table automatically,
-   plus a real "table status" surface in both KDS and the Admin Dashboard.
-3. **Admin Dashboard using real, live data** — revenue/orders/loyalty
+   plus a real "table status" surface in both KDS and the Admin
+   Dashboard — next up.
+2. **Admin Dashboard using real, live data** — revenue/orders/loyalty
    KPIs and the 7-day chart are still fixed mock numbers (documented,
    not hidden, in CLAUDE.md). Needs real aggregation queries + Realtime.
 

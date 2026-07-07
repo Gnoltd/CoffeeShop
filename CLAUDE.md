@@ -172,6 +172,26 @@ you need to find your way around; check the dated docs for full detail.
 - Product Detail Page has its own sticky Add-to-Cart bar; reviews/
   ratings are still mock (`lib/mock-data/reviews.ts`) — no schema for
   them yet.
+- Menu's "+" quick-add always adds directly to cart when an item needs
+  no size decision (`hasSizeOptions && sizes.length > 0`); if it has
+  extras, tapping "+" opens `components/customer/quick-add-extras-popup.tsx`
+  (extras only, no size/note) instead of the full Product Detail page —
+  tapping the item itself still opens the full page.
+- `menu_items.has_size_options` (migration `0020`) lets admin hide the
+  size picker for a single-size item regardless of how many
+  `menu_item_sizes` rows exist — an explicit toggle in
+  `menu-item-form.tsx`, not automatic based on row count.
+- `lib/supabase/loyalty-data.ts` — real `getLoyaltyBalance`/
+  `getLoyaltyTransactions`, backing the Loyalty page's balance and
+  transaction history (was a hardcoded mock until 2026-07-08). Tier
+  progress still has no real tier table — documented mock.
+- Landing's "Scan QR at Table" is real camera scanning
+  (`components/customer/qr-scanner-overlay.tsx`, `jsQR`, no other new
+  dependency) — decodes a table's printed QR code and routes into the
+  existing `/table/[qrToken]` flow untouched. Validates the decoded
+  string against the table-URL *pathname* shape only (ignores hostname,
+  so it also works against preview-deployment URLs) before navigating —
+  see `lib/qr-table-token.ts`'s `extractTableToken`.
 - **Known gap**: `checkout-view.tsx`'s initial `orderType` reads
   `activeTable` only once at first render, so it can default to
   "pickup" if `activeTable` populates moments later (right after a
