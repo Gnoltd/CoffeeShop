@@ -44,6 +44,7 @@ describe("getMenuItems", () => {
       is_available: true,
       is_popular: true,
       image_url: null,
+      has_size_options: true,
       menu_item_sizes: [{ id: "size-1", name: "M", price_delta: 0 }],
       menu_item_modifier_groups: [
         {
@@ -82,6 +83,7 @@ describe("getMenuItems", () => {
         isAvailable: true,
         isPopular: true,
         imageUrl: null,
+        hasSizeOptions: true,
         sizes: [{ id: "size-1", name: "M", priceDelta: 0 }],
         modifierGroups: [
           {
@@ -111,6 +113,7 @@ describe("createMenuItem", () => {
       is_available: true,
       is_popular: false,
       image_url: null,
+      has_size_options: true,
       menu_item_sizes: [],
       menu_item_modifier_groups: [],
     }
@@ -131,6 +134,7 @@ describe("createMenuItem", () => {
       icon: "cup-soda",
       isAvailable: true,
       isPopular: false,
+      hasSizeOptions: true,
     })
 
     expect(insertSpy).toHaveBeenCalledWith({
@@ -144,6 +148,7 @@ describe("createMenuItem", () => {
       is_available: true,
       is_popular: false,
       image_url: null,
+      has_size_options: true,
     })
     expect(result.id).toBe("item-new")
     expect(result.nameEn).toBe("Peach Tea")

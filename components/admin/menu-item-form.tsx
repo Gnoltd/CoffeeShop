@@ -47,6 +47,7 @@ export function MenuItemForm({
   const [icon, setIcon] = useState<MenuIcon>(initialItem?.icon ?? "coffee")
   const [isAvailable, setIsAvailable] = useState(initialItem?.isAvailable ?? true)
   const [isPopular, setIsPopular] = useState(initialItem?.isPopular ?? false)
+  const [hasSizeOptions, setHasSizeOptions] = useState(initialItem?.hasSizeOptions ?? true)
   const [imageFile, setImageFile] = useState<File | null>(null)
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(initialItem?.imageUrl ?? null)
   // Tracks whether *this form* created the current preview URL via
@@ -226,6 +227,7 @@ export function MenuItemForm({
         icon,
         isAvailable,
         isPopular,
+        hasSizeOptions,
         // A blob: URL is per-tab/ephemeral (URL.createObjectURL) — never
         // persist it to the real DB. Only pass through a real, persistable
         // URL (inherited initialItem.imageUrl) or null.
@@ -434,6 +436,27 @@ export function MenuItemForm({
                 className={cn(
                   "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
                   isPopular ? "translate-x-5" : "translate-x-0"
+                )}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <span className="text-sm font-medium text-card-foreground">{t("hasSizeOptionsToggle")}</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={hasSizeOptions}
+              onClick={() => setHasSizeOptions((prev) => !prev)}
+              className={cn(
+                "relative h-6 w-11 rounded-full transition-colors",
+                hasSizeOptions ? "bg-primary" : "bg-muted-foreground/30"
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                  hasSizeOptions ? "translate-x-5" : "translate-x-0"
                 )}
               />
             </button>

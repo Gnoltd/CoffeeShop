@@ -90,6 +90,7 @@ export function MenuManagement({
         icon: item.icon,
         isAvailable: !item.isAvailable,
         isPopular: item.isPopular,
+        hasSizeOptions: item.hasSizeOptions,
         imageUrl: item.imageUrl,
       })
       setItems((prev) => prev.map((i) => (i.id === item.id ? updated : i)))

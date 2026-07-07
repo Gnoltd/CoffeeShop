@@ -42,6 +42,7 @@ export type MenuItem = {
   isAvailable: boolean
   isPopular: boolean
   imageUrl: string | null
+  hasSizeOptions: boolean
   sizes: MenuItemSize[]
   modifierGroups: MenuModifierGroup[]
 }
@@ -57,6 +58,7 @@ export type MenuItemInput = {
   isAvailable: boolean
   isPopular: boolean
   imageUrl?: string | null
+  hasSizeOptions: boolean
 }
 
 type CategoryRow = {
@@ -82,7 +84,7 @@ export async function getCategories(supabase: SupabaseClient): Promise<MenuCateg
 
 const MENU_ITEM_SELECT = `
   id, category_id, name_vi, name_en, description_vi, description_en,
-  base_price, icon, is_available, is_popular, image_url,
+  base_price, icon, is_available, is_popular, image_url, has_size_options,
   menu_item_sizes ( id, name, price_delta ),
   menu_item_modifier_groups (
     modifier_groups ( id, name_vi, name_en, is_required, modifiers ( id, name_vi, name_en, price_delta ) )
@@ -126,6 +128,7 @@ type MenuItemRow = {
   is_available: boolean
   is_popular: boolean
   image_url: string | null
+  has_size_options: boolean
   menu_item_sizes: SizeRow[] | null
   menu_item_modifier_groups: ModifierGroupLinkRow[] | null
 }
@@ -143,6 +146,7 @@ function mapMenuItemRow(row: MenuItemRow): MenuItem {
     isAvailable: row.is_available,
     isPopular: row.is_popular,
     imageUrl: row.image_url,
+    hasSizeOptions: row.has_size_options,
     sizes: (row.menu_item_sizes ?? []).map((s) => ({
       id: s.id,
       name: s.name,
@@ -191,6 +195,7 @@ function toRow(input: MenuItemInput) {
     is_available: input.isAvailable,
     is_popular: input.isPopular,
     image_url: input.imageUrl ?? null,
+    has_size_options: input.hasSizeOptions,
   }
 }
 

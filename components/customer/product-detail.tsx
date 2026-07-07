@@ -27,7 +27,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
   const { addItem } = useCart()
 
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(
-    item.sizes?.find((s) => s.priceDelta === 0)?.id ?? item.sizes?.[0]?.id ?? null
+    item.hasSizeOptions ? item.sizes?.find((s) => s.priceDelta === 0)?.id ?? item.sizes?.[0]?.id ?? null : null
   )
   const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>(() => {
     const defaults: Record<string, string> = {}
@@ -102,7 +102,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
 
         <p className="mt-3 text-sm text-muted-foreground">{description}</p>
 
-        {item.sizes.length > 0 && (
+        {item.hasSizeOptions && item.sizes.length > 0 && (
           <section className="mt-6 flex flex-col gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("size")}

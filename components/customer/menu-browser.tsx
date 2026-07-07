@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart } from "@/hooks/useCart"
+import { QuickAddExtrasPopup } from "@/components/customer/quick-add-extras-popup"
 import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
@@ -39,6 +40,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
 
   const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id ?? "")
   const [searchQuery, setSearchQuery] = useState("")
+  const [extrasPopupItem, setExtrasPopupItem] = useState<MenuItem | null>(null)
 
   const name = (item: MenuItem) => (locale === "vi" ? item.nameVi : item.nameEn)
   const description = (item: MenuItem) => (locale === "vi" ? item.descriptionVi : item.descriptionEn)
@@ -63,8 +65,13 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
 
   function quickAdd(item: MenuItem) {
     if (!item.isAvailable) return
-    if (item.sizes.length > 0 || item.modifierGroups.length > 0) {
+    const needsSizeDecision = item.hasSizeOptions && item.sizes.length > 0
+    if (needsSizeDecision) {
       openItem(item)
+      return
+    }
+    if (item.modifierGroups.length > 0) {
+      setExtrasPopupItem(item)
       return
     }
     addItem({
@@ -169,6 +176,10 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
           </span>
           <span className="text-lg font-bold">{formatVND(subtotal)}</span>
         </Link>
+      )}
+
+      {extrasPopupItem && (
+        <QuickAddExtrasPopup item={extrasPopupItem} onClose={() => setExtrasPopupItem(null)} />
       )}
     </div>
   )
