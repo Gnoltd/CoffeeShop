@@ -1,49 +1,47 @@
-# Next up: VNPay follow-up (or user's call)
+# Next up: user's call — payments follow-up is complete
 
 ## Status
 
-Stripe payment integration is shipped and verified live: real Stripe
-Checkout Sessions from customer self-checkout, webhook-confirmed
-payment (`checkout.session.completed`/`checkout.session.expired`),
-self-cancel via a guest-safe `cancel_pending_order` RPC, and POS's Card
-option (marks paid immediately, no Stripe API call — money already
-collected via a physical terminal). Design:
-`docs/superpowers/specs/2026-07-07-stripe-payment-integration-design.md`.
-Plan: `docs/superpowers/plans/2026-07-07-stripe-payment-integration.md`.
-Full structural detail belongs in CLAUDE.md once that's updated — this
-file only tracks what's still open.
+All three payment methods are now real and verified live: Cash, Stripe
+(`docs/superpowers/specs/2026-07-07-stripe-payment-integration-design.md`,
+`docs/superpowers/plans/2026-07-07-stripe-payment-integration.md`), and
+VNPay (`docs/superpowers/specs/2026-07-07-vnpay-payment-integration-design.md`,
+`docs/superpowers/plans/2026-07-07-vnpay-payment-integration.md`). This
+closes out the entire payments follow-up agreed when the Orders Realtime
+work shipped (Cash → Stripe → VNPay) — no payment-related backend work
+remains deferred. Full structural detail is in CLAUDE.md's "Stripe
+payment integration" and "VNPay payment integration" sections; this file
+only tracks what's still open.
 
-A real pre-existing bug was found and fixed as part of this work:
-Checkout and POS both sent the hyphenated `"dine-in"` string straight to
-`place_order`, which casts it to the `order_type` enum (`pickup|dine_in`,
-underscore) — every dine-in order was silently failing before this fix,
-regardless of payment method.
-
-A real webhook misconfiguration was found and fixed during live
-verification: the Stripe webhook endpoint was initially pointed at the
-Vercel frontend URL instead of the Supabase Edge Function URL, and then
-`STRIPE_WEBHOOK_SECRET` was initially missing from Supabase's Edge
-Function secrets (a separate store from Vercel's env vars — syncing a
-var to Vercel does not make it available to `Deno.env` in an Edge
-Function). Both fixed; verified live end-to-end afterward (real Stripe
-test payment → webhook → order flipped to paid → loyalty points
-awarded correctly).
+Two real bugs were found and fixed during this work, both via live
+sandbox testing rather than guessing:
+- A pre-existing dine-in `order_type` enum mismatch (Checkout/POS sent
+  hyphenated `"dine-in"`, the DB enum wants `dine_in`) that silently
+  broke every dine-in order regardless of payment method.
+- A VNPay signature encoding bug — VNPay signs with PHP
+  `urlencode()`-style encoding (`+` for spaces), not plain
+  `encodeURIComponent`'s `%20`. Root-caused by comparing against a known
+  working reference implementation, not by guessing.
 
 ## Open / not started
 
-1. **Ask the user what's next:**
-   - VNPay follow-up spec — the last remaining payment method, per the
-     sequencing agreed when Orders started (Cash → Stripe → VNPay).
-     Checkout's VNPay button is currently disabled+tooltip.
-   - Something else entirely.
+1. **Ask the user what's next** — the payments initiative that's been
+   running since Orders Realtime is now fully complete. No specific
+   next task is queued.
 
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
-- `checkout.session.expired` (the 30-minute auto-cancel-abandoned-order
-  path) was verified architecturally (identical guarded `UPDATE` to the
-  already-proven `checkout.session.completed` path) but not triggered
-  directly during this session's live testing — worth a real Stripe
-  "resend test event" check next time this area is touched.
+- VNPay's `checkout.session.expired`-equivalent (an abandoned/never-
+  completed sandbox payment) was verified architecturally but a full
+  *successful* (paid) VNPay sandbox transaction wasn't separately
+  observed as of this writing — only a customer-cancelled one
+  (`vnp_ResponseCode=24`) was confirmed end-to-end. Same code path as
+  success, just not yet directly seen with a `paid` row — worth a quick
+  confirmation next time this area is touched.
+- `VNPAY_RETURN_URL` (synced to Vercel) is dead — VNPay's actual return
+  URL is built dynamically in `place-order` pointing at the Supabase
+  function URL instead. Worth removing the unused Vercel var, or
+  documenting why it's kept, next time env vars are audited.
 - `checkout-view.tsx`'s `orderType` state only reads `activeTable` once
   at first render — can default to "pickup" even when `activeTable`
   becomes populated moments later after a full reload (before

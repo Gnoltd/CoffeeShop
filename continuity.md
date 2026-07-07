@@ -12,28 +12,34 @@ intentionally works differently).
 
 ## Current status
 
-**Stale-file notice (updated 2026-07-06):** everything below this notice
+**Stale-file notice (updated 2026-07-07):** everything below this notice
 describes the FE-only, pre-Supabase state from an earlier phase of the
 project. CLAUDE.md is the actively-maintained structural map and should
 be treated as authoritative for current reality; this file has drifted
 since the backend work started and is kept only as a historical log —
 do not use the sections below as a live task list.
 
-**Current reality (as of the end of the 2026-07-06 session):** all 17
+**Current reality (as of the end of the 2026-07-07 session):** all 18
 DB migrations are applied to the live hosted Supabase project.
 Login/Signup/Logout are real (Supabase Auth). Menu, Inventory, Tables,
-Orders (core, Cash-only), and Staff accounts are all real Supabase data
-with live Realtime — this was the full scope of the "make all data
-real-time" initiative (Inventory → Tables → Orders → Staff accounts),
-and **all four sub-projects are now shipped**. The app is deployed live
-on Vercel at `https://phadincoffee.vercel.app` (see CLAUDE.md's
-"Deployment" section). The only deliberately deferred backend work is
-Stripe/VNPay payment integration (Checkout's Card/VNPay buttons are
-still disabled+tooltip; only Cash is real end-to-end) — each is its own
-planned follow-up spec, not yet started. See `daily.md` for the current
-open/not-started task list and known gaps; it is kept short and
-recap-free by design, so check it first before this file for "what's
-left."
+Orders (real order placement/tracking/KDS unification), and Staff
+accounts are all real Supabase data with live Realtime — this was the
+full scope of the "make all data real-time" initiative (Inventory →
+Tables → Orders → Staff accounts), and **all four sub-projects are
+shipped**. On top of that, **all three payment methods are now real —
+Cash, Stripe, and VNPay** (each its own design/plan pair, see CLAUDE.md's
+"Stripe payment integration" and "VNPay payment integration" sections)
+— this closes out the entire payments follow-up agreed when Orders
+Realtime shipped, so no payment-related backend work remains deferred.
+Two real bugs were found and fixed via live sandbox testing along the
+way: a dine-in `order_type` enum mismatch that silently broke every
+dine-in order, and a VNPay signature-encoding bug (VNPay signs with PHP
+`urlencode()`-style `+`-for-space encoding, not plain
+`encodeURIComponent`). The app is deployed live on Vercel at
+`https://phadincoffee.vercel.app` (see CLAUDE.md's "Deployment"
+section). See `daily.md` for the current open/not-started task list and
+known gaps; it is kept short and recap-free by design, so check it
+first before this file for "what's left."
 
 **All FE pages from the original design are now genuinely real, interactive
 UI** — none are translated-placeholder-only anymore. This was previously

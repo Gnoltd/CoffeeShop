@@ -39,12 +39,13 @@ with **live Realtime sync** across sessions — migrations `0010`/`0011`,
 `lib/supabase/orders-data.ts`/`lib/supabase/staff-data.ts`; see "Admin
 pages"/"Table identity flow"/"Real orders + Realtime"/"Staff accounts +
 Realtime" below. This completes all four sub-projects of the "make all
-data real-time" initiative. **Stripe payment integration is now real**
-(migration `0018`, the extended `place-order` and new `stripe-webhook`
-Edge Functions) — see "Stripe payment integration" below. **Still not
-built:** VNPay integration (its own follow-up spec) — the only
-remaining deferred backend work. See each feature section below for
-exactly what's mocked and what's a documented (not hidden) gap.
+data real-time" initiative. **All three payment methods are now real —
+Cash, Stripe, and VNPay** (migration `0018`, `place-order` extended
+twice, plus `stripe-webhook`/`vnpay-ipn`/`vnpay-return`) — see "Stripe
+payment integration" and "VNPay payment integration" below. This closes
+out the entire payments follow-up from the Orders Realtime spec; no
+payment-related backend work remains deferred. See each feature section
+below for exactly what's mocked and what's a documented (not hidden) gap.
 
 ## Stack
 
@@ -543,8 +544,8 @@ POS/Kitchen Display) into one real `orders` schema (migrations
 `docs/superpowers/specs/2026-07-06-orders-realtime-design.md`. Plan:
 `docs/superpowers/plans/2026-07-06-orders-realtime.md`. Stripe/VNPay were
 explicitly out of scope for this sub-project (separate future specs) —
-Stripe is now real, see "Stripe payment integration" below; VNPay's
-Checkout button is still disabled+tooltip.
+both are now real, see "Stripe payment integration" and "VNPay payment
+integration" below.
 
 - **`place_order`** (migration `0014`, `security definer`) — the one
   place order money values are computed. Takes a JSON cart payload,
@@ -719,6 +720,77 @@ remains its own separate, still-pending follow-up.
 - **Explicitly out of scope**: refunds/disputes (handled manually via
   the Stripe Dashboard), Stripe Terminal for a real in-person
   Stripe-processed card reader, VNPay (separate future spec).
+
+## VNPay payment integration (2026-07-07, core)
+
+Last item in the Cash → Stripe → VNPay payment sequencing agreed in the
+Orders Realtime spec — closes out the whole "make all data real-time"
+payments follow-up work. Design:
+`docs/superpowers/specs/2026-07-07-vnpay-payment-integration-design.md`.
+Plan: `docs/superpowers/plans/2026-07-07-vnpay-payment-integration.md`.
+Checkout's VNPay button and POS's VNPay button are both real now.
+
+- **`place-order` Edge Function (extended again)**: a VNPay branch
+  alongside the existing Stripe one — `paymentMethod === "vnpay"` and
+  not already collected builds a signed VNPay Checkout URL locally (no
+  API call needed, unlike Stripe's Checkout Session). VNPay's amount
+  convention is the *opposite* of Stripe's zero-decimal VND handling:
+  always `total × 100`. `vnp_ReturnUrl` points at this project's own
+  Supabase function URL (`SUPABASE_URL`, auto-provided), not `SITE_URL`
+  (the Vercel domain Stripe's success/cancel URLs use) — `vnpay-return`
+  does its own server-side redirect onward after verifying VNPay's hash.
+- **`vnpay-ipn` Edge Function (new — was a stub)**: server-to-server,
+  the sole source of truth for "paid," mirroring `stripe-webhook`'s
+  role — not `vnpay-return`, since a browser redirect isn't guaranteed
+  to fire if the tab closes. Verifies VNPay's hash, cross-checks
+  `vnp_Amount` against the order's real stored total (never trusts
+  VNPay's echoed amount), and returns VNPay's specific `{RspCode,
+  Message}` JSON contract (`"00"` paid, `"02"` already-confirmed/
+  idempotent-retry, `"04"` amount mismatch, `"97"` bad signature, `"01"`
+  order not found) rather than a bare 200.
+- **`vnpay-return` Edge Function (new — was a stub)**: unlike Stripe's
+  separate `success_url`/`cancel_url`, VNPay redirects to **one** return
+  URL for every outcome, distinguished by `vnp_ResponseCode`. Verifies
+  the same hash; on success redirects to `/orders/{orderId}`, on
+  failure/cancel calls the existing guest-safe `cancel_pending_order`
+  RPC (reused as-is from the Stripe work, migration `0018`) then
+  redirects to `/checkout?paymentFailed=1` — no client-side self-cancel
+  dance needed here since the cancellation already happened server-side
+  before the browser lands.
+- **POS's VNPay option** sends `paymentCollected: true`, skipping the
+  VNPay branch entirely and marking the order paid immediately — same
+  "already collected in person, no gateway API call" pattern as POS's
+  Card option, except VNPay has its own real enum value (`'vnpay'`)
+  rather than reusing another payment method's.
+- **A real signing bug found via live sandbox testing, not guessed**:
+  the first live VNPay checkout attempt showed "Invalid signature" on
+  VNPay's *own* payment page — before the customer could even enter
+  card details, meaning the bug was in the *outgoing* signed URL, not
+  IPN/return. Root-caused by fetching and comparing against a
+  known-working reference implementation
+  (`github.com/Gnoltd/MysteryBoxFreshFood`): VNPay signs using **PHP
+  `urlencode()` convention**, where a space encodes as `+`, not `%20`
+  like plain `encodeURIComponent`. Since `vnp_OrderInfo` contains
+  spaces, the wrong encoding produced a hash VNPay's servers could never
+  match. Fixed with a shared `vnpayEncode()` helper
+  (`encodeURIComponent(v).replace(/%20/g, "+")`) applied consistently in
+  all three places that sign or verify VNPay data — `place-order`
+  (outgoing), `vnpay-ipn` and `vnpay-return` (incoming; a receiving
+  Deno function's `URLSearchParams` correctly decodes `+` back to a
+  literal space per the WHATWG form-urlencoded spec, but re-encoding
+  that decoded value for verification needs the same `+`-for-space fix
+  or the two sides diverge again). Verified live afterward: a real
+  VNPay sandbox transaction (customer-cancelled, `vnp_ResponseCode=24`)
+  produced a signature `vnpay-ipn` correctly verified and processed
+  (returned `RspCode "00"`/confirmed, order correctly marked
+  `cancelled`) — direct proof the fix works end-to-end for real VNPay
+  traffic, though a full *successful* (paid) sandbox transaction hadn't
+  been separately confirmed as of this writing (architecturally
+  identical code path, just `vnp_ResponseCode === "00"` instead — same
+  confidence level, just not yet directly observed with a `paid` row).
+- **Explicitly out of scope**: refunds/disputes (VNPay merchant portal,
+  manual), any VNPay payment method beyond the standard redirect gateway
+  (e.g. pre-selecting a bank code to skip VNPay's method-selection page).
 
 ## Admin pages (`/admin/dashboard`, `/menu`, `/inventory`, `/tables`, `/staff`, `/settings`)
 
@@ -1136,11 +1208,13 @@ Full entity list: spec Section 2.
 
 ## Edge Functions (`supabase/functions/`)
 
-`place-order` (real, now also creates a Stripe Checkout Session for
-online card payment — see "Stripe payment integration" above) and
-`stripe-webhook` (real, verifies Stripe's signature and confirms/cancels
-orders) are both live. `vnpay-ipn`/`vnpay-return` are still comment-only
-`index.ts` stubs, pending VNPay's own follow-up spec.
+All five payment-related Edge Functions are real and live: `place-order`
+(creates a Stripe Checkout Session or a signed VNPay redirect URL
+depending on `paymentMethod`), `stripe-webhook` (verifies Stripe's
+signature, confirms/cancels orders), and `vnpay-ipn`/`vnpay-return`
+(verify VNPay's signature; IPN is the source of truth for "paid," return
+only redirects the browser and self-cancels on failure). See "Stripe
+payment integration" and "VNPay payment integration" above.
 
 ## Deployment (Vercel)
 
@@ -1157,22 +1231,26 @@ the source of truth for "does the feature actually work."
   locally — currently synced: `NEXT_PUBLIC_SUPABASE_URL`,
   `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (in active use),
   `NEXT_PUBLIC_SITE_URL`, `VNPAY_RETURN_URL` (set to the real domain for
-  Production/Preview, `localhost:3000` for Development — not read by any
-  code yet), and `SUPABASE_SECRET_KEY`/`STRIPE_SECRET_KEY`/
-  `STRIPE_WEBHOOK_SECRET`/`VNPAY_TMN_CODE`/`VNPAY_HASH_SECRET` (real
-  values, kept here for reference even though `STRIPE_SECRET_KEY`/
-  `STRIPE_WEBHOOK_SECRET` are actually read from **Supabase Edge
-  Function secrets**, not Vercel's — see the next bullet).
+  Production/Preview, `localhost:3000` for Development — **still not
+  read by any code**; VNPay's actual return URL is built dynamically in
+  `place-order` pointing at the Supabase function URL instead, see "VNPay
+  payment integration" above — this Vercel var is effectively dead),
+  and `SUPABASE_SECRET_KEY`/`STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET`/
+  `VNPAY_TMN_CODE`/`VNPAY_HASH_SECRET` (real values, kept here for
+  reference even though all four of the latter are actually read from
+  **Supabase Edge Function secrets**, not Vercel's — see the next bullet).
 - **Supabase Edge Function secrets (`Deno.env`) are a separate store from
   Vercel's env vars — syncing a variable to Vercel does not make it
-  available inside an Edge Function.** Bit this project twice during the
-  Stripe integration: `STRIPE_SECRET_KEY` and a new Edge-Function-only
-  `SITE_URL` (the production domain, distinct from `NEXT_PUBLIC_SITE_URL`
-  which is `localhost:3000` in `.env.local`) had to be set directly via
-  the Supabase Dashboard (Edge Functions → Secrets) or `supabase secrets
-  set`, and initially `STRIPE_WEBHOOK_SECRET` was missed there too,
-  silently breaking the webhook until caught via diagnostics — see
-  "Stripe payment integration" above. No MCP tool in this project manages
+  available inside an Edge Function.** Bit this project three times
+  across the Stripe and VNPay work: `STRIPE_SECRET_KEY` and a new
+  Edge-Function-only `SITE_URL` (the production domain, distinct from
+  `NEXT_PUBLIC_SITE_URL` which is `localhost:3000` in `.env.local`) had
+  to be set directly via the Supabase Dashboard (Edge Functions →
+  Secrets) or `supabase secrets set`; `STRIPE_WEBHOOK_SECRET` was missed
+  there too, silently breaking the webhook until caught via diagnostics;
+  and `VNPAY_TMN_CODE`/`VNPAY_HASH_SECRET` needed the exact same manual
+  step repeated for VNPay. See "Stripe payment integration" and "VNPay
+  payment integration" above. No MCP tool in this project manages
   Supabase Edge Function secrets.
 - **Supabase Auth's "URL Configuration" (Site URL + Redirect URLs
   allow-list) is a Dashboard-only setting** — no MCP tool exposes it. Site
@@ -1201,13 +1279,13 @@ RPC (see "Table identity flow" above); Orders has real order
 placement/tracking/KDS unification (see "Real orders + Realtime"
 above); Staff accounts has real Supabase Auth account creation, an
 `is_active` disable mechanism, and a real staff directory (see "Staff
-accounts + Realtime" above). **Stripe payment integration is also now
-real** (see "Stripe payment integration" above) — customer Checkout's
-Card button and POS's Card button both work end-to-end, verified live.
-`vnpay-ipn`/`vnpay-return` are still comment-only stubs, pending VNPay's
-own follow-up spec — this is the only remaining deferred payment work.
-The app is also live on Vercel (see "Deployment" above) — verify
-against the live URL, not localhost.
+accounts + Realtime" above). **All three payment methods are now real —
+Cash, Stripe, and VNPay** (see "Stripe payment integration" and "VNPay
+payment integration" above) — every payment button on both Checkout and
+POS works end-to-end, verified live. This closes out the entire
+payments follow-up from the Orders Realtime spec; no payment-related
+backend work remains deferred. The app is also live on Vercel (see
+"Deployment" above) — verify against the live URL, not localhost.
 When adding any genuinely new page/feature beyond what's already built,
 follow the same pattern used throughout: shared brand tokens (no
 hardcoded hex), `useTranslations`/`getTranslations` for every label with
