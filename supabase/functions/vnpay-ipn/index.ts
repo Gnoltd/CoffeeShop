@@ -16,6 +16,14 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2"
 
+// VNPay signs with PHP urlencode()-style encoding — spaces become "+",
+// not "%20" like encodeURIComponent's default. See place-order's
+// buildVnpayCheckoutUrl for the matching outgoing-side fix and the
+// live-testing story behind it.
+function vnpayEncode(value: string): string {
+  return encodeURIComponent(value).replace(/%20/g, "+")
+}
+
 async function verifyVnpaySignature(params: URLSearchParams, secret: string): Promise<boolean> {
   const received = params.get("vnp_SecureHash")
   if (!received) return false
@@ -23,7 +31,7 @@ async function verifyVnpaySignature(params: URLSearchParams, secret: string): Pr
     ([k]) => k !== "vnp_SecureHash" && k !== "vnp_SecureHashType"
   )
   entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-  const signString = entries.map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join("&")
+  const signString = entries.map(([k, v]) => `${k}=${vnpayEncode(v)}`).join("&")
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),

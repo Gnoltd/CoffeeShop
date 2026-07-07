@@ -141,9 +141,19 @@ function toVnpayDateString(d: Date): string {
   return `${get("year")}${get("month")}${get("day")}${get("hour")}${get("minute")}${get("second")}`
 }
 
+// VNPay signs with PHP urlencode()-style encoding — spaces become "+",
+// not "%20" like encodeURIComponent's default. Confirmed by comparing
+// against a known-working reference implementation after live sandbox
+// testing showed "Invalid signature" on VNPay's own payment page (i.e.
+// before ever reaching our code again) — vnp_OrderInfo contains spaces,
+// so plain encodeURIComponent silently produced a wrong hash.
+function vnpayEncode(value: string): string {
+  return encodeURIComponent(value).replace(/%20/g, "+")
+}
+
 async function signVnpayParams(params: Record<string, string>, secret: string): Promise<string> {
   const sortedKeys = Object.keys(params).sort()
-  const signString = sortedKeys.map((k) => `${k}=${encodeURIComponent(params[k])}`).join("&")
+  const signString = sortedKeys.map((k) => `${k}=${vnpayEncode(params[k])}`).join("&")
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
@@ -187,7 +197,7 @@ async function buildVnpayCheckoutUrl(params: {
   const secureHash = await signVnpayParams(vnpParams, Deno.env.get("VNPAY_HASH_SECRET")!)
   const query = Object.keys(vnpParams)
     .sort()
-    .map((k) => `${k}=${encodeURIComponent(vnpParams[k])}`)
+    .map((k) => `${k}=${vnpayEncode(vnpParams[k])}`)
     .join("&")
   return `${VNPAY_GATEWAY_URL}?${query}&vnp_SecureHash=${secureHash}`
 }
