@@ -230,7 +230,11 @@
     "viewMenu": "Xem Thực Đơn",
     "invalidTitle": "Mã Bàn Không Hợp Lệ",
     "invalidMessage": "Vui lòng quét lại mã QR trên bàn hoặc nhờ nhân viên hỗ trợ.",
-    "backToMenu": "Về Thực Đơn"
+    "backToMenu": "Về Thực Đơn",
+    "cleaningTitle": "Bàn Đang Được Dọn Dẹp",
+    "cleaningMessage": "Chúng tôi đang chuẩn bị bàn này cho khách tiếp theo. Vui lòng đợi trong giây lát.",
+    "notifyStaff": "Báo Nhân Viên",
+    "staffNotified": "Đã Báo Nhân Viên"
   },
   "Loyalty": {
     "currentBalance": "Số Dư Hiện Tại",

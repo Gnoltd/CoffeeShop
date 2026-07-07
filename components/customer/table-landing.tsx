@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
-import { MapPin, AlertCircle } from "lucide-react"
+import { MapPin, AlertCircle, Sparkles } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { useTables, type TableRecord } from "@/hooks/useTables"
 
 export function TableLanding({ qrToken }: { qrToken: string }) {
   const t = useTranslations("TableLanding")
-  const { setActiveTableByToken } = useTables()
+  const { setActiveTableByToken, notifyCleaning } = useTables()
   const [resolvedTable, setResolvedTable] = useState<TableRecord | null | undefined>(undefined)
+  const [notified, setNotified] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -38,6 +39,25 @@ export function TableLanding({ qrToken }: { qrToken: string }) {
         <p className="text-sm text-muted-foreground">{t("invalidMessage")}</p>
         <Button className="h-11 w-full rounded-xl" render={<Link href="/menu" />} nativeButton={false}>
           {t("backToMenu")}
+        </Button>
+      </div>
+    )
+  }
+
+  if (resolvedTable.status === "cleaning") {
+    return (
+      <div className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center gap-4 px-6 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-amber-100">
+          <Sparkles className="h-10 w-10 text-amber-700" />
+        </div>
+        <h1 className="text-xl font-bold text-card-foreground">{t("cleaningTitle")}</h1>
+        <p className="text-sm text-muted-foreground">{t("cleaningMessage")}</p>
+        <Button
+          className="h-11 w-full rounded-xl"
+          disabled={notified}
+          onClick={() => notifyCleaning(resolvedTable.id).then(() => setNotified(true))}
+        >
+          {notified ? t("staffNotified") : t("notifyStaff")}
         </Button>
       </div>
     )
