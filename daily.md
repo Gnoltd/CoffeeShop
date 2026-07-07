@@ -31,13 +31,6 @@ sandbox testing rather than guessing:
 
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
-- VNPay's `checkout.session.expired`-equivalent (an abandoned/never-
-  completed sandbox payment) was verified architecturally but a full
-  *successful* (paid) VNPay sandbox transaction wasn't separately
-  observed as of this writing — only a customer-cancelled one
-  (`vnp_ResponseCode=24`) was confirmed end-to-end. Same code path as
-  success, just not yet directly seen with a `paid` row — worth a quick
-  confirmation next time this area is touched.
 - `VNPAY_RETURN_URL` (synced to Vercel) is dead — VNPay's actual return
   URL is built dynamically in `place-order` pointing at the Supabase
   function URL instead. Worth removing the unused Vercel var, or
