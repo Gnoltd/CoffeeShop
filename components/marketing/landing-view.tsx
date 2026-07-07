@@ -1,10 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { Coffee, CupSoda, Cookie, Milk, QrCode, Sparkles, ArrowRight } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { formatVND } from "@/lib/format"
+import { QrScannerOverlay } from "@/components/customer/qr-scanner-overlay"
 import type { MenuItem, MenuIcon } from "@/lib/supabase/menu-data"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
@@ -24,6 +26,7 @@ const CATEGORY_CHIPS = [
 export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
   const locale = useLocale()
   const t = useTranslations("Landing")
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -43,8 +46,7 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
             <Button
               variant="outline"
               className="h-14 rounded-xl border-2 border-white/70 bg-transparent text-base font-bold text-white hover:bg-white/10"
-              disabled
-              title="Not implemented yet — no camera-based QR scanning built"
+              onClick={() => setIsScannerOpen(true)}
             >
               <QrCode className="h-5 w-5" />
               {t("scanQr")}
@@ -114,6 +116,8 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
           )
         })}
       </section>
+
+      {isScannerOpen && <QrScannerOverlay onClose={() => setIsScannerOpen(false)} />}
     </div>
   )
 }
