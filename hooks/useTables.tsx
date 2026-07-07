@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
 import {
@@ -9,23 +9,26 @@ import {
   getTables,
   incrementScanCount,
   mapTableRow,
+  notifyTableCleaning,
   regenerateQrToken as regenerateQrTokenQuery,
   renameTable as renameTableQuery,
-  setTableOccupied,
+  setTableStatus,
   updateTableLocation,
   type TableInput,
+  type TableOccupancyStatus,
   type TableRecord,
   type TableRow,
 } from "@/lib/supabase/tables-data"
 
-export type { TableRecord, TableInput }
+export type { TableRecord, TableInput, TableOccupancyStatus }
 
 type TablesContextValue = {
   tables: TableRecord[]
   addTable: (input: TableInput) => Promise<void>
   renameTable: (id: string, number: string) => Promise<void>
   updateLocation: (id: string, locationVi: string, locationEn: string) => Promise<void>
-  toggleOccupied: (id: string) => Promise<void>
+  setStatus: (id: string, status: TableOccupancyStatus) => Promise<void>
+  notifyCleaning: (id: string) => Promise<void>
   regenerateToken: (id: string) => Promise<void>
   activeTable: TableRecord | null
   setActiveTableByToken: (token: string) => Promise<TableRecord | null>
@@ -41,11 +44,6 @@ export function TablesProvider({ children }: { children: ReactNode }) {
   const [tables, setTables] = useState<TableRecord[]>([])
   const [activeTable, setActiveTable] = useState<TableRecord | null>(null)
   const [hydrated, setHydrated] = useState(false)
-  const tablesRef = useRef<TableRecord[]>([])
-
-  useEffect(() => {
-    tablesRef.current = tables
-  }, [tables])
 
   // activeTable persistence is unchanged from before this hook was
   // rewritten — it must survive a VI/EN locale switch, which remounts
@@ -123,10 +121,12 @@ export function TablesProvider({ children }: { children: ReactNode }) {
     setActiveTable((prev) => (prev?.id === id ? { ...prev, locationVi, locationEn } : prev))
   }
 
-  async function toggleOccupied(id: string) {
-    const table = tablesRef.current.find((t) => t.id === id)
-    if (!table) return
-    await setTableOccupied(supabase, id, !table.isOccupied)
+  async function setStatus(id: string, status: TableOccupancyStatus) {
+    await setTableStatus(supabase, id, status)
+  }
+
+  async function notifyCleaning(id: string) {
+    await notifyTableCleaning(supabase, id)
   }
 
   async function regenerateToken(id: string) {
@@ -156,7 +156,8 @@ export function TablesProvider({ children }: { children: ReactNode }) {
         addTable,
         renameTable,
         updateLocation,
-        toggleOccupied,
+        setStatus,
+        notifyCleaning,
         regenerateToken,
         activeTable,
         setActiveTableByToken,
