@@ -1,4 +1,4 @@
-# Next up: verify table status live, then Admin Dashboard real data (third queued feature)
+# Next up: execute the deferred-payment plan inline (cloud attempt unretrievable — see below), then verify table status live
 
 ## Status
 
@@ -42,8 +42,36 @@ are shipped:
   **not yet verified live on Vercel** (this project's actual source of
   truth) — do that next.
 
-The remaining item from that same batch is a real feature, next up
-after live verification:
+A fourth, larger feature was brainstormed after that: **deferred payment
++ table-driven service lifecycle** (Pay Now/Pay Later checkout choice,
+all 3 methods, both order types; new `served` order status; auto-
+completion trigger). Spec:
+`docs/superpowers/specs/2026-07-08-deferred-payment-service-lifecycle-design.md`.
+Plan (14 tasks, fully coded, no placeholders):
+`docs/superpowers/plans/2026-07-08-deferred-payment-service-lifecycle.md`.
+
+**Cloud-routine attempt didn't produce retrievable output.** Tried
+delegating inline execution to a scheduled cloud agent (Claude Code
+routine, run_once at 2026-07-07T22:50Z, no Supabase MCP access there so
+scoped to code-only tasks on branch `deferred-payment-lifecycle-cloud-run`,
+told not to push). The routine's `get` status confirms it fired
+(`ended_reason: "run_once_fired"`, `last_fired_at: 2026-07-07T22:50:20Z`),
+but:
+- The `RemoteTrigger` API has no "fetch run transcript/output" action —
+  only trigger config is retrievable that way.
+- The branch was never pushed (per its own instructions, for safety on
+  an unattended run) and the cloud session isn't persisted, so
+  `git fetch origin` shows no trace of it.
+- **Net result: whatever code it wrote (if any) is not recoverable from
+  this environment.** The routine's page on claude.ai may still show the
+  session transcript for manual inspection, but that hasn't been checked.
+
+**Next step: just execute the plan directly in an interactive session**
+(inline execution, `superpowers:executing-plans`, per the task-by-task
+breakdown already in the plan) — this environment has full Supabase MCP
+access (`apply_migration`, `deploy_edge_function`), so it can actually
+complete every task including the migration and the 4 Edge Function
+deploys, not just the code-only subset the cloud routine was limited to.
 
 ## Open / not started
 
