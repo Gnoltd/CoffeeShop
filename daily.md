@@ -1,6 +1,23 @@
-# Next up: live-verify deferred payment on Vercel, then Admin Dashboard real data
+# Next up: confirm the table-cleaning trigger fix, then finish the live walkthrough
 
 ## Status
+
+**Live bug found and fixed (migration `0024`)**: `sync_table_occupancy`
+(the trigger that moves a table to Cleaning) was scoped to `after
+update of status` — Postgres only fires a column-scoped trigger when
+the *client's own* UPDATE statement names that column. For a Pay Later
+order, once served, payment finalizing (Stripe webhook / VNPay IPN /
+cash confirm) only updates `payment_status` — a separate trigger
+(`complete_order_when_served_and_paid`) then flips `status` to
+`completed` as a side effect, which the column-scoped trigger never
+saw. Net effect: order genuinely completed and got paid, but its table
+stayed `occupied` forever. Fixed by dropping the column scope (fires on
+every order update now, unconditionally — the function body already
+gates its own logic, matching how the other order triggers already
+work). Table 2 specifically was left manually stuck by this — user is
+clearing it by hand via the Admin Tables/KDS tap-to-cycle control.
+**Not yet re-verified live** that the fix actually holds — next
+priority, see the two-step check below before anything else.
 
 **Deferred payment + table-driven service lifecycle is fully built and
 pushed to `main`** (spec:
@@ -36,6 +53,16 @@ auto-completion + table moves to Cleaning, check the failure-retry path
 doesn't cancel a served order) has not been run. Do this next — the
 plan file's Task 14 checklist is close but predates this revision, so
 add "choose method at the end" scenarios when walking through it.
+
+**Priority order for next session:**
+1. Clear Table 2 manually (tap-to-cycle in Admin Tables or KDS).
+2. Re-run the exact scenario that broke: dine-in, Pay Later, choose
+   Stripe or VNPay once served, complete payment — confirm the table
+   flips to Cleaning automatically this time (no manual tap needed).
+   This is the one thing that must be re-verified before trusting the
+   rest of the deferred-payment feature.
+3. Only after that passes, work through the rest of the original
+   checklist (Cash Pay Later, pickup, failure-retry path).
 
 Also still pending from the previous feature: **table status (shipped
 2026-07-08, in CLAUDE.md) has never been live-verified on Vercel
