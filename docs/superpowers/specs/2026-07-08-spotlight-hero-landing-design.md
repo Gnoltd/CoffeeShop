@@ -31,6 +31,17 @@ category chips) stays exactly as it is today.
   promo/best-sellers/categories sections. The `isScannerOpen` state and
   `QrScannerOverlay` stay in `LandingView`.
 
+### Revision (found during live verification)
+
+The marketing route's layout wrapped the page in `CustomerHeader` +
+`BottomNav`. The sticky 56px header duplicated the hero's branding and
+pushed the 100dvh hero down, shoving its bottom CTAs underneath the fixed
+BottomNav. Resolution: `CustomerHeader` is removed from the **marketing
+layout only** (LandingNav is this page's header; every other customer page
+keeps it); `BottomNav` stays (primary mobile nav + live cart badge), and
+the hero's bottom-anchored blocks use `bottom-24` on all breakpoints so
+they clear the ~68px tab bar.
+
 ## Hero layout (adapted from spec)
 
 `<section>` `relative w-full overflow-hidden h-screen bg-black`,

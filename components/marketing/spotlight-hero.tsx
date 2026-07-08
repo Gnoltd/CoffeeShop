@@ -88,13 +88,13 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
         </h1>
       </div>
       <div
-        className="hero-anim hero-fade absolute bottom-14 left-10 z-50 hidden max-w-[260px] sm:block md:left-14"
+        className="hero-anim hero-fade absolute bottom-24 left-10 z-50 hidden max-w-[260px] sm:block md:left-14"
         style={{ animationDelay: "0.7s" }}
       >
         <p className="text-sm leading-relaxed text-white/80">{t("heroLeftText")}</p>
       </div>
       <div
-        className="hero-anim hero-fade absolute bottom-10 left-5 right-5 z-50 flex max-w-full flex-col items-start gap-4 sm:bottom-24 sm:left-auto sm:right-10 sm:max-w-[260px] sm:gap-5 md:right-14"
+        className="hero-anim hero-fade absolute bottom-24 left-5 right-5 z-50 flex max-w-full flex-col items-start gap-4 sm:left-auto sm:right-10 sm:max-w-[260px] sm:gap-5 md:right-14"
         style={{ animationDelay: "0.85s" }}
       >
         <p className="text-xs leading-relaxed text-white/80 sm:text-sm">{t("heroRightText")}</p>
