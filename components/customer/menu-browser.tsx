@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { motion } from "framer-motion"
 import { Coffee, CupSoda, Cookie, Milk, Search, Plus, Ban } from "lucide-react"
 import { Link, useRouter } from "@/i18n/navigation"
 import { Input } from "@/components/ui/input"
@@ -10,6 +11,9 @@ import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart } from "@/hooks/useCart"
 import { QuickAddExtrasPopup } from "@/components/customer/quick-add-extras-popup"
+import { SegmentedControl } from "@/components/motion/segmented-control"
+import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
+import { TAP_SCALE, TAP_TRANSITION } from "@/components/motion/press-feedback"
 import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
@@ -95,76 +99,69 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
         />
       </div>
 
-      <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            type="button"
-            onClick={() => setSelectedCategory(category.id)}
-            className={cn(
-              "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-colors",
-              selectedCategory === category.id
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-accent/40"
-            )}
-          >
-            {categoryLabel(category)}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        variant="chips"
+        layoutId="menu-category-pill"
+        className="mb-6"
+        value={selectedCategory}
+        onChange={setSelectedCategory}
+        options={categories.map((category) => ({ value: category.id, label: categoryLabel(category) }))}
+      />
 
       {visibleItems.length === 0 && (
         <p className="py-12 text-center text-sm text-muted-foreground">{t("emptyResults")}</p>
       )}
 
-      <div className="flex flex-col gap-3">
+      <StaggerList staggerKey={selectedCategory + searchQuery} className="flex flex-col gap-3">
         {visibleItems.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => openItem(item)}
-            className={cn(
-              "flex items-center gap-3 rounded-xl border bg-card p-2 text-left shadow-sm transition-shadow hover:shadow-md",
-              !item.isAvailable && "opacity-70"
-            )}
-          >
-            <ItemImage
-              item={item}
-              className={cn("h-20 w-20 shrink-0 rounded-lg", !item.isAvailable && "grayscale")}
-            />
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <div className="flex items-start justify-between gap-2">
-                <span className="line-clamp-1 font-semibold text-card-foreground">{name(item)}</span>
-                {item.isPopular && (
-                  <Badge className="shrink-0 bg-primary text-primary-foreground hover:bg-primary">
-                    {t("popular")}
-                  </Badge>
-                )}
+          <StaggerItem key={item.id}>
+            <button
+              type="button"
+              onClick={() => openItem(item)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-xl border bg-card p-2 text-left shadow-sm transition-shadow hover:shadow-md",
+                !item.isAvailable && "opacity-70"
+              )}
+            >
+              <motion.div layoutId={`product-image-${item.id}`} className="shrink-0">
+                <ItemImage item={item} className={cn("h-20 w-20 rounded-lg", !item.isAvailable && "grayscale")} />
+              </motion.div>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="line-clamp-1 font-semibold text-card-foreground">{name(item)}</span>
+                  {item.isPopular && (
+                    <Badge className="shrink-0 bg-primary text-primary-foreground hover:bg-primary">
+                      {t("popular")}
+                    </Badge>
+                  )}
+                </div>
+                <p className="line-clamp-1 text-xs text-muted-foreground">{description(item)}</p>
+                <div className="mt-1 flex items-center justify-between">
+                  <span className="font-bold text-primary">{formatVND(item.basePrice)}</span>
+                  {item.isAvailable ? (
+                    <motion.span
+                      role="button"
+                      whileTap={TAP_SCALE}
+                      transition={TAP_TRANSITION}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        quickAdd(item)
+                      }}
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </motion.span>
+                  ) : (
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                      <Ban className="h-4 w-4" />
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="line-clamp-1 text-xs text-muted-foreground">{description(item)}</p>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="font-bold text-primary">{formatVND(item.basePrice)}</span>
-                {item.isAvailable ? (
-                  <span
-                    role="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      quickAdd(item)
-                    }}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm transition-transform active:scale-90"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </span>
-                ) : (
-                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
-                    <Ban className="h-4 w-4" />
-                  </span>
-                )}
-              </div>
-            </div>
-          </button>
+            </button>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerList>
 
       {itemCount > 0 && (
         <Link
