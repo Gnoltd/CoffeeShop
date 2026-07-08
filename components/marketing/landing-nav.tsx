@@ -16,6 +16,10 @@ export function LandingNav() {
 
   return (
     <nav className="absolute top-0 left-0 right-0 z-[60] flex items-center justify-between p-4 sm:p-5">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-24 bg-gradient-to-b from-black/55 to-transparent sm:h-28"
+        aria-hidden
+      />
       <span className="flex items-center gap-2">
         <Coffee className="h-[26px] w-[26px] text-white" aria-hidden />
         <span className="font-playfair text-2xl italic text-white">PhaDinCoffee</span>

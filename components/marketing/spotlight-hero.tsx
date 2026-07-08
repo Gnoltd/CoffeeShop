@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from "react"
 import { QrCode } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
-import { spotlightMask } from "@/lib/spotlight-mask"
+import { SPOTLIGHT_R, spotlightMask } from "@/lib/spotlight-mask"
+
+// Phone viewports get a 40% smaller reveal radius — the 260px desktop default
+// (tuned for mouse-cursor use) covers more than half the width of a phone
+// screen and swallows the whole reveal image at rest.
+const MOBILE_SPOTLIGHT_R = SPOTLIGHT_R * 0.6
+const MOBILE_BREAKPOINT = 640
 
 // Swappable hero photography (CSS backgrounds, no next/image config needed).
 // Base: dark moody coffee; reveal: warm glowing cup, shown through the spotlight.
@@ -19,6 +25,7 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
   const smooth = useRef({ x: 0, y: 0 })
   const rafRef = useRef(0)
   const [cursorPos, setCursorPos] = useState({ x: -999, y: -999 })
+  const [radius, setRadius] = useState(SPOTLIGHT_R)
 
   useEffect(() => {
     // Start at screen center so touch devices see the reveal immediately.
@@ -26,6 +33,12 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
     mouse.current = { ...center }
     smooth.current = { ...center }
     setCursorPos(center)
+
+    const updateRadius = () => {
+      setRadius(window.innerWidth < MOBILE_BREAKPOINT ? MOBILE_SPOTLIGHT_R : SPOTLIGHT_R)
+    }
+    updateRadius()
+    window.addEventListener("resize", updateRadius)
 
     const onMouseMove = (e: MouseEvent) => {
       mouse.current = { x: e.clientX, y: e.clientY }
@@ -46,13 +59,14 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
     rafRef.current = requestAnimationFrame(tick)
 
     return () => {
+      window.removeEventListener("resize", updateRadius)
       window.removeEventListener("mousemove", onMouseMove)
       window.removeEventListener("touchmove", onTouchMove)
       cancelAnimationFrame(rafRef.current)
     }
   }, [])
 
-  const mask = spotlightMask(cursorPos.x, cursorPos.y)
+  const mask = spotlightMask(cursorPos.x, cursorPos.y, radius)
 
   return (
     <section
