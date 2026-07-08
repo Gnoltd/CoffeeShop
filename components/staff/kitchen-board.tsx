@@ -130,7 +130,7 @@ export function KitchenBoard({
                         </div>
                       ))}
                     </div>
-                    {!(column.status === "ready" && order.orderType === "dine-in") && (
+                    {!(column.status === "ready" && order.orderType === "dine-in" && order.tableId) && (
                       <button
                         type="button"
                         onClick={() => onAdvance(order.id)}
