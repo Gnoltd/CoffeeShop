@@ -37,6 +37,7 @@ export function CheckoutView() {
   const [pickupTime, setPickupTime] = useState("asap")
   const [redeemLoyalty, setRedeemLoyalty] = useState(false)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null)
+  const [payAt, setPayAt] = useState<"now" | "later">("now")
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [pointsBalance, setPointsBalance] = useState(0)
   const [redeemValuePerPoint, setRedeemValuePerPoint] = useState(0)
@@ -99,6 +100,7 @@ export function CheckoutView() {
           tableNumber: orderType === "dine-in" ? tableNumber : null,
           pickupTime: orderType === "pickup" ? pickupTime : null,
           paymentMethod,
+          payAt,
           promoCode,
           redeemLoyaltyPoints: redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS : 0,
           paymentCollected: false,
@@ -269,6 +271,32 @@ export function CheckoutView() {
             {t("loyaltyGuestTooltip")}
           </p>
         )}
+      </section>
+
+      <section className="mb-6 space-y-2">
+        <h2 className="font-bold text-card-foreground">{t("payTiming")}</h2>
+        <div className="flex gap-1 rounded-lg bg-muted p-1">
+          <button
+            type="button"
+            onClick={() => setPayAt("now")}
+            className={cn(
+              "flex-1 rounded-md py-3 text-sm font-bold transition-all",
+              payAt === "now" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
+            )}
+          >
+            {t("payNow")}
+          </button>
+          <button
+            type="button"
+            onClick={() => setPayAt("later")}
+            className={cn(
+              "flex-1 rounded-md py-3 text-sm font-bold transition-all",
+              payAt === "later" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
+            )}
+          >
+            {t("payLater")}
+          </button>
+        </div>
       </section>
 
       <section className="mb-6 space-y-2">
