@@ -55,6 +55,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
   const [isGuestPolling, setIsGuestPolling] = useState(false)
   const [isPaying, setIsPaying] = useState(false)
   const [paymentNotice, setPaymentNotice] = useState(false)
+  const [cashConfirmed, setCashConfirmed] = useState(false)
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -71,6 +72,10 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
         window.location.href = checkoutUrl
         return
       }
+      // Cash has no redirect -- give immediate feedback instead of
+      // waiting for Realtime (or guest polling, up to 10s) to reflect
+      // the DB change back into local `order` state.
+      if (method === "cash") setCashConfirmed(true)
       setIsPaying(false)
     } catch {
       setPaymentNotice(true)
@@ -210,7 +215,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
       {order.status === "served" && order.paymentStatus === "pending" && (
         <section className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
           {paymentNotice && <p className="mb-3 text-sm text-destructive">{t("paymentRetryNotice")}</p>}
-          {paymentMethod === null ? (
+          {paymentMethod === null && !cashConfirmed ? (
             <>
               <p className="mb-3 text-sm font-medium text-card-foreground">{t("choosePaymentMethodPrompt")}</p>
               <div className="grid grid-cols-3 gap-2">
@@ -243,12 +248,12 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
                 </button>
               </div>
             </>
-          ) : paymentMethod === "cash" ? (
+          ) : paymentMethod === "cash" || cashConfirmed ? (
             <p className="text-sm text-muted-foreground">{t("cashAwaitingStaffNote")}</p>
           ) : (
             <>
               <p className="mb-3 text-sm font-medium text-card-foreground">{t("payNowPrompt")}</p>
-              <Button className="h-11 w-full rounded-xl" disabled={isPaying} onClick={() => handlePayNow(paymentMethod)}>
+              <Button className="h-11 w-full rounded-xl" disabled={isPaying} onClick={() => paymentMethod && handlePayNow(paymentMethod)}>
                 {isPaying ? t("payNowLoading") : t("payNowButton")}
               </Button>
             </>
