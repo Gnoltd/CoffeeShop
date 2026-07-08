@@ -249,3 +249,49 @@ verified live, per payment method, per `payAt` choice:
   is already settled).
 - **Who triggers deferred Stripe/VNPay payment**: the customer, from
   their own order-tracking page — not staff-initiated.
+
+## Revision (same day, post-implementation): payment method also deferred for Pay Later
+
+The initial implementation still asked for a payment **method**
+(Cash/Stripe/VNPay) at checkout even for Pay Later, only deferring
+*when* it was collected. That's wrong — for Pay Later, the method
+itself should also be chosen at the end, not the start. Corrected
+design:
+
+- **Checkout** only asks Pay Now vs Pay Later. If **Pay Now**, the
+  Payment Method picker appears immediately, exactly as before —
+  unchanged. If **Pay Later**, no Payment Method picker appears at
+  all — the order is placed with `payment_method = null`.
+- **`orders.payment_method` becomes nullable** (was `not null`) — a
+  new migration drops the constraint. `place_order` now requires a
+  method only when `payAt = 'now'`; for `payAt = 'later'` it's
+  optional and typically omitted.
+- **Choosing the method later**: once an order is `served` with
+  `payment_status = 'pending'` and `payment_method` still null, either
+  side can set it:
+  - **Customer**, from their tracking page — a 3-way picker
+    (Cash/Card/VNPay) replaces the old single "Pay Now" button when no
+    method is chosen yet. Picking Cash just records the choice (staff
+    collects it in person, no redirect); picking Stripe/VNPay records
+    the choice *and* immediately redirects to that gateway's checkout,
+    same as before.
+  - **Staff**, from the table's card in the KDS Tables column — but
+    **cash only**. Stripe/VNPay require the customer's own device to
+    complete a hosted checkout; staff has no way to finish that flow on
+    the guest's behalf, so the table card's method picker only offers
+    "Mark Cash" (a plain update, staff already has row-level UPDATE
+    rights via `orders_update_staff`) — Stripe/VNPay stay customer-only.
+  - Both paths converge on the same already-built mechanics once a
+    method is known: Cash → existing "Confirm Cash Received" flow;
+    Stripe/VNPay → existing `pay-order` Edge Function checkout-session
+    creation.
+- The `pay-order` Edge Function's payload gains a required
+  `paymentMethod` field (it now *sets* the order's method rather than
+  reading a pre-existing one) and its response becomes `{ checkoutUrl?:
+  string }` — present for Stripe/VNPay, absent for Cash (nothing to
+  redirect to).
+- Every `paymentMethod`-typed field touched by the original
+  implementation (`OrderRow`, `OrderForTracking`, `TrackingJson`,
+  `KdsOrderRow`, and the Staff Order History types for consistency)
+  widens from `"stripe" | "cash" | "vnpay"` to `"stripe" | "cash" |
+  "vnpay" | null`.
