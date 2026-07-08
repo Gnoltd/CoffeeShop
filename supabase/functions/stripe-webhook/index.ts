@@ -70,18 +70,28 @@ Deno.serve(async (req) => {
 
   const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)
 
-  if (event.type === "checkout.session.completed" && orderId) {
-    await serviceClient
-      .from("orders")
-      .update({ status: "paid", payment_status: "paid" })
-      .eq("id", orderId)
-      .eq("payment_status", "pending")
-  } else if (event.type === "checkout.session.expired" && orderId) {
-    await serviceClient
-      .from("orders")
-      .update({ status: "cancelled" })
-      .eq("id", orderId)
-      .eq("payment_status", "pending")
+  if ((event.type === "checkout.session.completed" || event.type === "checkout.session.expired") && orderId) {
+    const { data: order } = await serviceClient.from("orders").select("status").eq("id", orderId).maybeSingle()
+
+    if (event.type === "checkout.session.completed") {
+      // A pre-kitchen Pay Now order also needs `status` flipped to
+      // 'paid' (that's what makes it kitchen-visible). A Pay Later
+      // order is already 'served' by the time its deferred payment
+      // clears -- only payment_status changes there; the
+      // complete_order_when_served_and_paid trigger (migration 0022)
+      // takes it to 'completed' from that single field flip.
+      const update = order?.status === "served" ? { payment_status: "paid" } : { status: "paid", payment_status: "paid" }
+      await serviceClient.from("orders").update(update).eq("id", orderId).eq("payment_status", "pending")
+    } else if (order?.status === "pending_payment") {
+      // Only a still-pre-kitchen order should be cancelled on expiry --
+      // a served order whose deferred payment attempt expired just
+      // stays served/unpaid, awaiting a retry.
+      await serviceClient
+        .from("orders")
+        .update({ status: "cancelled" })
+        .eq("id", orderId)
+        .eq("payment_status", "pending")
+    }
   }
 
   return new Response(JSON.stringify({ received: true }), {
