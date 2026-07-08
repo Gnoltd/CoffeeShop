@@ -8,10 +8,11 @@ decision was made or the full bug-hunt narrative behind a fix.
 
 ## Status
 
-Everything is real and shipped. Next.js app (bilingual, role-gated), full
-customer/staff/admin UI, live Supabase DB (19 migrations) with RLS, live
-Realtime sync across Inventory/Tables/Orders/Staff accounts, and all
-three payment methods (Cash/Stripe/VNPay) work end-to-end. Deployed at
+Everything shipped so far is real end-to-end. Next.js app (bilingual,
+role-gated), full customer/staff/admin UI, live Supabase DB (21
+migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
+Staff accounts, 3-state table occupancy/cleaning, and all three payment
+methods (Cash/Stripe/VNPay) work end-to-end. Deployed at
 **https://phadincoffee.vercel.app**, auto-deploys on push to `main`. See
 `daily.md` for what's currently open — it's kept short and recap-free by
 design, so check it before this file for "what's left."
@@ -242,8 +243,9 @@ you need to find your way around; check the dated docs for full detail.
   real `inventory_logs`, admin-configurable recipes
   (`menu_item_ingredients`/`modifier_ingredients`, feeding the
   `handle_order_paid` deduction trigger).
-- `hooks/useTables.tsx` (shared Admin Tables + Table QR flow) — real
-  rename/location/occupied-toggle, all Realtime.
+- `hooks/useTables.tsx` (shared Admin Tables + Table QR flow + KDS
+  Tables column) — real rename/location, plus `status` (see "Table
+  status" below), all Realtime.
   `regenerate_table_qr_token` (admin-only) and
   `increment_table_scan_count` (the one guest-writable `security
   definer` RPC in this flow, scoped to only ever touch `scan_count`)
@@ -277,6 +279,30 @@ you need to find your way around; check the dated docs for full detail.
   every 10s instead, labeled in the UI as polling. Logged-in
   customers/staff get true Realtime.
 
+### Table status — occupancy + cleaning (all real, shipped 2026-07-08)
+- `tables.status` (migration `0021`) is a 3-state enum — `available |
+  occupied | cleaning` — replacing the old `is_occupied` boolean.
+- **Occupied**: automatic — `sync_table_occupancy` trigger fires on a
+  dine-in order `INSERT`, regardless of payment status.
+- **Cleaning**: automatic — same trigger, fires when a table's *last*
+  active order reaches `completed`/`cancelled`. Deliberately not the
+  same event as "guest left" — a finished order always routes through
+  Cleaning, never straight to Available.
+- **Available**: always a manual staff tap ("Cleaning Done") — never
+  automatic. Two surfaces call the same `setStatus`: the KDS "Tables"
+  4th board column (`components/staff/kitchen-tables-column.tsx`) and
+  Admin Tables (`components/admin/tables-management.tsx`, a 3-state
+  contextual button, not a binary toggle).
+- Guests scanning a `cleaning` table's QR get a blocked message with a
+  "Notify Staff" button — guest-safe `notify_table_cleaning` RPC (sets
+  `cleaning_notified_at`), shown as an urgent badge on the KDS table
+  card until cleared.
+- Admin Dashboard has a real-time "Table Status" card (3-way counts +
+  a cleaning-attention alert) — separate from the still-mock KPIs
+  above it (see Admin pages' known gap).
+- Design: `docs/superpowers/specs/2026-07-08-table-status-design.md`;
+  plan: `docs/superpowers/plans/2026-07-08-table-status.md`.
+
 ### Payments — Cash, Stripe, VNPay (all real, all end-to-end verified live)
 - **Cash**: self-checkout starts `pending_payment`; staff confirms via
   `components/staff/kitchen-pending-payment.tsx`'s "Confirm Cash
@@ -303,7 +329,7 @@ you need to find your way around; check the dated docs for full detail.
 
 ## Database (`supabase/migrations/`)
 
-19 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+21 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -317,6 +343,8 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0016`–`0017` | `profiles.is_active` + `get_staff_members()` + `set_initial_staff_role()` |
 | `0018` | `cancel_pending_order()` (Stripe follow-up) |
 | `0019` | `get_order_history()` (Staff Order History) |
+| `0020` | `menu_items.has_size_options` (per-item size-picker toggle) |
+| `0021` | `tables.status` 3-state enum + occupancy/cleaning trigger + `notify_table_cleaning()` guest RPC |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
@@ -354,11 +382,17 @@ auto-deploys, no manual `vercel deploy` needed).
 
 ## Building the rest
 
-All Stitch-designed pages are ported; all four "make all data
+All Stitch-designed pages are ported; all four original "make all data
 real-time" sub-projects (Inventory, Tables, Orders, Staff accounts) and
 all three payment methods (Cash, Stripe, VNPay) are shipped and
-verified live. No backend work remains deferred as of this writing —
-check `daily.md` for what's currently open. When adding anything new:
+verified live, plus table occupancy/cleaning (above, shipped
+2026-07-08). A **deferred payment + table-driven service lifecycle**
+feature (Pay Now/Pay Later checkout choice across all 3 methods and
+both order types, a new `served` order status, an auto-completion
+trigger) is fully spec'd and planned but **not yet built** — spec:
+`docs/superpowers/specs/2026-07-08-deferred-payment-service-lifecycle-design.md`,
+plan: `docs/superpowers/plans/2026-07-08-deferred-payment-service-lifecycle.md`.
+Check `daily.md` for current status. When adding anything new:
 shared brand tokens, `useTranslations`/`getTranslations` with both
 message files updated together, Base UI's `render` prop for polymorphic
 Buttons, "disabled + tooltip" for unbacked actions, DI'd query-layer
