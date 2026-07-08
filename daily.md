@@ -1,6 +1,35 @@
-# Next up: confirm the table-cleaning trigger fix, then finish the live walkthrough
+# Next up: resolve the one stranded order, then confirm both fixes live
 
 ## Status
+
+**Second live bug found and fixed**: Checkout let a customer pick
+Dine-in manually without ever scanning a table's QR code, using a
+`FALLBACK_TABLE_NUMBER = "04"` display fallback while sending
+`table_id: null` to `place_order`. Since the entire table-driven KDS
+model (table card, Served button, occupancy) keys off `table_id`, any
+such order was invisible everywhere — no Served button, no occupancy
+tracking, nothing. This is very likely what actually caused the "table
+2 stuck with no button" report just before it — table 2's own row
+turned out fine (it was the earlier trigger-scope bug), but a live scan
+of the DB turned up a **currently-stranded real order**
+(`c5b531cf-2661-4bac-9217-511de8b5d3f4`, `status: ready`, `table_id:
+null`, created 2026-07-08) that had no table card to route a Served
+action through, and no order-card button either (removed for dine-in
+by the deferred-payment work). Two fixes shipped:
+1. Checkout now **requires a real scanned table** for Dine-in — the
+   toggle is disabled with a tooltip until `activeTable` is set, with
+   an inline "Scan Table QR" button (reuses the existing camera
+   scanner) right there. The fake fallback is gone entirely.
+2. KDS board: the Ready-column action button is now restored as a
+   fallback for any dine-in order that (still) has no `table_id` — a
+   safety net so a stray/orphaned order like the one above can never be
+   completely un-actionable again.
+
+**The stranded order still needs manual resolution** — now that the
+KDS safety-net button is live, it should show a "Complete" button in
+KDS's Ready column despite being dine-in; tap it to clear it (it has no
+real table to free, so no Cleaning transition will follow — that's
+expected for this one orphaned case).
 
 **Live bug found and fixed (migration `0024`)**: `sync_table_occupancy`
 (the trigger that moves a table to Cleaning) was scoped to `after
@@ -56,12 +85,17 @@ add "choose method at the end" scenarios when walking through it.
 
 **Priority order for next session:**
 1. Clear Table 2 manually (tap-to-cycle in Admin Tables or KDS).
-2. Re-run the exact scenario that broke: dine-in, Pay Later, choose
-   Stripe or VNPay once served, complete payment — confirm the table
-   flips to Cleaning automatically this time (no manual tap needed).
-   This is the one thing that must be re-verified before trusting the
-   rest of the deferred-payment feature.
-3. Only after that passes, work through the rest of the original
+2. Clear the stranded orphaned order (`c5b531cf...`) via the now-
+   restored KDS Ready-column button.
+3. Confirm Dine-in is actually blocked in Checkout without a scan, and
+   that the inline "Scan Table QR" button works end-to-end.
+4. Re-run the exact scenario that broke the cleaning trigger: dine-in
+   (with a real scanned table this time), Pay Later, choose Stripe or
+   VNPay once served, complete payment — confirm the table flips to
+   Cleaning automatically (no manual tap needed). This is the one thing
+   that must be re-verified before trusting the rest of the
+   deferred-payment feature.
+5. Only after that passes, work through the rest of the original
    checklist (Cash Pay Later, pickup, failure-retry path).
 
 Also still pending from the previous feature: **table status (shipped
