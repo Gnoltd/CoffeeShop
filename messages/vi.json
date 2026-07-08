@@ -170,6 +170,7 @@
     "payTiming": "Bạn muốn thanh toán khi nào?",
     "payNow": "Thanh Toán Ngay",
     "payLater": "Thanh Toán Sau",
+    "payLaterNote": "Bạn sẽ chọn cách thanh toán khi đơn hàng được phục vụ.",
     "paymentMethod": "Phương Thức Thanh Toán",
     "payStripe": "Thẻ",
     "payCash": "Tiền Mặt",

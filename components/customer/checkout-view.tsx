@@ -89,7 +89,7 @@ export function CheckoutView() {
   const total = Math.max(subtotal - discount, 0)
 
   async function handlePlaceOrder() {
-    if (items.length === 0 || !paymentMethod) return
+    if (items.length === 0 || (payAt === "now" && !paymentMethod)) return
     setError(null)
     setIsPlacing(true)
     try {
@@ -99,7 +99,7 @@ export function CheckoutView() {
           tableId: orderType === "dine-in" ? (activeTable?.id ?? null) : null,
           tableNumber: orderType === "dine-in" ? tableNumber : null,
           pickupTime: orderType === "pickup" ? pickupTime : null,
-          paymentMethod,
+          paymentMethod: payAt === "now" ? paymentMethod : null,
           payAt,
           promoCode,
           redeemLoyaltyPoints: redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS : 0,
@@ -297,32 +297,35 @@ export function CheckoutView() {
             {t("payLater")}
           </button>
         </div>
+        {payAt === "later" && <p className="text-sm text-muted-foreground">{t("payLaterNote")}</p>}
       </section>
 
-      <section className="mb-6 space-y-2">
-        <h2 className="font-bold text-card-foreground">{t("paymentMethod")}</h2>
-        <div className="grid grid-cols-3 gap-2">
-          {PAYMENT_OPTIONS.map(({ id, icon: Icon, labelKey, enabled }) => (
-            <button
-              key={id}
-              type="button"
-              disabled={!enabled}
-              title={enabled ? undefined : t("paymentMethodComingSoon")}
-              onClick={() => setPaymentMethod(id)}
-              className={cn(
-                "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
-                paymentMethod === id
-                  ? "border-primary bg-primary/5 text-primary"
-                  : "border-transparent bg-muted text-muted-foreground",
-                !enabled && "opacity-50"
-              )}
-            >
-              <Icon className="h-7 w-7" />
-              <span className="text-xs font-bold">{t(labelKey)}</span>
-            </button>
-          ))}
-        </div>
-      </section>
+      {payAt === "now" && (
+        <section className="mb-6 space-y-2">
+          <h2 className="font-bold text-card-foreground">{t("paymentMethod")}</h2>
+          <div className="grid grid-cols-3 gap-2">
+            {PAYMENT_OPTIONS.map(({ id, icon: Icon, labelKey, enabled }) => (
+              <button
+                key={id}
+                type="button"
+                disabled={!enabled}
+                title={enabled ? undefined : t("paymentMethodComingSoon")}
+                onClick={() => setPaymentMethod(id)}
+                className={cn(
+                  "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
+                  paymentMethod === id
+                    ? "border-primary bg-primary/5 text-primary"
+                    : "border-transparent bg-muted text-muted-foreground",
+                  !enabled && "opacity-50"
+                )}
+              >
+                <Icon className="h-7 w-7" />
+                <span className="text-xs font-bold">{t(labelKey)}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {canceledNotice && (
         <p className="mx-auto mb-2 max-w-2xl rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
@@ -344,7 +347,7 @@ export function CheckoutView() {
         </div>
         <Button
           onClick={handlePlaceOrder}
-          disabled={!paymentMethod || isPlacing}
+          disabled={(payAt === "now" && !paymentMethod) || isPlacing}
           className="h-12 rounded-xl px-8 text-base font-bold"
         >
           {t("placeOrder")}

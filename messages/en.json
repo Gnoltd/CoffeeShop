@@ -170,6 +170,7 @@
     "payTiming": "When would you like to pay?",
     "payNow": "Pay Now",
     "payLater": "Pay Later",
+    "payLaterNote": "You'll choose how to pay once your order is served.",
     "paymentMethod": "Payment Method",
     "payStripe": "Card",
     "payCash": "Cash",
