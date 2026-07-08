@@ -22,6 +22,7 @@ import { formatNumber } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { ROLE_HOME } from "@/lib/roles"
+import { PressFeedback } from "@/components/motion/press-feedback"
 
 /** Matches loyalty-view.tsx's mock balance — no real profile/loyalty tables yet. */
 const MOCK_POINTS_BALANCE = 1250
@@ -151,7 +152,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
                     }}
                     className="h-11 flex-1 rounded-xl border-2 border-primary bg-card px-4 text-card-foreground focus:outline-none"
                   />
-                  <button
+                  <PressFeedback
                     type="button"
                     onClick={saveEdit}
                     aria-label={t("save")}
@@ -159,8 +160,8 @@ export function ProfileView({ role = null }: { role?: string | null }) {
                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"
                   >
                     <Check className="h-4 w-4" />
-                  </button>
-                  <button
+                  </PressFeedback>
+                  <PressFeedback
                     type="button"
                     onClick={cancelEdit}
                     aria-label={t("cancel")}
@@ -168,17 +169,17 @@ export function ProfileView({ role = null }: { role?: string | null }) {
                     className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-muted-foreground"
                   >
                     <X className="h-4 w-4" />
-                  </button>
+                  </PressFeedback>
                 </div>
               ) : (
-                <button
+                <PressFeedback
                   type="button"
                   onClick={() => startEdit(field)}
                   className="flex h-11 w-full items-center justify-between rounded-xl border-2 border-transparent bg-muted px-4 text-left transition-colors hover:border-primary/40"
                 >
                   <span className="text-card-foreground">{profile[field]}</span>
                   <Pencil className="h-4 w-4 text-muted-foreground" />
-                </button>
+                </PressFeedback>
               )}
             </div>
           )
@@ -264,7 +265,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </button>
 
-        <button
+        <PressFeedback
           type="button"
           onClick={handleLogout}
           className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted"
@@ -275,7 +276,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
             </span>
             <span className="font-medium text-destructive">{t("menuLogout")}</span>
           </span>
-        </button>
+        </PressFeedback>
       </section>
     </div>
   )
