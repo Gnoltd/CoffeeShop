@@ -39,3 +39,20 @@ export function formatPhoneVN(phone: string): string {
 
   return `${digits.slice(0, 4)} ${digits.slice(4, 7)} ${digits.slice(7, 10)}`.trim()
 }
+
+/**
+ * Parses a "YYYY-MM-DD" string as a LOCAL date, not UTC -- `new
+ * Date(isoString)` parses as UTC midnight, which can display as the
+ * wrong calendar day depending on the browser's timezone. This app's
+ * dates are already Vietnam-local from the source (get_dashboard_stats
+ * RPC); this just avoids re-introducing a timezone shift on the way
+ * back out.
+ */
+export function parseIsoDateLocal(isoDate: string): Date {
+  const [year, month, day] = isoDate.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
+export function formatWeekdayShort(isoDate: string, locale: string): string {
+  return parseIsoDateLocal(isoDate).toLocaleDateString(locale === "vi" ? "vi-VN" : "en-US", { weekday: "short" })
+}
