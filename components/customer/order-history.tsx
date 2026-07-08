@@ -7,6 +7,8 @@ import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { formatOrderId, formatVND } from "@/lib/format"
 import { useOrders, type OrderStatus } from "@/hooks/useOrders"
+import { SegmentedControl } from "@/components/motion/segmented-control"
+import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
 
 const STATUS_STYLES: Record<OrderStatus, string> = {
   pending_payment: "bg-muted text-muted-foreground",
@@ -64,63 +66,56 @@ export function OrderHistory() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-4">
-      <div className="mb-4 flex gap-1 rounded-lg bg-muted p-1">
-        {FILTERS.map(({ id, labelKey }) => (
-          <button
-            key={id}
-            type="button"
-            onClick={() => setFilter(id)}
-            className={cn(
-              "flex-1 rounded-md py-2 text-sm font-bold transition-all",
-              filter === id ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
-            )}
-          >
-            {t(labelKey)}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        layoutId="order-history-filter-pill"
+        className="mb-4"
+        value={filter}
+        onChange={setFilter}
+        options={FILTERS.map(({ id, labelKey }) => ({ value: id, label: t(labelKey) }))}
+      />
 
       {isLoadingMyOrders ? (
         <p className="py-16 text-center text-muted-foreground">{t("loading")}</p>
       ) : filtered.length === 0 ? (
         <p className="py-16 text-center text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <StaggerList staggerKey={filter} className="flex flex-col gap-3">
           {filtered.map((order) => {
             const itemsLabel = order.items
               .map((item) => (locale === "vi" ? item.nameVi : item.nameEn))
               .join(", ")
             return (
-              <Link
-                key={order.id}
-                href={`/orders/${order.id}`}
-                className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-primary/40"
-              >
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-bold text-card-foreground">#{formatOrderId(order.id)}</span>
-                    <span
-                      className={cn(
-                        "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold",
-                        STATUS_STYLES[order.status]
-                      )}
-                    >
-                      {t(STATUS_KEYS[order.status])}
-                    </span>
+              <StaggerItem key={order.id}>
+                <Link
+                  href={`/orders/${order.id}`}
+                  className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-primary/40"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold text-card-foreground">#{formatOrderId(order.id)}</span>
+                      <span
+                        className={cn(
+                          "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold",
+                          STATUS_STYLES[order.status]
+                        )}
+                      >
+                        {t(STATUS_KEYS[order.status])}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{formatOrderDate(order.createdAt, locale)}</p>
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
+                      {t("itemCount", { count: order.items.length })}: {itemsLabel}
+                    </p>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground">{formatOrderDate(order.createdAt, locale)}</p>
-                  <p className="mt-1 truncate text-sm text-muted-foreground">
-                    {t("itemCount", { count: order.items.length })}: {itemsLabel}
-                  </p>
-                </div>
-                <div className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="font-bold text-primary">{formatVND(order.total)}</span>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </Link>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="font-bold text-primary">{formatVND(order.total)}</span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </Link>
+              </StaggerItem>
             )
           })}
-        </div>
+        </StaggerList>
       )}
     </div>
   )
