@@ -310,6 +310,8 @@
     "markServed": "Served",
     "tableAwaitingPayment": "Awaiting Payment",
     "markCash": "Mark Cash",
+    "markOccupied": "Mark Occupied",
+    "markCleaning": "Mark Cleaning",
     "updateError": "Failed to update. Try again.",
     "pickup": "Pickup",
     "table": "Table {table}",

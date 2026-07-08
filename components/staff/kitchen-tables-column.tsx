@@ -45,12 +45,25 @@ export function KitchenTablesColumn() {
               <div>
                 <p className="font-bold text-card-foreground">{table.number}</p>
                 {location && <p className="text-xs text-muted-foreground">{location}</p>}
-                <span
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError(null)
+                    const next = table.status === "available" ? "occupied" : table.status === "occupied" ? "cleaning" : "available"
+                    setStatus(table.id, next).catch(() => setError(t("updateError")))
+                  }}
+                  title={
+                    table.status === "available"
+                      ? t("markOccupied")
+                      : table.status === "occupied"
+                        ? t("markCleaning")
+                        : t("cleaningDone")
+                  }
                   className={cn(
-                    "mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold",
-                    table.status === "available" && "bg-green-100 text-green-700",
-                    table.status === "occupied" && "bg-red-100 text-red-700",
-                    table.status === "cleaning" && "bg-amber-100 text-amber-700"
+                    "mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold transition-colors",
+                    table.status === "available" && "bg-green-100 text-green-700 hover:bg-green-200",
+                    table.status === "occupied" && "bg-red-100 text-red-700 hover:bg-red-200",
+                    table.status === "cleaning" && "bg-amber-100 text-amber-700 hover:bg-amber-200"
                   )}
                 >
                   {table.status === "available" && <CircleCheck className="h-3 w-3" />}
@@ -61,7 +74,7 @@ export function KitchenTablesColumn() {
                     : table.status === "occupied"
                       ? t("tableOccupied")
                       : t("tableCleaning")}
-                </span>
+                </button>
                 {table.status === "cleaning" && table.cleaningNotifiedAt && (
                   <span className="mt-1 flex items-center gap-1 text-[10px] font-bold text-destructive">
                     <Bell className="h-3 w-3 animate-pulse" />
@@ -76,18 +89,6 @@ export function KitchenTablesColumn() {
                 )}
               </div>
               <div className="flex shrink-0 flex-col gap-1.5">
-                {table.status === "cleaning" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setError(null)
-                      setStatus(table.id, "available").catch(() => setError(t("updateError")))
-                    }}
-                    className="rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:brightness-110"
-                  >
-                    {t("cleaningDone")}
-                  </button>
-                )}
                 {readyOrderIds.length > 0 && (
                   <button
                     type="button"
