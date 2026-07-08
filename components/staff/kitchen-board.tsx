@@ -130,32 +130,34 @@ export function KitchenBoard({
                         </div>
                       ))}
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => onAdvance(order.id)}
-                      className={cn(
-                        "flex w-full items-center justify-center gap-2 rounded-b-xl py-3 text-base font-bold text-white transition-all active:scale-[0.99]",
-                        column.status === "paid" && "bg-primary hover:brightness-110",
-                        column.status === "preparing" && "bg-amber-600 hover:brightness-110",
-                        column.status === "ready" && "bg-green-600 hover:brightness-110"
-                      )}
-                    >
-                      {column.status === "paid" && (
-                        <>
-                          <Play className="h-4 w-4" /> {t("startPreparing")}
-                        </>
-                      )}
-                      {column.status === "preparing" && (
-                        <>
-                          <CheckCircle2 className="h-4 w-4" /> {t("markReady")}
-                        </>
-                      )}
-                      {column.status === "ready" && (
-                        <>
-                          <PackageCheck className="h-4 w-4" /> {t("complete")}
-                        </>
-                      )}
-                    </button>
+                    {!(column.status === "ready" && order.orderType === "dine-in") && (
+                      <button
+                        type="button"
+                        onClick={() => onAdvance(order.id)}
+                        className={cn(
+                          "flex w-full items-center justify-center gap-2 rounded-b-xl py-3 text-base font-bold text-white transition-all active:scale-[0.99]",
+                          column.status === "paid" && "bg-primary hover:brightness-110",
+                          column.status === "preparing" && "bg-amber-600 hover:brightness-110",
+                          column.status === "ready" && "bg-green-600 hover:brightness-110"
+                        )}
+                      >
+                        {column.status === "paid" && (
+                          <>
+                            <Play className="h-4 w-4" /> {t("startPreparing")}
+                          </>
+                        )}
+                        {column.status === "preparing" && (
+                          <>
+                            <CheckCircle2 className="h-4 w-4" /> {t("markReady")}
+                          </>
+                        )}
+                        {column.status === "ready" && (
+                          <>
+                            <PackageCheck className="h-4 w-4" /> {t("complete")}
+                          </>
+                        )}
+                      </button>
+                    )}
                   </div>
                 )
               })}

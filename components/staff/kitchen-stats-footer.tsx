@@ -22,7 +22,7 @@ export function KitchenStatsFooter({ orders, now }: { orders: KdsOrder[]; now: n
   const locale = useLocale()
   const t = useTranslations("KitchenDisplay")
 
-  const activeOrders = orders.filter((o) => o.status !== "ready")
+  const activeOrders = orders.filter((o) => o.status !== "ready" && o.status !== "served")
   const activeCount = activeOrders.length
   const level = loadLevelFor(activeCount)
   const barWidth = Math.min(100, (activeCount / 8) * 100)
