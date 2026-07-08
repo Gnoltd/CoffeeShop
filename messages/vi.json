@@ -406,7 +406,8 @@
     "tableOccupied": "Đang Dùng",
     "tableCleaning": "Đang Dọn",
     "tablesNeedCleaning": "{count} bàn cần được dọn dẹp",
-    "loadingStats": "…"
+    "loadingStats": "…",
+    "exportExcel": "Xuất Excel"
   },
   "AdminMenu": {
     "title": "Quản Lý Thực Đơn",

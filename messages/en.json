@@ -406,7 +406,8 @@
     "tableOccupied": "Occupied",
     "tableCleaning": "Cleaning",
     "tablesNeedCleaning": "{count} table(s) need cleaning attention",
-    "loadingStats": "…"
+    "loadingStats": "…",
+    "exportExcel": "Export Excel"
   },
   "AdminMenu": {
     "title": "Manage Menu",

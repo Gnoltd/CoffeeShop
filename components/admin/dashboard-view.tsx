@@ -1,7 +1,18 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { Banknote, ShoppingBag, Gift, TriangleAlert, Coffee, Droplet, Wheat, Candy, ArrowRight } from "lucide-react"
+import {
+  Banknote,
+  ShoppingBag,
+  Gift,
+  TriangleAlert,
+  Coffee,
+  Droplet,
+  Wheat,
+  Candy,
+  ArrowRight,
+  FileSpreadsheet,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
 import { formatVND, formatWeekdayShort } from "@/lib/format"
@@ -9,6 +20,7 @@ import { cn } from "@/lib/utils"
 import { useInventory, type IngredientIcon } from "@/hooks/useInventory"
 import { useTables } from "@/hooks/useTables"
 import { useDashboardStats } from "@/hooks/useDashboardStats"
+import { exportDashboardExcel } from "@/lib/export-dashboard-excel"
 
 const INGREDIENT_ICONS: Record<IngredientIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -31,9 +43,26 @@ export function DashboardView({ locale }: { locale: string }) {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <div>
-        <h2 className="text-2xl font-bold text-card-foreground">{t("overview")}</h2>
-        <p className="text-muted-foreground">{t("welcomeMessage")}</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-card-foreground">{t("overview")}</h2>
+          <p className="text-muted-foreground">{t("welcomeMessage")}</p>
+        </div>
+        <Button
+          variant="outline"
+          className="h-10 gap-2"
+          onClick={() =>
+            exportDashboardExcel({
+              stats,
+              lowStock,
+              tableCounts: { available: availableCount, occupied: occupiedCount, cleaning: cleaningCount },
+              locale,
+            })
+          }
+        >
+          <FileSpreadsheet className="h-4 w-4" />
+          {t("exportExcel")}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
