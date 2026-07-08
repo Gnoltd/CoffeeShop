@@ -1,13 +1,16 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import {
-  CookingPot, Check, PackageCheck, CircleCheckBig, Clock, TableIcon, ShoppingBag, Store, Phone,
+  CookingPot, Check, PackageCheck, CircleCheckBig, Clock, TableIcon, ShoppingBag, Store, Phone, Utensils,
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { formatOrderId, formatVND } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { payExistingOrder } from "@/lib/supabase/orders-data"
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
 
 const MOCK_SHOP_PHONE = "+84281234567"
@@ -17,6 +20,7 @@ const STEPS = [
   { key: "stepPaid", icon: Check },
   { key: "stepPreparing", icon: CookingPot },
   { key: "stepReady", icon: PackageCheck },
+  { key: "stepServed", icon: Utensils },
   { key: "stepCompleted", icon: CircleCheckBig },
 ] as const
 
@@ -25,7 +29,8 @@ const STATUS_STEP: Record<OrderStatus, number> = {
   paid: 0,
   preparing: 1,
   ready: 2,
-  completed: 3,
+  served: 3,
+  completed: 4,
   cancelled: -1,
 }
 
@@ -34,6 +39,7 @@ const STATUS_LABEL_KEY: Record<OrderStatus, string> = {
   paid: "statusPaid",
   preparing: "statusPreparing",
   ready: "statusReady",
+  served: "statusServed",
   completed: "statusCompleted",
   cancelled: "statusCancelled",
 }
@@ -46,6 +52,26 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
 
   const [order, setOrder] = useState<OrderForTracking | null | undefined>(undefined)
   const [isGuestPolling, setIsGuestPolling] = useState(false)
+  const [isPaying, setIsPaying] = useState(false)
+  const [paymentNotice, setPaymentNotice] = useState(false)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const failed = searchParams.get("paymentFailed") === "1" || searchParams.get("stripeCanceled") === "1"
+    if (failed) setPaymentNotice(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function handlePayNow() {
+    setIsPaying(true)
+    try {
+      const { checkoutUrl } = await payExistingOrder(supabase, orderId, locale)
+      window.location.href = checkoutUrl
+    } catch {
+      setPaymentNotice(true)
+      setIsPaying(false)
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -174,6 +200,18 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
           })}
         </div>
       </section>
+
+      {order.status === "served" &&
+        order.paymentStatus === "pending" &&
+        (order.paymentMethod === "stripe" || order.paymentMethod === "vnpay") && (
+          <section className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+            <p className="mb-3 text-sm font-medium text-card-foreground">{t("payNowPrompt")}</p>
+            {paymentNotice && <p className="mb-3 text-sm text-destructive">{t("paymentRetryNotice")}</p>}
+            <Button className="h-11 w-full rounded-xl" disabled={isPaying} onClick={handlePayNow}>
+              {isPaying ? t("payNowLoading") : t("payNowButton")}
+            </Button>
+          </section>
+        )}
 
       <section className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm">

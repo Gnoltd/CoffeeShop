@@ -205,12 +205,14 @@
     "statusPaid": "Order Confirmed",
     "statusPreparing": "Preparing",
     "statusReady": "Ready",
+    "statusServed": "Served",
     "statusCompleted": "Completed",
     "statusCancelled": "Cancelled",
     "etaLabel": "Ready in 5-10 minutes",
     "stepPaid": "Paid",
     "stepPreparing": "Preparing",
     "stepReady": "Ready",
+    "stepServed": "Served",
     "stepCompleted": "Completed",
     "tableLabel": "Table {table}",
     "dineInBadge": "Dine-in",
@@ -224,7 +226,11 @@
     "contactShop": "Contact Shop",
     "notFoundTitle": "Order Not Found",
     "notFoundMessage": "We couldn't find this order, or you don't have access to view it.",
-    "guestPollingNote": "Checking for updates every few seconds…"
+    "guestPollingNote": "Checking for updates every few seconds…",
+    "payNowPrompt": "Your order has been served. Complete payment whenever you're ready.",
+    "payNowButton": "Pay Now",
+    "payNowLoading": "Redirecting to payment…",
+    "paymentRetryNotice": "Payment didn't go through — please try again."
   },
   "TableLanding": {
     "orderingAt": "You're ordering at",

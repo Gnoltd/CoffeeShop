@@ -205,12 +205,14 @@
     "statusPaid": "Đã Xác Nhận Đơn",
     "statusPreparing": "Đang Pha Chế",
     "statusReady": "Sẵn Sàng",
+    "statusServed": "Đã Phục Vụ",
     "statusCompleted": "Hoàn Tất",
     "statusCancelled": "Đã Hủy",
     "etaLabel": "Dự kiến xong trong 5-10 phút",
     "stepPaid": "Đã Thanh Toán",
     "stepPreparing": "Đang Pha Chế",
     "stepReady": "Sẵn Sàng",
+    "stepServed": "Đã Phục Vụ",
     "stepCompleted": "Hoàn Tất",
     "tableLabel": "Bàn số {table}",
     "dineInBadge": "Phục vụ tại chỗ",
@@ -224,7 +226,11 @@
     "contactShop": "Liên Hệ Cửa Hàng",
     "notFoundTitle": "Không Tìm Thấy Đơn Hàng",
     "notFoundMessage": "Không thể tìm thấy đơn hàng này, hoặc bạn không có quyền xem.",
-    "guestPollingNote": "Đang kiểm tra cập nhật mỗi vài giây…"
+    "guestPollingNote": "Đang kiểm tra cập nhật mỗi vài giây…",
+    "payNowPrompt": "Đơn hàng của bạn đã được phục vụ. Hoàn tất thanh toán khi bạn sẵn sàng.",
+    "payNowButton": "Thanh Toán Ngay",
+    "payNowLoading": "Đang chuyển đến trang thanh toán…",
+    "paymentRetryNotice": "Thanh toán không thành công — vui lòng thử lại."
   },
   "TableLanding": {
     "orderingAt": "Bạn đang đặt món tại",
