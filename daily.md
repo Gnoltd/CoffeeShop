@@ -1,4 +1,4 @@
-# Next up: finish live verification of deferred payment + table status
+# Next up: live-verify table status, then Admin Dashboard real data
 
 ## Status
 
@@ -23,16 +23,16 @@ Checkout fix, no `table_id`) has been cancelled directly in the DB —
 it was test data with no real table to route any action through.
 Nothing left over from today's debugging.
 
+**Deferred payment is confirmed working live** — user has verified the
+Pay Later flow end-to-end (dine-in, choose method once served, table
+auto-moves to Cleaning). Closed out, no further verification needed
+for that feature.
+
 ## Open / not started
 
-1. **Finish live verification of the deferred-payment feature** — the
-   original scenario that exposed bug #1 (dine-in, Pay Later, choose
-   Stripe/VNPay once served, confirm the table auto-moves to Cleaning)
-   should be re-run now that it's fixed, plus the rest of the original
-   checklist: Cash Pay Later, pickup, the failure-retry path.
-2. **Live-verify table status** (shipped 2026-07-08, documented in
+1. **Live-verify table status** (shipped 2026-07-08, documented in
    CLAUDE.md) — still never walked through end-to-end on Vercel.
-3. **Admin Dashboard using real, live data** — revenue/orders/loyalty
+2. **Admin Dashboard using real, live data** — revenue/orders/loyalty
    KPIs and the 7-day chart are still fixed mock numbers (documented,
    not hidden, in CLAUDE.md). The Table Status card on that dashboard
    is separate and already real — this item is only the remaining mock
