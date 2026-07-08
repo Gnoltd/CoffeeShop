@@ -10,6 +10,15 @@ fallback, an RLS gap blocking staff writes to `tables`, a missing KDS
 manual override, a Realtime UX lag) were all found and fixed the same
 day; no follow-up needed.
 
+Spotlight hero landing redesign (2026-07-09) is shipped and
+live-verified: full-screen dark hero with cursor/touch-following
+spotlight reveal (CSS gradient mask, no canvas), Playfair Display italic
+display accent, adapted nav, Order Now + Scan QR CTAs, both locales,
+promo/best-sellers/categories intact below. `CustomerHeader` was removed
+from the marketing layout only (the hero's `LandingNav` is that page's
+header); `BottomNav` stays. Spec/plan:
+`docs/superpowers/{specs,plans}/2026-07-08-spotlight-hero-landing*.md`.
+
 Admin Dashboard real data + Excel export is implemented, typechecked,
 built, unit-tested (71/71 passing), and pushed/deployed to
 `https://phadincoffee.vercel.app` — `get_dashboard_stats()` RPC
