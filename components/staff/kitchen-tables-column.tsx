@@ -1,14 +1,16 @@
 "use client"
 
 import { useLocale, useTranslations } from "next-intl"
-import { Bell, CircleCheck, Sparkles, User } from "lucide-react"
+import { Bell, CircleCheck, Sparkles, User, Utensils, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useTables } from "@/hooks/useTables"
+import { useKitchenOrders } from "@/hooks/useKitchenOrders"
 
 export function KitchenTablesColumn() {
   const locale = useLocale()
   const t = useTranslations("KitchenDisplay")
   const { tables, setStatus } = useTables()
+  const { orders, serveTable, confirmCashPayment } = useKitchenOrders()
 
   return (
     <section className="flex h-full flex-col overflow-hidden rounded-xl border bg-muted">
@@ -21,11 +23,15 @@ export function KitchenTablesColumn() {
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {tables.map((table) => {
           const location = locale === "vi" ? table.locationVi : table.locationEn
+          const tableOrders = orders.filter((o) => o.tableId === table.id)
+          const readyOrderIds = tableOrders.filter((o) => o.status === "ready").map((o) => o.id)
+          const awaitingPaymentOrder = tableOrders.find((o) => o.status === "served" && o.paymentStatus === "pending")
+
           return (
             <div
               key={table.id}
               className={cn(
-                "flex items-center justify-between rounded-lg border p-3",
+                "flex items-center justify-between gap-2 rounded-lg border p-3",
                 table.status === "available" && "bg-green-50 dark:bg-green-950/20",
                 table.status === "occupied" && "bg-red-50 dark:bg-red-950/20",
                 table.status === "cleaning" && "bg-amber-50 dark:bg-amber-950/20"
@@ -57,16 +63,43 @@ export function KitchenTablesColumn() {
                     {t("guestNotified")}
                   </span>
                 )}
+                {awaitingPaymentOrder && (
+                  <span className="mt-1 flex items-center gap-1 text-[10px] font-bold text-amber-700">
+                    <Wallet className="h-3 w-3" />
+                    {t("tableAwaitingPayment")}
+                  </span>
+                )}
               </div>
-              {table.status === "cleaning" && (
-                <button
-                  type="button"
-                  onClick={() => setStatus(table.id, "available")}
-                  className="shrink-0 rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:brightness-110"
-                >
-                  {t("cleaningDone")}
-                </button>
-              )}
+              <div className="flex shrink-0 flex-col gap-1.5">
+                {table.status === "cleaning" && (
+                  <button
+                    type="button"
+                    onClick={() => setStatus(table.id, "available")}
+                    className="rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:brightness-110"
+                  >
+                    {t("cleaningDone")}
+                  </button>
+                )}
+                {readyOrderIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => serveTable(readyOrderIds)}
+                    className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground hover:brightness-110"
+                  >
+                    <Utensils className="h-3 w-3" />
+                    {t("markServed")}
+                  </button>
+                )}
+                {awaitingPaymentOrder?.paymentMethod === "cash" && (
+                  <button
+                    type="button"
+                    onClick={() => confirmCashPayment(awaitingPaymentOrder.id)}
+                    className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:brightness-110"
+                  >
+                    {t("confirmCashReceived")}
+                  </button>
+                )}
+              </div>
             </div>
           )
         })}

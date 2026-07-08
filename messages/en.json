@@ -289,6 +289,8 @@
     "tableCleaning": "Cleaning",
     "cleaningDone": "Cleaning Done",
     "guestNotified": "Guest notified staff",
+    "markServed": "Served",
+    "tableAwaitingPayment": "Awaiting Payment",
     "pickup": "Pickup",
     "table": "Table {table}",
     "startPreparing": "Start",
