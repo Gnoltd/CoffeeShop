@@ -1,28 +1,30 @@
-# Next up: execute the deferred-payment implementation plan
+# Next up: live-verify deferred payment on Vercel, then Admin Dashboard real data
 
 ## Status
 
-Spec and plan are done and committed:
-- Spec: `docs/superpowers/specs/2026-07-08-deferred-payment-service-lifecycle-design.md`
-- Plan (14 tasks, fully coded, no placeholders): `docs/superpowers/plans/2026-07-08-deferred-payment-service-lifecycle.md`
+**Deferred payment + table-driven service lifecycle is fully built and
+pushed to `main`** (spec:
+`docs/superpowers/specs/2026-07-08-deferred-payment-service-lifecycle-design.md`,
+plan: `docs/superpowers/plans/2026-07-08-deferred-payment-service-lifecycle.md`,
+14/14 tasks done). Migration `0022` applied live; all 4 affected Edge
+Functions (`place-order`, new `pay-order`, `stripe-webhook`,
+`vnpay-ipn`, `vnpay-return`) deployed live. Typecheck, all 67 Vitest
+tests, and `npm run build` all pass locally.
 
-**Nothing from the plan has been built yet.** A cloud routine was tried
-first (scheduled Claude Code routine, run_once at 2026-07-07T22:50Z) to
-execute it unattended — it fired (`ended_reason: "run_once_fired"`,
-confirmed via `RemoteTrigger` `get`), but produced no recoverable
-output: the routine's API has no run-transcript/output action, it was
-told not to push its branch (`deferred-payment-lifecycle-cloud-run`,
-safety measure for an unattended run), and the cloud session isn't
-persisted — so `git fetch origin` shows no trace of whatever it did.
-That branch name is now a dead end; don't try to look for it.
+**Not yet done: the live walkthrough on Vercel.** This session had no
+browser automation available, so the actual click-through verification
+(place a Pay Later order, watch it hit KDS immediately, tap "Served" on
+the table card, confirm Awaiting Payment + Confirm Cash Received /
+customer-side Pay Now button, confirm auto-completion + table moves to
+Cleaning, check the failure-retry path doesn't cancel a served order)
+has not been run. Do this next — full checklist is in Task 14 of the
+plan file above.
 
-**Next step**: run the plan for real, inline, in an interactive session
-(`superpowers:executing-plans`, task-by-task per the plan file) — that
-has Supabase MCP access (`apply_migration`, `deploy_edge_function`),
-so unlike the cloud attempt it can actually complete every task,
-including the migration (`0022`, adds `served` status + auto-completion
-trigger) and the 4 Edge Function deploys (`place-order`, new
-`pay-order`, `stripe-webhook` fix, `vnpay-ipn` fix, `vnpay-return` fix).
+Also still pending from the previous feature: **table status (shipped
+2026-07-08, in CLAUDE.md) has never been live-verified on Vercel
+either** — worth doing both walkthroughs in the same pass, since the
+deferred-payment feature builds directly on top of table status (same
+`sync_table_occupancy` trigger, same KDS Tables column).
 
 ## Open / not started
 
@@ -50,12 +52,12 @@ trigger) and the 4 Edge Function deploys (`place-order`, new
 - No Vitest/RTL coverage beyond the `lib/supabase/*.ts` query layers and
   `lib/middleware-rules.ts`/`lib/get-current-role.ts` — component-level
   tests were never added (skipped so far, not a regression).
-- Table status (shipped 2026-07-08) was pushed straight to `main` and
-  passed typecheck/build/tests locally, but has **not yet been verified
-  live on Vercel** — this project's actual source of truth for "does it
-  work." Worth a real walkthrough (place a dine-in order, complete it,
-  confirm Cleaning not Available, tap Cleaning Done, scan a cleaning
-  table's QR) next time that area is touched.
+- POS (`components/staff/pos-terminal.tsx`) was not touched by the
+  deferred-payment work — it still always collects payment in person
+  (`paymentCollected: true`), so Pay Later is a self-checkout-only
+  concept for now. That's intentional (POS staff are standing right
+  there, no reason to defer), not an oversight, but worth stating
+  explicitly since it's not written down anywhere else yet.
 
 Two throwaway test accounts (staff/customer roles, credentials in
 `.env.local` and the gitignored `test-accounts.md`) are kept
