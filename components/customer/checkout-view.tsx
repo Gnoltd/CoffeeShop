@@ -12,9 +12,7 @@ import { createClient } from "@/lib/supabase/client"
 import { cancelPendingOrder } from "@/lib/supabase/orders-data"
 import { useCart } from "@/hooks/useCart"
 import { useTables } from "@/hooks/useTables"
-
-/** Fallback shown only when Dine-in is picked manually without scanning a table's QR code first. */
-const FALLBACK_TABLE_NUMBER = "04"
+import { QrScannerOverlay } from "@/components/customer/qr-scanner-overlay"
 
 type OrderType = "pickup" | "dine-in"
 type PaymentMethod = "stripe" | "cash" | "vnpay"
@@ -45,6 +43,7 @@ export function CheckoutView() {
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
   const [canceledNotice, setCanceledNotice] = useState(false)
+  const [isScannerOpen, setIsScannerOpen] = useState(false)
 
   // One fixed redemption chunk per toggle-on, same UX as the old mock's
   // single "50 points for X đ" option — only the VND-per-point conversion
@@ -82,14 +81,14 @@ export function CheckoutView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const tableNumber = activeTable?.number ?? FALLBACK_TABLE_NUMBER
+  const tableNumber = activeTable?.number
   const canRedeem = pointsBalance >= REDEEM_CHUNK_POINTS
   const loyaltyDiscount = redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS * redeemValuePerPoint : 0
   const discount = promoDiscount + loyaltyDiscount
   const total = Math.max(subtotal - discount, 0)
 
   async function handlePlaceOrder() {
-    if (items.length === 0 || (payAt === "now" && !paymentMethod)) return
+    if (items.length === 0 || (payAt === "now" && !paymentMethod) || (orderType === "dine-in" && !activeTable)) return
     setError(null)
     setIsPlacing(true)
     try {
@@ -120,7 +119,7 @@ export function CheckoutView() {
         return
       }
       clear()
-      if (orderType === "dine-in") {
+      if (orderType === "dine-in" && tableNumber) {
         router.push(`/orders/${data.orderId}?table=${encodeURIComponent(tableNumber)}`)
       } else {
         router.push(`/orders/${data.orderId}`)
@@ -161,21 +160,33 @@ export function CheckoutView() {
           </button>
           <button
             type="button"
-            onClick={() => setOrderType("dine-in")}
+            disabled={!activeTable}
+            title={!activeTable ? t("dineInRequiresScan") : undefined}
+            onClick={() => activeTable && setOrderType("dine-in")}
             className={cn(
               "flex-1 rounded-md py-3 text-sm font-bold transition-all",
               orderType === "dine-in"
                 ? "bg-card text-card-foreground shadow-sm"
-                : "text-muted-foreground"
+                : "text-muted-foreground",
+              !activeTable && "opacity-50"
             )}
           >
             {t("dineIn")}
           </button>
         </div>
-        {orderType === "dine-in" && (
+        {orderType === "dine-in" && activeTable && (
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/20 px-3 py-1.5 text-sm text-accent-foreground">
             <TableIcon className="h-4 w-4" />
             {t("table")}: <strong>{tableNumber}</strong>
+          </div>
+        )}
+        {!activeTable && (
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-muted-foreground/40 p-3">
+            <p className="text-xs text-muted-foreground">{t("dineInRequiresScan")}</p>
+            <Button size="sm" variant="outline" className="h-9 shrink-0 gap-1.5" onClick={() => setIsScannerOpen(true)}>
+              <QrCode className="h-3.5 w-3.5" />
+              {t("scanTableQr")}
+            </Button>
           </div>
         )}
       </section>
@@ -347,12 +358,14 @@ export function CheckoutView() {
         </div>
         <Button
           onClick={handlePlaceOrder}
-          disabled={(payAt === "now" && !paymentMethod) || isPlacing}
+          disabled={(payAt === "now" && !paymentMethod) || (orderType === "dine-in" && !activeTable) || isPlacing}
           className="h-12 rounded-xl px-8 text-base font-bold"
         >
           {t("placeOrder")}
         </Button>
       </div>
+
+      {isScannerOpen && <QrScannerOverlay onClose={() => setIsScannerOpen(false)} />}
     </div>
   )
 }

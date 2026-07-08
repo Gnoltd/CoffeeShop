@@ -156,6 +156,8 @@
     "orderType": "Hình Thức Nhận Hàng",
     "pickup": "Mang Đi",
     "dineIn": "Tại Bàn",
+    "dineInRequiresScan": "Quét mã QR trên bàn để đặt món tại chỗ",
+    "scanTableQr": "Quét QR Bàn",
     "table": "Bàn",
     "pickupTime": "Thời Gian Nhận",
     "asap": "Sớm Nhất Có Thể",

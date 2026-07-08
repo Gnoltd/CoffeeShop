@@ -156,6 +156,8 @@
     "orderType": "Order Type",
     "pickup": "Pickup",
     "dineIn": "Dine-in",
+    "dineInRequiresScan": "Scan your table's QR code to order dine-in",
+    "scanTableQr": "Scan Table QR",
     "table": "Table",
     "pickupTime": "Pickup Time",
     "asap": "As Soon As Possible",
