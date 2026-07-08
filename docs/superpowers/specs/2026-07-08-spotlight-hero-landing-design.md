@@ -149,7 +149,7 @@ and `messages/en.json`:
 |---|---|---|
 | `heroLine1` | Every bean holds | Từng hạt cà phê |
 | `heroLine2` | a story worth tasting | kể một câu chuyện |
-| `heroLeftText` | From misty highland farms to your cup — every roast carries the soil, sun, and patience of the Pha Din hills. | Từ những nông trại cao nguyên mờ sương đến tách cà phê của bạn — mỗi mẻ rang mang theo đất, nắng và sự kiên nhẫn của đồi Phà Đin. |
+| `heroLeftText` | Carefully selected beans, roasted slowly and brewed fresh every day — each cup holds its own warmth, aroma, and a moment worth savoring. | Hạt cà phê tuyển chọn kỹ, rang chậm và pha mới mỗi ngày — mỗi tách cà phê mang hương thơm, sự ấm áp và một khoảnh khắc đáng thưởng thức. |
 | `heroRightText` | Order in seconds, from your phone or right at your table — your coffee starts brewing the moment you tap. | Đặt món trong vài giây, từ điện thoại hoặc ngay tại bàn — ly cà phê của bạn được pha ngay khi bạn chạm. |
 | `navMenu` | Menu | Thực đơn |
 | `navOrders` | Orders | Đơn hàng |
