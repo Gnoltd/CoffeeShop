@@ -1,6 +1,24 @@
-# Next up: resolve the one stranded order, then confirm both fixes live
+# Next up: resolve the stranded order, then confirm all three fixes live
 
 ## Status
+
+**Third live bug found and fixed**: "tap Cleaning Done, nothing
+happens" turned out to be an RLS gap, not a UI bug —
+`tables_admin_all` (migration `0005`) only ever granted UPDATE on
+`public.tables` to `manager`/`admin`. But KDS's Tables column (where
+Cleaning Done lives) is reachable by plain `staff` role too, per
+middleware's `/staff/*` gating. A staff-role tap was silently rejected
+by Postgres — and none of the four KDS table actions (Cleaning Done,
+Served, Confirm Cash Received, Mark Cash) caught the rejection, so
+nothing ever showed an error either. Fixed with two changes:
+1. New RLS policy `tables_update_staff` (migration `0025`), mirroring
+   `orders_update_staff`'s existing precedent — staff can now write to
+   `tables`.
+2. All four KDS table actions now catch failures and show an inline
+   error instead of doing nothing silently.
+
+**If you were testing under the staff test account, this was it** —
+try Cleaning Done again, it should work now.
 
 **Second live bug found and fixed**: Checkout let a customer pick
 Dine-in manually without ever scanning a table's QR code, using a
