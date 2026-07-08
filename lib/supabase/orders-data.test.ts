@@ -9,6 +9,7 @@ import {
   confirmCashPayment,
   confirmServedCashPayment,
   payExistingOrder,
+  setOrderPaymentMethodCash,
   cancelPendingOrder,
   getOrderHistory,
   getOrderHistoryDetail,
@@ -286,13 +287,37 @@ describe("confirmServedCashPayment", () => {
 })
 
 describe("payExistingOrder", () => {
-  it("invokes the pay-order function with orderId and locale", async () => {
+  it("invokes the pay-order function with orderId, locale, and paymentMethod", async () => {
     const invokeSpy = vi.fn(() => Promise.resolve({ data: { checkoutUrl: "https://example.com/pay" }, error: null }))
     const supabase = { functions: { invoke: invokeSpy } } as unknown as SupabaseClient
 
-    const result = await payExistingOrder(supabase, "order-1", "vi")
+    const result = await payExistingOrder(supabase, "order-1", "vi", "stripe")
 
-    expect(invokeSpy).toHaveBeenCalledWith("pay-order", { body: { orderId: "order-1", locale: "vi" } })
+    expect(invokeSpy).toHaveBeenCalledWith("pay-order", {
+      body: { orderId: "order-1", locale: "vi", paymentMethod: "stripe" },
+    })
     expect(result.checkoutUrl).toBe("https://example.com/pay")
+  })
+
+  it("returns no checkoutUrl for a cash choice", async () => {
+    const invokeSpy = vi.fn(() => Promise.resolve({ data: { ok: true }, error: null }))
+    const supabase = { functions: { invoke: invokeSpy } } as unknown as SupabaseClient
+
+    const result = await payExistingOrder(supabase, "order-1", "vi", "cash")
+
+    expect(result.checkoutUrl).toBeUndefined()
+  })
+})
+
+describe("setOrderPaymentMethodCash", () => {
+  it("updates only payment_method to cash", async () => {
+    const eqSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const updateSpy = vi.fn(() => ({ eq: eqSpy }))
+    const supabase = { from: () => ({ update: updateSpy }) } as unknown as SupabaseClient
+
+    await setOrderPaymentMethodCash(supabase, "order-1")
+
+    expect(updateSpy).toHaveBeenCalledWith({ payment_method: "cash" })
+    expect(eqSpy).toHaveBeenCalledWith("id", "order-1")
   })
 })

@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 export type RealOrderStatus = "pending_payment" | "paid" | "preparing" | "ready" | "served" | "completed" | "cancelled"
 export type RealOrderType = "pickup" | "dine_in"
 export type OrderType = "pickup" | "dine-in"
+export type RealPaymentMethod = "stripe" | "cash" | "vnpay"
 
 export type OrderForTrackingItem = { nameVi: string; nameEn: string; quantity: number; unitPrice: number; note?: string }
 
@@ -17,7 +18,7 @@ export type OrderForTracking = {
   total: number
   status: RealOrderStatus
   paymentStatus: string
-  paymentMethod: "stripe" | "cash" | "vnpay"
+  paymentMethod: RealPaymentMethod | null
 }
 
 export type PlaceOrderItemInput = {
@@ -56,7 +57,7 @@ type TrackingJson = {
   table: string | null
   status: RealOrderStatus
   paymentStatus: string
-  paymentMethod: "stripe" | "cash" | "vnpay"
+  paymentMethod: RealPaymentMethod | null
   subtotal: number
   discount: number
   total: number
@@ -121,7 +122,7 @@ type OrderRow = {
   total: number
   table_id: string | null
   payment_status: string
-  payment_method: "stripe" | "cash" | "vnpay"
+  payment_method: RealPaymentMethod | null
   tables: { table_number: string } | null
   order_items: { menu_items: { name_vi: string; name_en: string }; quantity: number; unit_price: number; note: string | null }[]
 }
@@ -169,7 +170,7 @@ export type KdsOrderRow = {
   tableId?: string
   status: RealOrderStatus
   paymentStatus: string
-  paymentMethod: "stripe" | "cash" | "vnpay"
+  paymentMethod: RealPaymentMethod | null
   createdAt: number
   items: KdsOrderItemRow[]
 }
@@ -237,11 +238,17 @@ export async function confirmServedCashPayment(supabase: SupabaseClient, orderId
 export async function payExistingOrder(
   supabase: SupabaseClient,
   orderId: string,
-  locale: string
-): Promise<{ checkoutUrl: string }> {
-  const { data, error } = await supabase.functions.invoke("pay-order", { body: { orderId, locale } })
+  locale: string,
+  paymentMethod: RealPaymentMethod
+): Promise<{ checkoutUrl?: string }> {
+  const { data, error } = await supabase.functions.invoke("pay-order", { body: { orderId, locale, paymentMethod } })
   if (error || data?.error) throw error ?? new Error(data.error)
-  return data as { checkoutUrl: string }
+  return data as { checkoutUrl?: string }
+}
+
+export async function setOrderPaymentMethodCash(supabase: SupabaseClient, orderId: string): Promise<void> {
+  const { error } = await supabase.from("orders").update({ payment_method: "cash" }).eq("id", orderId)
+  if (error) throw error
 }
 
 export async function cancelPendingOrder(supabase: SupabaseClient, orderId: string): Promise<boolean> {
@@ -264,7 +271,7 @@ export type OrderHistoryRow = {
   orderType: OrderType
   table?: string
   customerName?: string
-  paymentMethod: "stripe" | "cash" | "vnpay"
+  paymentMethod: RealPaymentMethod | null
   status: RealOrderStatus
   total: number
 }
@@ -277,7 +284,7 @@ type OrderHistoryRpcRow = {
   order_type: RealOrderType
   table_number: string | null
   customer_name: string | null
-  payment_method: "stripe" | "cash" | "vnpay"
+  payment_method: RealPaymentMethod | null
   status: RealOrderStatus
   total: number
 }
@@ -315,13 +322,13 @@ export async function getOrderHistory(
 }
 
 export type OrderHistoryDetail = OrderForTracking & {
-  paymentMethod: "stripe" | "cash" | "vnpay"
+  paymentMethod: RealPaymentMethod | null
   paymentStatus: string
   customerName?: string
 }
 
 type OrderHistoryDetailRow = OrderRow & {
-  payment_method: "stripe" | "cash" | "vnpay"
+  payment_method: RealPaymentMethod | null
   payment_status: string
   profiles: { full_name: string } | null
 }
