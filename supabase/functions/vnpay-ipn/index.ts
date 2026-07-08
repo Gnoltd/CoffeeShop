@@ -78,7 +78,7 @@ Deno.serve(async (req) => {
 
   const { data: order } = await serviceClient
     .from("orders")
-    .select("id, total, payment_status")
+    .select("id, total, status, payment_status")
     .eq("id", orderId)
     .maybeSingle()
 
@@ -95,12 +95,14 @@ Deno.serve(async (req) => {
   }
 
   if (responseCode === "00") {
-    await serviceClient
-      .from("orders")
-      .update({ status: "paid", payment_status: "paid" })
-      .eq("id", orderId)
-      .eq("payment_status", "pending")
-  } else {
+    // Pay Later order: already 'served' by the time payment clears --
+    // only payment_status changes; complete_order_when_served_and_paid
+    // (migration 0022) takes it to 'completed' from there.
+    const update = order.status === "served" ? { payment_status: "paid" } : { status: "paid", payment_status: "paid" }
+    await serviceClient.from("orders").update(update).eq("id", orderId).eq("payment_status", "pending")
+  } else if (order.status === "pending_payment") {
+    // Only cancel a still-pre-kitchen order -- a served order whose
+    // deferred payment failed just stays served/unpaid for a retry.
     await serviceClient
       .from("orders")
       .update({ status: "cancelled" })
