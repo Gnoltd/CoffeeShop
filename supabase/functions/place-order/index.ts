@@ -235,8 +235,8 @@ Deno.serve(async (req) => {
     }
 
     const locale = VALID_LOCALES.includes(payload.locale) ? payload.locale : "vi"
-    const needsStripeSession = payload.paymentMethod === "stripe" && payload.paymentCollected !== true
-    const needsVnpayUrl = payload.paymentMethod === "vnpay" && payload.paymentCollected !== true
+    const needsStripeSession = payload.paymentMethod === "stripe" && payload.paymentCollected !== true && payload.payAt !== "later"
+    const needsVnpayUrl = payload.paymentMethod === "vnpay" && payload.paymentCollected !== true && payload.payAt !== "later"
 
     if (needsStripeSession) {
       const siteUrl = Deno.env.get("SITE_URL")!
