@@ -194,6 +194,7 @@
     "statusPaid": "Order Confirmed",
     "statusPreparing": "Preparing",
     "statusReady": "Ready",
+    "statusServed": "Served",
     "statusCompleted": "Completed",
     "statusCancelled": "Cancelled",
     "empty": "No orders yet.",

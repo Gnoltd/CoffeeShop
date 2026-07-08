@@ -13,15 +13,20 @@ const STATUS_STYLES: Record<OrderStatus, string> = {
   paid: "bg-blue-100 text-blue-800",
   preparing: "bg-amber-100 text-amber-800",
   ready: "bg-blue-100 text-blue-800",
+  served: "bg-blue-100 text-blue-800",
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-muted text-muted-foreground",
 }
 
-const STATUS_KEYS: Record<OrderStatus, "statusPendingPayment" | "statusPaid" | "statusPreparing" | "statusReady" | "statusCompleted" | "statusCancelled"> = {
+const STATUS_KEYS: Record<
+  OrderStatus,
+  "statusPendingPayment" | "statusPaid" | "statusPreparing" | "statusReady" | "statusServed" | "statusCompleted" | "statusCancelled"
+> = {
   pending_payment: "statusPendingPayment",
   paid: "statusPaid",
   preparing: "statusPreparing",
   ready: "statusReady",
+  served: "statusServed",
   completed: "statusCompleted",
   cancelled: "statusCancelled",
 }
@@ -36,7 +41,8 @@ const FILTERS: { id: Filter; labelKey: "filterAll" | "filterActive" | "filterCom
 
 function matchesFilter(status: OrderStatus, filter: Filter): boolean {
   if (filter === "all") return true
-  if (filter === "active") return status === "pending_payment" || status === "paid" || status === "preparing" || status === "ready"
+  if (filter === "active")
+    return status === "pending_payment" || status === "paid" || status === "preparing" || status === "ready" || status === "served"
   return status === "completed" || status === "cancelled"
 }
 
