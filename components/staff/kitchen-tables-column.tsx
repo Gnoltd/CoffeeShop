@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { Bell, CircleCheck, Sparkles, User, Utensils, Wallet } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -11,6 +12,7 @@ export function KitchenTablesColumn() {
   const t = useTranslations("KitchenDisplay")
   const { tables, setStatus } = useTables()
   const { orders, serveTable, confirmCashPayment, markCashPayment } = useKitchenOrders()
+  const [error, setError] = useState<string | null>(null)
 
   return (
     <section className="flex h-full flex-col overflow-hidden rounded-xl border bg-muted">
@@ -20,6 +22,9 @@ export function KitchenTablesColumn() {
           <span className="rounded bg-white/20 px-2 py-0.5 text-sm">{tables.length}</span>
         </h2>
       </header>
+      {error && (
+        <p className="mx-3 mt-2 shrink-0 rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">{error}</p>
+      )}
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {tables.map((table) => {
           const location = locale === "vi" ? table.locationVi : table.locationEn
@@ -74,7 +79,10 @@ export function KitchenTablesColumn() {
                 {table.status === "cleaning" && (
                   <button
                     type="button"
-                    onClick={() => setStatus(table.id, "available")}
+                    onClick={() => {
+                      setError(null)
+                      setStatus(table.id, "available").catch(() => setError(t("updateError")))
+                    }}
                     className="rounded-lg bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:brightness-110"
                   >
                     {t("cleaningDone")}
@@ -83,7 +91,10 @@ export function KitchenTablesColumn() {
                 {readyOrderIds.length > 0 && (
                   <button
                     type="button"
-                    onClick={() => serveTable(readyOrderIds)}
+                    onClick={() => {
+                      setError(null)
+                      serveTable(readyOrderIds).catch(() => setError(t("updateError")))
+                    }}
                     className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground hover:brightness-110"
                   >
                     <Utensils className="h-3 w-3" />
@@ -93,7 +104,10 @@ export function KitchenTablesColumn() {
                 {awaitingPaymentOrder?.paymentMethod === "cash" && (
                   <button
                     type="button"
-                    onClick={() => confirmCashPayment(awaitingPaymentOrder.id)}
+                    onClick={() => {
+                      setError(null)
+                      confirmCashPayment(awaitingPaymentOrder.id).catch(() => setError(t("updateError")))
+                    }}
                     className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:brightness-110"
                   >
                     {t("confirmCashReceived")}
@@ -102,7 +116,10 @@ export function KitchenTablesColumn() {
                 {awaitingPaymentOrder && awaitingPaymentOrder.paymentMethod === null && (
                   <button
                     type="button"
-                    onClick={() => markCashPayment(awaitingPaymentOrder.id)}
+                    onClick={() => {
+                      setError(null)
+                      markCashPayment(awaitingPaymentOrder.id).catch(() => setError(t("updateError")))
+                    }}
                     className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:brightness-110"
                   >
                     {t("markCash")}

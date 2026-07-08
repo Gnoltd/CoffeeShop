@@ -310,6 +310,7 @@
     "markServed": "Đã Phục Vụ",
     "tableAwaitingPayment": "Chờ Thanh Toán",
     "markCash": "Đánh Dấu Tiền Mặt",
+    "updateError": "Cập nhật thất bại. Vui lòng thử lại.",
     "pickup": "Mang Đi",
     "table": "Bàn {table}",
     "startPreparing": "Bắt Đầu",
