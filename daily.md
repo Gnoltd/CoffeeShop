@@ -1,42 +1,32 @@
-# Next up: live-verify table status, then Admin Dashboard real data
+# Next up: live-verify the Admin Dashboard real data + Excel export
 
 ## Status
 
-Today's live testing surfaced and fixed 5 real bugs in the
-deferred-payment + table-status features, all deployed to `main`:
-1. `sync_table_occupancy` trigger was scoped to `update of status`,
-   missing completions that happen via `payment_status`-only updates
-   (migration `0024`).
-2. Checkout's fake `FALLBACK_TABLE_NUMBER` let Dine-in orders through
-   with no real table — removed; Dine-in now requires a real scan.
-3. `tables` had no RLS UPDATE policy for `staff` role — KDS's Cleaning
-   Done silently did nothing for staff accounts (migration `0025`).
-4. KDS Tables column had no button at all for a table whose order had
-   already left the active list — the status badge itself is now a
-   tap-to-cycle manual override, matching Admin Tables.
-5. The tracking page's Cash confirmation waited on Realtime before
-   showing anything — now shows immediately via local state.
+Deferred payment + table-driven service lifecycle and table status are
+both shipped, live-verified, and working — see CLAUDE.md for the
+structural summary of both features. A handful of real bugs found
+during live testing (trigger column-scope gap, a fake-table checkout
+fallback, an RLS gap blocking staff writes to `tables`, a missing KDS
+manual override, a Realtime UX lag) were all found and fixed the same
+day; no follow-up needed.
 
-**All cleanup confirmed done**: Table 2 and Table 4 are both back to
-`available`. The orphaned test order (`c5b531cf...`, created before the
-Checkout fix, no `table_id`) has been cancelled directly in the DB —
-it was test data with no real table to route any action through.
-Nothing left over from today's debugging.
-
-**Deferred payment is confirmed working live** — user has verified the
-Pay Later flow end-to-end (dine-in, choose method once served, table
-auto-moves to Cleaning). Closed out, no further verification needed
-for that feature.
+Admin Dashboard real data + Excel export is implemented, typechecked,
+built, unit-tested (71/71 passing), and pushed/deployed to
+`https://phadincoffee.vercel.app` — `get_dashboard_stats()` RPC
+(migration `0026`) backs real revenue/orders/loyalty KPIs, a 7-day
+chart, and best sellers, all Realtime on `orders`/`order_items`/
+`loyalty_transactions`. A 5-sheet `.xlsx` export button (`xlsx`/
+SheetJS) was added alongside it. Not yet walked through by hand on the
+live site — see Open below.
 
 ## Open / not started
 
-1. **Live-verify table status** (shipped 2026-07-08, documented in
-   CLAUDE.md) — still never walked through end-to-end on Vercel.
-2. **Admin Dashboard using real, live data** — revenue/orders/loyalty
-   KPIs and the 7-day chart are still fixed mock numbers (documented,
-   not hidden, in CLAUDE.md). The Table Status card on that dashboard
-   is separate and already real — this item is only the remaining mock
-   KPIs/chart.
+1. **Live-verify the Admin Dashboard** — confirm real KPI numbers
+   (cross-check Orders Today against Staff Order History), the 7-day
+   chart's bars/weekday labels, Best Sellers reflecting real orders,
+   a Realtime update after placing a new paid order, and the Excel
+   export (all 5 sheets, correct Vietnamese text, real numeric cells
+   for revenue/quantity columns — not text).
 
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
