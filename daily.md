@@ -1,6 +1,20 @@
-# Next up: resolve the stranded order, then confirm all three fixes live
+# Next up: resolve the stranded order and Table 2, then confirm all fixes live
 
 ## Status
+
+**Fourth live bug found and fixed**: even with admin (never blocked by
+RLS), Table 2's card in KDS showed no button at all. Root cause: the
+KDS Tables column only ever showed action buttons tied to a *matching
+order* (Served/Confirm Cash/Mark Cash) or the old dedicated "Cleaning
+Done" button (only for `cleaning` status) — Table 2 was `occupied` with
+its order already `completed` and dropped out of the active orders
+list, so literally no condition matched and nothing rendered. Fixed by
+making the **status badge itself** a manual override — tapping it now
+cycles Available → Occupied → Cleaning → Available, exactly matching
+Admin Tables' existing control, so KDS always has a way to force a
+table's status regardless of order state. The old standalone "Cleaning
+Done" button is gone (redundant — the badge covers that transition
+too).
 
 **Third live bug found and fixed**: "tap Cleaning Done, nothing
 happens" turned out to be an RLS gap, not a UI bug —
