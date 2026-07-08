@@ -307,6 +307,7 @@
     "guestNotified": "Guest notified staff",
     "markServed": "Served",
     "tableAwaitingPayment": "Awaiting Payment",
+    "markCash": "Mark Cash",
     "pickup": "Pickup",
     "table": "Table {table}",
     "startPreparing": "Start",

@@ -10,7 +10,7 @@ export function KitchenTablesColumn() {
   const locale = useLocale()
   const t = useTranslations("KitchenDisplay")
   const { tables, setStatus } = useTables()
-  const { orders, serveTable, confirmCashPayment } = useKitchenOrders()
+  const { orders, serveTable, confirmCashPayment, markCashPayment } = useKitchenOrders()
 
   return (
     <section className="flex h-full flex-col overflow-hidden rounded-xl border bg-muted">
@@ -97,6 +97,15 @@ export function KitchenTablesColumn() {
                     className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:brightness-110"
                   >
                     {t("confirmCashReceived")}
+                  </button>
+                )}
+                {awaitingPaymentOrder && awaitingPaymentOrder.paymentMethod === null && (
+                  <button
+                    type="button"
+                    onClick={() => markCashPayment(awaitingPaymentOrder.id)}
+                    className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:brightness-110"
+                  >
+                    {t("markCash")}
                   </button>
                 )}
               </div>
