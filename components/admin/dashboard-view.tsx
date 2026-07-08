@@ -4,10 +4,11 @@ import { useTranslations } from "next-intl"
 import { Banknote, ShoppingBag, Gift, TriangleAlert, Coffee, Droplet, Wheat, Candy, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Link } from "@/i18n/navigation"
-import { formatVND } from "@/lib/format"
+import { formatVND, formatWeekdayShort } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { useInventory, type IngredientIcon } from "@/hooks/useInventory"
 import { useTables } from "@/hooks/useTables"
+import { useDashboardStats } from "@/hooks/useDashboardStats"
 
 const INGREDIENT_ICONS: Record<IngredientIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -15,26 +16,6 @@ const INGREDIENT_ICONS: Record<IngredientIcon, typeof Coffee> = {
   wheat: Wheat,
   candy: Candy,
 }
-
-/**
- * No orders/analytics tables yet — revenue/orders/loyalty figures are fixed
- * mock data matching the approved Stitch mockup's example numbers. Becomes
- * a real aggregation query once Supabase's orders/loyalty_transactions
- * exist. Low-stock data below is real, shared state (hooks/useInventory.tsx)
- * — not a separate mock copy.
- */
-const MOCK_REVENUE_TODAY = 5420000
-const MOCK_ORDERS_TODAY = 142
-const MOCK_LOYALTY_ISSUED = 850
-
-const MOCK_REVENUE_BARS = [40, 55, 45, 70, 60, 85, 75] // percent height, Mon-Sun
-const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-
-const MOCK_BEST_SELLERS = [
-  { nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", sold: 248 },
-  { nameVi: "Bánh Mì Que", nameEn: "Crispy Breadsticks", sold: 195 },
-  { nameVi: "Trà Đào Cam Sả", nameEn: "Peach Tea", sold: 162 },
-]
 
 export function DashboardView({ locale }: { locale: string }) {
   const t = useTranslations("Dashboard")
@@ -45,6 +26,8 @@ export function DashboardView({ locale }: { locale: string }) {
   const occupiedCount = tables.filter((tbl) => tbl.status === "occupied").length
   const cleaningCount = tables.filter((tbl) => tbl.status === "cleaning").length
   const needsCleaningAttention = tables.filter((tbl) => tbl.cleaningNotifiedAt !== null).length
+  const { stats, isLoading: isStatsLoading } = useDashboardStats()
+  const maxRevenue = Math.max(...stats.sevenDayRevenue.map((d) => d.revenue), 1)
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
@@ -59,21 +42,27 @@ export function DashboardView({ locale }: { locale: string }) {
             <Banknote className="h-5 w-5" />
           </div>
           <p className="mb-1 text-sm text-muted-foreground">{t("todaysRevenue")}</p>
-          <h3 className="text-xl font-bold text-card-foreground">{formatVND(MOCK_REVENUE_TODAY)}</h3>
+          <h3 className="text-xl font-bold text-card-foreground">
+            {isStatsLoading ? t("loadingStats") : formatVND(stats.todayRevenue)}
+          </h3>
         </div>
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/15 text-secondary">
             <ShoppingBag className="h-5 w-5" />
           </div>
           <p className="mb-1 text-sm text-muted-foreground">{t("ordersToday")}</p>
-          <h3 className="text-xl font-bold text-card-foreground">{MOCK_ORDERS_TODAY}</h3>
+          <h3 className="text-xl font-bold text-card-foreground">
+            {isStatsLoading ? t("loadingStats") : stats.ordersToday}
+          </h3>
         </div>
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent/30 text-accent-foreground">
             <Gift className="h-5 w-5" />
           </div>
           <p className="mb-1 text-sm text-muted-foreground">{t("loyaltyIssued")}</p>
-          <h3 className="text-xl font-bold text-card-foreground">{MOCK_LOYALTY_ISSUED}</h3>
+          <h3 className="text-xl font-bold text-card-foreground">
+            {isStatsLoading ? t("loadingStats") : stats.loyaltyIssuedToday}
+          </h3>
         </div>
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 shadow-sm">
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
@@ -93,20 +82,20 @@ export function DashboardView({ locale }: { locale: string }) {
             </span>
           </div>
           <div className="flex h-48 items-end justify-between gap-2">
-            {MOCK_REVENUE_BARS.map((height, index) => (
+            {stats.sevenDayRevenue.map((day, index) => (
               <div
-                key={index}
+                key={day.date}
                 className={cn(
                   "flex-1 rounded-t-lg transition-colors",
-                  index === MOCK_REVENUE_BARS.length - 1 ? "bg-primary" : "bg-primary/20 hover:bg-primary/40"
+                  index === stats.sevenDayRevenue.length - 1 ? "bg-primary" : "bg-primary/20 hover:bg-primary/40"
                 )}
-                style={{ height: `${height}%` }}
+                style={{ height: `${(day.revenue / maxRevenue) * 100}%` }}
               />
             ))}
           </div>
           <div className="mt-2 flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            {WEEKDAY_LABELS.map((day) => (
-              <span key={day}>{day}</span>
+            {stats.sevenDayRevenue.map((day) => (
+              <span key={day.date}>{formatWeekdayShort(day.date, locale)}</span>
             ))}
           </div>
         </div>
@@ -114,8 +103,8 @@ export function DashboardView({ locale }: { locale: string }) {
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <h4 className="mb-4 font-bold text-card-foreground">{t("bestSellers")}</h4>
           <div className="space-y-3">
-            {MOCK_BEST_SELLERS.map((item) => (
-              <div key={item.nameEn} className="flex items-center gap-3">
+            {stats.bestSellers.map((item, index) => (
+              <div key={`${item.nameEn}-${index}`} className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                   <Coffee className="h-5 w-5" />
                 </div>
@@ -123,7 +112,7 @@ export function DashboardView({ locale }: { locale: string }) {
                   {locale === "vi" ? item.nameVi : item.nameEn}
                 </p>
                 <div className="text-right">
-                  <p className="font-bold text-primary">{item.sold}</p>
+                  <p className="font-bold text-primary">{item.quantitySold}</p>
                   <p className="text-[10px] uppercase text-muted-foreground">{t("sold")}</p>
                 </div>
               </div>

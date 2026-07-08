@@ -405,7 +405,8 @@
     "tableAvailable": "Available",
     "tableOccupied": "Occupied",
     "tableCleaning": "Cleaning",
-    "tablesNeedCleaning": "{count} table(s) need cleaning attention"
+    "tablesNeedCleaning": "{count} table(s) need cleaning attention",
+    "loadingStats": "…"
   },
   "AdminMenu": {
     "title": "Manage Menu",

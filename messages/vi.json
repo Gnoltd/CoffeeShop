@@ -405,7 +405,8 @@
     "tableAvailable": "Trống",
     "tableOccupied": "Đang Dùng",
     "tableCleaning": "Đang Dọn",
-    "tablesNeedCleaning": "{count} bàn cần được dọn dẹp"
+    "tablesNeedCleaning": "{count} bàn cần được dọn dẹp",
+    "loadingStats": "…"
   },
   "AdminMenu": {
     "title": "Quản Lý Thực Đơn",
