@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import {
   advanceOrderStatus,
   confirmCashPayment as confirmCashPaymentQuery,
+  confirmServedCashPayment as confirmServedCashPaymentQuery,
   getKitchenOrders,
   getPendingPaymentOrders,
   type KdsOrderRow,
@@ -17,7 +18,7 @@ export type { KdsOrderRow as KdsOrder }
 export const NEXT_STATUS: Record<KdsStatus, RealOrderStatus | null> = {
   paid: "preparing",
   preparing: "ready",
-  ready: "completed",
+  ready: "served",
 }
 
 function formatDuration(ms: number): string {
@@ -32,6 +33,7 @@ type KitchenOrdersContextValue = {
   pendingPaymentOrders: KdsOrderRow[]
   isLoading: boolean
   advance: (orderId: string) => Promise<void>
+  serveTable: (orderIds: string[]) => Promise<void>
   confirmCashPayment: (orderId: string) => Promise<void>
   completedCount: number
   avgTimeLabel: string
@@ -93,8 +95,23 @@ export function KitchenOrdersProvider({ children }: { children: ReactNode }) {
     await advanceOrderStatus(supabase, orderId, next)
   }
 
+  async function serveTable(orderIds: string[]) {
+    for (const orderId of orderIds) {
+      const order = orders.find((o) => o.id === orderId)
+      if (!order || order.status !== "ready") continue
+      setCompletedCount((count) => count + 1)
+      setCompletedDurations((durations) => [...durations, Date.now() - order.createdAt])
+      await advanceOrderStatus(supabase, orderId, "served")
+    }
+  }
+
   async function confirmCashPayment(orderId: string) {
-    await confirmCashPaymentQuery(supabase, orderId)
+    const order = orders.find((o) => o.id === orderId) ?? pendingPaymentOrders.find((o) => o.id === orderId)
+    if (order?.status === "served") {
+      await confirmServedCashPaymentQuery(supabase, orderId)
+    } else {
+      await confirmCashPaymentQuery(supabase, orderId)
+    }
   }
 
   const avgTimeLabel =
@@ -104,7 +121,7 @@ export function KitchenOrdersProvider({ children }: { children: ReactNode }) {
 
   return (
     <KitchenOrdersContext.Provider
-      value={{ orders, pendingPaymentOrders, isLoading, advance, confirmCashPayment, completedCount, avgTimeLabel }}
+      value={{ orders, pendingPaymentOrders, isLoading, advance, serveTable, confirmCashPayment, completedCount, avgTimeLabel }}
     >
       {children}
     </KitchenOrdersContext.Provider>
