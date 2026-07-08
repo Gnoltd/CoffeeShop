@@ -9,10 +9,11 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (21
+role-gated), full customer/staff/admin UI, live Supabase DB (25
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
-Staff accounts, 3-state table occupancy/cleaning, and all three payment
-methods (Cash/Stripe/VNPay) work end-to-end. Deployed at
+Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
+Now/Pay Later) payment with method-chosen-at-serving-time, and all
+three payment methods (Cash/Stripe/VNPay) work end-to-end. Deployed at
 **https://phadincoffee.vercel.app**, auto-deploys on push to `main`. See
 `daily.md` for what's currently open — it's kept short and recap-free by
 design, so check it before this file for "what's left."
@@ -150,6 +151,26 @@ Reusable facts that apply anywhere in the codebase, not tied to one feature.
 - **Realtime**: subscribe unfiltered to `postgres_changes` and refetch,
   rather than using a column `filter` — a filter doesn't reliably
   combine with RLS-gated Realtime (confirmed directly, more than once).
+- **A Postgres `AFTER UPDATE OF column_name` trigger only fires when
+  the client's own UPDATE statement names that column** — not when
+  another `BEFORE` trigger changes it as a side effect. Was a real bug:
+  `sync_table_occupancy` (scoped to `OF status`) never fired when a
+  deferred-payment order completed via a `payment_status`-only update
+  (the `complete_order_when_served_and_paid` trigger flipped `status`
+  internally, invisibly to the column scope) — a table could finish an
+  order and never get freed. Fixed (migration `0024`) by dropping the
+  column scope; the function's own body already gates its logic
+  correctly, matching the unscoped pattern `handle_order_paid` and
+  `complete_order_when_served_and_paid` already used.
+- **Every RLS policy needs checking against all roles that can reach
+  the UI surface calling it**, not just the role that happens to be
+  logged in during a given test pass. `tables_admin_all` only granted
+  `manager`/`admin` — but KDS (staff-reachable) exposes a table-status
+  action too. A plain `staff` account got silently rejected until
+  `tables_update_staff` (migration `0025`) was added. Pair this with
+  always attaching `.catch()` to a Supabase write in the UI — an
+  RLS denial with no error handling looks identical to "button does
+  nothing," which is far harder to diagnose than a shown error message.
 - **Verify against the deployed Vercel URL**
   (`https://phadincoffee.vercel.app`), not `npm run dev` — this
   project's explicit convention. Local `build`/`tsc`/`test` are fine for
@@ -303,6 +324,47 @@ you need to find your way around; check the dated docs for full detail.
 - Design: `docs/superpowers/specs/2026-07-08-table-status-design.md`;
   plan: `docs/superpowers/plans/2026-07-08-table-status.md`.
 
+### Deferred payment + service lifecycle (all real, shipped 2026-07-08)
+- New `served` order status (between `ready` and `completed`) — set
+  from the table's own card in the KDS Tables column for dine-in (not
+  the order card), or the existing Ready-column tap for pickup (no
+  table to attach a Served action to).
+- Checkout offers **Pay Now / Pay Later**. Pay Now is the unchanged
+  existing flow (payment method picked at checkout, before the kitchen
+  ever sees the order). Pay Later shows **no payment method picker at
+  checkout at all** — the order reaches the kitchen immediately
+  (bypasses `pending_payment`), and both the method and the payment
+  itself are chosen only once the order is `served`:
+  - **Customer** picks Cash/Card/VNPay on their own tracking page (a
+    3-way picker) — Cash just records the choice for staff to collect
+    in person; Card/VNPay records it and redirects to that gateway
+    immediately.
+  - **Staff** can also mark Cash directly from the table's card in KDS
+    ("Mark Cash") — Stripe/VNPay stay customer-only, since staff can't
+    complete a hosted checkout on the guest's behalf.
+  - `orders.payment_method` is nullable (migration `0023`);
+    `place_order` only requires it when `payAt = 'now'`.
+- **Auto-completion**: `complete_order_when_served_and_paid` trigger
+  (migration `0022`) promotes an order to `completed` the instant it's
+  both `served` and `payment_status = 'paid'`, regardless of which
+  becomes true first — a Pay Now order satisfies payment before
+  serving, so tapping Served completes it immediately; a Pay Later
+  order satisfies serving first and waits on payment.
+- New `pay-order` Edge Function — customer-triggered deferred
+  Stripe/VNPay checkout-session creation, reusing `place-order`'s
+  session-building logic but invoked later against an existing order.
+  `stripe-webhook`/`vnpay-ipn`/`vnpay-return` were all corrected to
+  branch on the order's *current* status, so a served-but-unpaid order
+  is never wrongly regressed back to `paid` or cancelled by a stale
+  payment attempt.
+- Checkout now **requires a real scanned table for Dine-in** — the
+  toggle is disabled until `activeTable` is set (no more fake
+  fallback table number sending `table_id: null`, which used to make
+  an order invisible to the entire table-driven KDS model).
+- Design: `docs/superpowers/specs/2026-07-08-deferred-payment-service-lifecycle-design.md`
+  (see its "Revision" section for the method-also-deferred correction);
+  plan: `docs/superpowers/plans/2026-07-08-deferred-payment-service-lifecycle.md`.
+
 ### Payments — Cash, Stripe, VNPay (all real, all end-to-end verified live)
 - **Cash**: self-checkout starts `pending_payment`; staff confirms via
   `components/staff/kitchen-pending-payment.tsx`'s "Confirm Cash
@@ -329,7 +391,7 @@ you need to find your way around; check the dated docs for full detail.
 
 ## Database (`supabase/migrations/`)
 
-21 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+25 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -345,6 +407,9 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0019` | `get_order_history()` (Staff Order History) |
 | `0020` | `menu_items.has_size_options` (per-item size-picker toggle) |
 | `0021` | `tables.status` 3-state enum + occupancy/cleaning trigger + `notify_table_cleaning()` guest RPC |
+| `0022`–`0023` | `served` order status + auto-completion trigger + `payAt`/nullable `payment_method` (deferred payment) |
+| `0024` | fixed `sync_table_occupancy`'s trigger column-scope gap (see gotcha below) |
+| `0025` | `tables_update_staff` RLS policy (staff-role gap, see gotcha below) |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
@@ -383,16 +448,12 @@ auto-deploys, no manual `vercel deploy` needed).
 ## Building the rest
 
 All Stitch-designed pages are ported; all four original "make all data
-real-time" sub-projects (Inventory, Tables, Orders, Staff accounts) and
-all three payment methods (Cash, Stripe, VNPay) are shipped and
-verified live, plus table occupancy/cleaning (above, shipped
-2026-07-08). A **deferred payment + table-driven service lifecycle**
-feature (Pay Now/Pay Later checkout choice across all 3 methods and
-both order types, a new `served` order status, an auto-completion
-trigger) is fully spec'd and planned but **not yet built** — spec:
-`docs/superpowers/specs/2026-07-08-deferred-payment-service-lifecycle-design.md`,
-plan: `docs/superpowers/plans/2026-07-08-deferred-payment-service-lifecycle.md`.
-Check `daily.md` for current status. When adding anything new:
+real-time" sub-projects (Inventory, Tables, Orders, Staff accounts),
+all three payment methods (Cash, Stripe, VNPay), table occupancy/
+cleaning, and deferred payment + service lifecycle (above) are shipped
+and verified live. Only the Admin Dashboard's revenue/orders/loyalty
+KPIs remain mock — check `daily.md` for current status. When adding
+anything new:
 shared brand tokens, `useTranslations`/`getTranslations` with both
 message files updated together, Base UI's `render` prop for polymorphic
 Buttons, "disabled + tooltip" for unbacked actions, DI'd query-layer
