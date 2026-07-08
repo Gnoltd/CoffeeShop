@@ -62,7 +62,14 @@ Deno.serve(async (req) => {
   }
 
   const serviceClient = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!)
-  await serviceClient.rpc("cancel_pending_order", { p_order_id: orderId })
+  const { data: wasCancelled } = await serviceClient.rpc("cancel_pending_order", { p_order_id: orderId })
 
-  return Response.redirect(`${siteUrl}/${locale}/checkout?paymentFailed=1`, 302)
+  // cancel_pending_order only ever cancels a still-pre-kitchen order and
+  // returns false as a no-op otherwise (e.g. a served Pay Later order
+  // whose deferred payment attempt just failed) -- send that case back
+  // to its own tracking page instead of an empty Checkout.
+  if (wasCancelled) {
+    return Response.redirect(`${siteUrl}/${locale}/checkout?paymentFailed=1`, 302)
+  }
+  return Response.redirect(`${siteUrl}/${locale}/orders/${orderId}?paymentFailed=1`, 302)
 })
