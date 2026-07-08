@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { motion } from "framer-motion"
 import { Coffee, CupSoda, Cookie, Milk, Check } from "lucide-react"
 import { useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
@@ -10,6 +11,8 @@ import { formatVND } from "@/lib/format"
 import { useCart, type CartModifier } from "@/hooks/useCart"
 import { StarRating } from "@/components/customer/star-rating"
 import { MOCK_REVIEWS, MOCK_RATING, MOCK_REVIEW_COUNT } from "@/lib/mock-data/reviews"
+import { SegmentedControl } from "@/components/motion/segmented-control"
+import { PressFeedback, TAP_SCALE, TAP_TRANSITION } from "@/components/motion/press-feedback"
 import type { MenuItem, MenuIcon } from "@/lib/supabase/menu-data"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
@@ -78,14 +81,17 @@ export function ProductDetail({ item }: { item: MenuItem }) {
 
   return (
     <div className="mx-auto w-full max-w-2xl pb-28">
-      <div className="flex h-64 w-full items-center justify-center bg-muted text-muted-foreground sm:h-80">
+      <motion.div
+        layoutId={`product-image-${item.id}`}
+        className="flex h-64 w-full items-center justify-center bg-muted text-muted-foreground sm:h-80"
+      >
         {item.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.imageUrl} alt={name} className="h-full w-full object-cover" />
         ) : (
           <Icon className="h-20 w-20" />
         )}
-      </div>
+      </motion.div>
 
       <div className="px-4 pt-4 sm:px-6">
         <div className="flex items-start justify-between gap-3">
@@ -107,23 +113,13 @@ export function ProductDetail({ item }: { item: MenuItem }) {
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {t("size")}
             </span>
-            <div className="flex gap-2">
-              {item.sizes.map((size) => (
-                <button
-                  key={size.id}
-                  type="button"
-                  onClick={() => setSelectedSizeId(size.id)}
-                  className={cn(
-                    "flex-1 rounded-lg border-2 py-2 text-sm font-semibold transition-colors",
-                    selectedSizeId === size.id
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-card-foreground hover:border-primary/50"
-                  )}
-                >
-                  {size.name}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              variant="tabs"
+              layoutId="product-size-pill"
+              value={selectedSizeId ?? ""}
+              onChange={setSelectedSizeId}
+              options={item.sizes.map((size) => ({ value: size.id, label: size.name }))}
+            />
           </section>
         )}
 
@@ -136,7 +132,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
               {group.options.map((option) => {
                 const selected = selectedModifiers[group.id] === option.id
                 return (
-                  <button
+                  <PressFeedback
                     key={option.id}
                     type="button"
                     onClick={() =>
@@ -158,7 +154,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                   >
                     <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
                     {selected && <Check className="h-4 w-4 text-primary" />}
-                  </button>
+                  </PressFeedback>
                 )
               })}
             </div>
@@ -216,16 +212,23 @@ export function ProductDetail({ item }: { item: MenuItem }) {
         </section>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t bg-card px-6 py-4 shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.1)]">
+      <motion.div
+        initial={{ y: 80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t bg-card px-6 py-4 shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.1)]"
+      >
         <span className="text-xl font-bold text-primary">{formatVND(price)}</span>
-        <Button
-          onClick={handleAddToCart}
-          disabled={!item.isAvailable}
-          className="h-12 gap-2 rounded-xl px-8 text-base font-bold"
-        >
-          {tProduct("addToCart")}
-        </Button>
-      </div>
+        <motion.div whileTap={item.isAvailable ? TAP_SCALE : undefined} transition={TAP_TRANSITION}>
+          <Button
+            onClick={handleAddToCart}
+            disabled={!item.isAvailable}
+            className="h-12 gap-2 rounded-xl px-8 text-base font-bold"
+          >
+            {tProduct("addToCart")}
+          </Button>
+        </motion.div>
+      </motion.div>
     </div>
   )
 }
