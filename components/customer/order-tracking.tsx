@@ -13,6 +13,8 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { payExistingOrder, type RealPaymentMethod } from "@/lib/supabase/orders-data"
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
+import { StepProgress } from "@/components/motion/step-progress"
+import { PressFeedback } from "@/components/motion/press-feedback"
 
 const MOCK_SHOP_PHONE = "+84281234567"
 const GUEST_POLL_INTERVAL_MS = 10000
@@ -157,7 +159,6 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
   }
 
   const currentStep = STATUS_STEP[order.status]
-  const progressPercent = currentStep < 0 ? 0 : (currentStep / (STEPS.length - 1)) * 100
   const paymentMethod = order.paymentMethod
 
   return (
@@ -179,37 +180,10 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
       </section>
 
       <section className="mt-8 px-2">
-        <div className="relative flex items-start justify-between">
-          <div className="absolute top-5 left-0 h-1 w-full -z-0 bg-border" />
-          <div
-            className="absolute top-5 left-0 -z-0 h-1 bg-primary transition-all duration-1000"
-            style={{ width: `${progressPercent}%` }}
-          />
-          {STEPS.map((step, index) => {
-            const Icon = step.icon
-            const isDone = index <= currentStep
-            return (
-              <div key={step.key} className="z-10 flex w-1/4 flex-col items-center gap-2">
-                <div
-                  className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-full shadow-sm",
-                    isDone ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                </div>
-                <p
-                  className={cn(
-                    "text-center text-[10px] font-bold leading-tight",
-                    isDone ? "text-primary" : "text-muted-foreground"
-                  )}
-                >
-                  {t(step.key)}
-                </p>
-              </div>
-            )
-          })}
-        </div>
+        <StepProgress
+          currentStep={currentStep}
+          steps={STEPS.map((step) => ({ key: step.key, label: t(step.key), icon: step.icon }))}
+        />
       </section>
 
       {order.status === "served" && order.paymentStatus === "pending" && (
@@ -219,7 +193,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
             <>
               <p className="mb-3 text-sm font-medium text-card-foreground">{t("choosePaymentMethodPrompt")}</p>
               <div className="grid grid-cols-3 gap-2">
-                <button
+                <PressFeedback
                   type="button"
                   disabled={isPaying}
                   onClick={() => handlePayNow("cash")}
@@ -227,8 +201,8 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
                 >
                   <Banknote className="h-7 w-7" />
                   <span className="text-xs font-bold">{t("payMethodCash")}</span>
-                </button>
-                <button
+                </PressFeedback>
+                <PressFeedback
                   type="button"
                   disabled={isPaying}
                   onClick={() => handlePayNow("stripe")}
@@ -236,8 +210,8 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
                 >
                   <CreditCard className="h-7 w-7" />
                   <span className="text-xs font-bold">{t("payMethodCard")}</span>
-                </button>
-                <button
+                </PressFeedback>
+                <PressFeedback
                   type="button"
                   disabled={isPaying}
                   onClick={() => handlePayNow("vnpay")}
@@ -245,7 +219,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
                 >
                   <QrCode className="h-7 w-7" />
                   <span className="text-xs font-bold">{t("payMethodVNPay")}</span>
-                </button>
+                </PressFeedback>
               </div>
             </>
           ) : paymentMethod === "cash" || cashConfirmed ? (
