@@ -7,6 +7,8 @@ import {
   getKitchenOrders,
   advanceOrderStatus,
   confirmCashPayment,
+  confirmServedCashPayment,
+  payExistingOrder,
   cancelPendingOrder,
   getOrderHistory,
   getOrderHistoryDetail,
@@ -20,6 +22,8 @@ describe("getOrderForTracking", () => {
       orderType: "dine_in",
       table: "3",
       status: "preparing",
+      paymentStatus: "paid",
+      paymentMethod: "cash",
       subtotal: 50000,
       discount: 0,
       total: 50000,
@@ -87,6 +91,9 @@ describe("getMyOrders", () => {
       subtotal: 29000,
       discount_amount: 0,
       total: 29000,
+      table_id: "tbl-2",
+      payment_status: "paid",
+      payment_method: "cash",
       tables: { table_number: "2" },
       order_items: [{ quantity: 1, unit_price: 29000, note: null, menu_items: { name_vi: "a", name_en: "b" } }],
     }
@@ -101,14 +108,14 @@ describe("getMyOrders", () => {
 })
 
 describe("getKitchenOrders", () => {
-  it("filters to paid/preparing/ready statuses", async () => {
+  it("filters to paid/preparing/ready/served statuses", async () => {
     const inSpy = vi.fn(() => ({ order: () => Promise.resolve({ data: [], error: null }) }))
     const supabase = {
       from: () => ({ select: () => ({ in: inSpy }) }),
     } as unknown as SupabaseClient
 
     await getKitchenOrders(supabase)
-    expect(inSpy).toHaveBeenCalledWith("status", ["paid", "preparing", "ready"])
+    expect(inSpy).toHaveBeenCalledWith("status", ["paid", "preparing", "ready", "served"])
   })
 })
 
@@ -234,6 +241,7 @@ describe("getOrderHistoryDetail", () => {
       subtotal: 60000,
       discount_amount: 0,
       total: 60000,
+      table_id: null,
       payment_method: "cash",
       payment_status: "paid",
       tables: null,
@@ -261,5 +269,30 @@ describe("getOrderHistoryDetail", () => {
 
     const result = await getOrderHistoryDetail(supabase, "unknown-id")
     expect(result).toBeNull()
+  })
+})
+
+describe("confirmServedCashPayment", () => {
+  it("updates only payment_status, not status", async () => {
+    const eqSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const updateSpy = vi.fn(() => ({ eq: eqSpy }))
+    const supabase = { from: () => ({ update: updateSpy }) } as unknown as SupabaseClient
+
+    await confirmServedCashPayment(supabase, "order-1")
+
+    expect(updateSpy).toHaveBeenCalledWith({ payment_status: "paid" })
+    expect(eqSpy).toHaveBeenCalledWith("id", "order-1")
+  })
+})
+
+describe("payExistingOrder", () => {
+  it("invokes the pay-order function with orderId and locale", async () => {
+    const invokeSpy = vi.fn(() => Promise.resolve({ data: { checkoutUrl: "https://example.com/pay" }, error: null }))
+    const supabase = { functions: { invoke: invokeSpy } } as unknown as SupabaseClient
+
+    const result = await payExistingOrder(supabase, "order-1", "vi")
+
+    expect(invokeSpy).toHaveBeenCalledWith("pay-order", { body: { orderId: "order-1", locale: "vi" } })
+    expect(result.checkoutUrl).toBe("https://example.com/pay")
   })
 })

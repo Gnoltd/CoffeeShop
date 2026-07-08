@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
-export type RealOrderStatus = "pending_payment" | "paid" | "preparing" | "ready" | "completed" | "cancelled"
+export type RealOrderStatus = "pending_payment" | "paid" | "preparing" | "ready" | "served" | "completed" | "cancelled"
 export type RealOrderType = "pickup" | "dine_in"
 export type OrderType = "pickup" | "dine-in"
 
@@ -16,6 +16,8 @@ export type OrderForTracking = {
   discount: number
   total: number
   status: RealOrderStatus
+  paymentStatus: string
+  paymentMethod: "stripe" | "cash" | "vnpay"
 }
 
 export type PlaceOrderItemInput = {
@@ -53,6 +55,8 @@ type TrackingJson = {
   orderType: RealOrderType
   table: string | null
   status: RealOrderStatus
+  paymentStatus: string
+  paymentMethod: "stripe" | "cash" | "vnpay"
   subtotal: number
   discount: number
   total: number
@@ -70,6 +74,8 @@ function mapTrackingJson(json: TrackingJson): OrderForTracking {
     discount: json.discount,
     total: json.total,
     status: json.status,
+    paymentStatus: json.paymentStatus,
+    paymentMethod: json.paymentMethod,
   }
 }
 
@@ -113,12 +119,16 @@ type OrderRow = {
   subtotal: number
   discount_amount: number
   total: number
+  table_id: string | null
+  payment_status: string
+  payment_method: "stripe" | "cash" | "vnpay"
   tables: { table_number: string } | null
   order_items: { menu_items: { name_vi: string; name_en: string }; quantity: number; unit_price: number; note: string | null }[]
 }
 
 const ORDER_SELECT = `
   id, created_at, order_type, status, subtotal, discount_amount, total,
+  table_id, payment_status, payment_method,
   tables ( table_number ),
   order_items ( quantity, unit_price, note, menu_items ( name_vi, name_en ) )
 `
@@ -140,6 +150,8 @@ function mapOrderRow(row: OrderRow): OrderForTracking {
     discount: row.discount_amount,
     total: row.total,
     status: row.status,
+    paymentStatus: row.payment_status,
+    paymentMethod: row.payment_method,
   }
 }
 
@@ -154,7 +166,10 @@ export type KdsOrderRow = {
   id: string
   orderType: OrderType
   table?: string
+  tableId?: string
   status: RealOrderStatus
+  paymentStatus: string
+  paymentMethod: "stripe" | "cash" | "vnpay"
   createdAt: number
   items: KdsOrderItemRow[]
 }
@@ -164,7 +179,10 @@ function mapKdsRow(row: OrderRow): KdsOrderRow {
     id: row.id,
     orderType: fromRealOrderType(row.order_type),
     table: row.tables?.table_number,
+    tableId: row.table_id ?? undefined,
     status: row.status,
+    paymentStatus: row.payment_status,
+    paymentMethod: row.payment_method,
     createdAt: new Date(row.created_at).getTime(),
     items: row.order_items.map((oi) => ({
       nameVi: oi.menu_items.name_vi,
@@ -179,7 +197,7 @@ export async function getKitchenOrders(supabase: SupabaseClient): Promise<KdsOrd
   const { data, error } = await supabase
     .from("orders")
     .select(ORDER_SELECT)
-    .in("status", ["paid", "preparing", "ready"])
+    .in("status", ["paid", "preparing", "ready", "served"])
     .order("created_at")
   if (error) throw error
   return ((data ?? []) as unknown as OrderRow[]).map(mapKdsRow)
@@ -189,8 +207,9 @@ export async function getPendingPaymentOrders(supabase: SupabaseClient): Promise
   const { data, error } = await supabase
     .from("orders")
     .select(ORDER_SELECT)
-    .eq("status", "pending_payment")
     .eq("payment_method", "cash")
+    .eq("payment_status", "pending")
+    .or("status.eq.pending_payment,and(status.eq.served,order_type.eq.pickup)")
     .order("created_at")
   if (error) throw error
   return ((data ?? []) as unknown as OrderRow[]).map(mapKdsRow)
@@ -208,6 +227,21 @@ export async function advanceOrderStatus(
 export async function confirmCashPayment(supabase: SupabaseClient, orderId: string): Promise<void> {
   const { error } = await supabase.from("orders").update({ status: "paid", payment_status: "paid" }).eq("id", orderId)
   if (error) throw error
+}
+
+export async function confirmServedCashPayment(supabase: SupabaseClient, orderId: string): Promise<void> {
+  const { error } = await supabase.from("orders").update({ payment_status: "paid" }).eq("id", orderId)
+  if (error) throw error
+}
+
+export async function payExistingOrder(
+  supabase: SupabaseClient,
+  orderId: string,
+  locale: string
+): Promise<{ checkoutUrl: string }> {
+  const { data, error } = await supabase.functions.invoke("pay-order", { body: { orderId, locale } })
+  if (error || data?.error) throw error ?? new Error(data.error)
+  return data as { checkoutUrl: string }
 }
 
 export async function cancelPendingOrder(supabase: SupabaseClient, orderId: string): Promise<boolean> {
