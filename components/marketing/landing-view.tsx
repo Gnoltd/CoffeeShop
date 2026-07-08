@@ -2,9 +2,10 @@
 
 import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { Coffee, CupSoda, Cookie, Milk, QrCode, Sparkles, ArrowRight } from "lucide-react"
+import { Coffee, CupSoda, Cookie, Milk, Sparkles, ArrowRight } from "lucide-react"
 import { Link } from "@/i18n/navigation"
-import { Button } from "@/components/ui/button"
+import { LandingNav } from "@/components/marketing/landing-nav"
+import { SpotlightHero } from "@/components/marketing/spotlight-hero"
 import { formatVND } from "@/lib/format"
 import { QrScannerOverlay } from "@/components/customer/qr-scanner-overlay"
 import type { MenuItem, MenuIcon } from "@/lib/supabase/menu-data"
@@ -29,32 +30,13 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
   const [isScannerOpen, setIsScannerOpen] = useState(false)
 
   return (
-    <div className="mx-auto w-full max-w-2xl">
-      <section className="relative flex h-[50vh] min-h-[360px] flex-col justify-end overflow-hidden bg-gradient-to-br from-secondary to-foreground">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        <div className="relative z-10 space-y-4 p-6 pb-8">
-          <h1 className="text-2xl font-bold leading-tight text-white">{t("heroHeadline")}</h1>
-          <p className="italic text-white/80">{t("heroSubheadline")}</p>
-          <div className="flex flex-col gap-3">
-            <Button
-              className="h-14 rounded-xl text-base font-bold"
-              render={<Link href="/menu" />}
-              nativeButton={false}
-            >
-              {t("orderNow")}
-            </Button>
-            <Button
-              variant="outline"
-              className="h-14 rounded-xl border-2 border-white/70 bg-transparent text-base font-bold text-white hover:bg-white/10"
-              onClick={() => setIsScannerOpen(true)}
-            >
-              <QrCode className="h-5 w-5" />
-              {t("scanQr")}
-            </Button>
-          </div>
-        </div>
-      </section>
+    <div className="w-full">
+      <div className="relative">
+        <LandingNav />
+        <SpotlightHero onScanQr={() => setIsScannerOpen(true)} />
+      </div>
 
+      <div className="mx-auto w-full max-w-2xl">
       <section className="px-4 pt-6">
         <div className="relative overflow-hidden rounded-xl border bg-muted p-5 shadow-sm">
           <div className="mb-2 flex items-center gap-2 text-primary">
@@ -116,6 +98,7 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
           )
         })}
       </section>
+      </div>
 
       {isScannerOpen && <QrScannerOverlay onClose={() => setIsScannerOpen(false)} />}
     </div>
