@@ -1,4 +1,4 @@
-# Next up: close out the one orphaned test order, then finish live verification
+# Next up: finish live verification of deferred payment + table status
 
 ## Status
 
@@ -17,17 +17,11 @@ deferred-payment + table-status features, all deployed to `main`:
 5. The tracking page's Cash confirmation waited on Realtime before
    showing anything — now shows immediately via local state.
 
-**Confirmed via direct DB check just now**: Table 2 and Table 4 are
-both back to `available` — cleared correctly. One loose end remains:
-
-**Orphaned order `c5b531cf-2661-4bac-9217-511de8b5d3f4`** — created
-before the Checkout fix, so it has `table_id: null`. It's now
-`status: served`, `payment_status: pending`, no payment method chosen.
-No table card exists for it (no `table_id`), so there's no "Mark Cash"
-surface. To close it out: either open its tracking page directly
-(`/orders/c5b531cf-2661-4bac-9217-511de8b5d3f4`) and pick a payment
-method there, or ask to have it cancelled/cleaned up directly in the
-DB since it's really a test-data artifact, not a real order.
+**All cleanup confirmed done**: Table 2 and Table 4 are both back to
+`available`. The orphaned test order (`c5b531cf...`, created before the
+Checkout fix, no `table_id`) has been cancelled directly in the DB —
+it was test data with no real table to route any action through.
+Nothing left over from today's debugging.
 
 ## Open / not started
 
