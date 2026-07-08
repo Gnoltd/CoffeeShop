@@ -2,6 +2,17 @@
 
 ## Status
 
+**Fifth live bug found and fixed, and good news**: Table 4's order
+(`b94263b1...`) was checked directly in the DB — it's `completed`,
+`paid`, `cash`, and the table is back to `available`. **The whole
+deferred-payment + choose-method-at-the-end flow already works
+end-to-end for real.** The confusion was a pure UX gap: after tapping
+"Cash" on the tracking page, the 3-way picker kept showing unchanged
+(looked like nothing happened) until Realtime — or guest polling, up
+to 10s — pushed the DB change back into the page. Fixed with an
+optimistic local flag so "staff will collect payment shortly" appears
+immediately on tap, regardless of Realtime timing.
+
 **Fourth live bug found and fixed**: even with admin (never blocked by
 RLS), Table 2's card in KDS showed no button at all. Root cause: the
 KDS Tables column only ever showed action buttons tied to a *matching
