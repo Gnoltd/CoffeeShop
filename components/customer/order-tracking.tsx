@@ -4,13 +4,14 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import {
   CookingPot, Check, PackageCheck, CircleCheckBig, Clock, TableIcon, ShoppingBag, Store, Phone, Utensils,
+  CreditCard, Banknote, QrCode,
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { formatOrderId, formatVND } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { payExistingOrder } from "@/lib/supabase/orders-data"
+import { payExistingOrder, type RealPaymentMethod } from "@/lib/supabase/orders-data"
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
 
 const MOCK_SHOP_PHONE = "+84281234567"
@@ -62,11 +63,15 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  async function handlePayNow() {
+  async function handlePayNow(method: RealPaymentMethod) {
     setIsPaying(true)
     try {
-      const { checkoutUrl } = await payExistingOrder(supabase, orderId, locale)
-      window.location.href = checkoutUrl
+      const { checkoutUrl } = await payExistingOrder(supabase, orderId, locale, method)
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl
+        return
+      }
+      setIsPaying(false)
     } catch {
       setPaymentNotice(true)
       setIsPaying(false)
@@ -148,6 +153,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
 
   const currentStep = STATUS_STEP[order.status]
   const progressPercent = currentStep < 0 ? 0 : (currentStep / (STEPS.length - 1)) * 100
+  const paymentMethod = order.paymentMethod
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-4 sm:px-6">
@@ -201,17 +207,54 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
         </div>
       </section>
 
-      {order.status === "served" &&
-        order.paymentStatus === "pending" &&
-        (order.paymentMethod === "stripe" || order.paymentMethod === "vnpay") && (
-          <section className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
-            <p className="mb-3 text-sm font-medium text-card-foreground">{t("payNowPrompt")}</p>
-            {paymentNotice && <p className="mb-3 text-sm text-destructive">{t("paymentRetryNotice")}</p>}
-            <Button className="h-11 w-full rounded-xl" disabled={isPaying} onClick={handlePayNow}>
-              {isPaying ? t("payNowLoading") : t("payNowButton")}
-            </Button>
-          </section>
-        )}
+      {order.status === "served" && order.paymentStatus === "pending" && (
+        <section className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+          {paymentNotice && <p className="mb-3 text-sm text-destructive">{t("paymentRetryNotice")}</p>}
+          {paymentMethod === null ? (
+            <>
+              <p className="mb-3 text-sm font-medium text-card-foreground">{t("choosePaymentMethodPrompt")}</p>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  disabled={isPaying}
+                  onClick={() => handlePayNow("cash")}
+                  className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                >
+                  <Banknote className="h-7 w-7" />
+                  <span className="text-xs font-bold">{t("payMethodCash")}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isPaying}
+                  onClick={() => handlePayNow("stripe")}
+                  className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                >
+                  <CreditCard className="h-7 w-7" />
+                  <span className="text-xs font-bold">{t("payMethodCard")}</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={isPaying}
+                  onClick={() => handlePayNow("vnpay")}
+                  className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                >
+                  <QrCode className="h-7 w-7" />
+                  <span className="text-xs font-bold">{t("payMethodVNPay")}</span>
+                </button>
+              </div>
+            </>
+          ) : paymentMethod === "cash" ? (
+            <p className="text-sm text-muted-foreground">{t("cashAwaitingStaffNote")}</p>
+          ) : (
+            <>
+              <p className="mb-3 text-sm font-medium text-card-foreground">{t("payNowPrompt")}</p>
+              <Button className="h-11 w-full rounded-xl" disabled={isPaying} onClick={() => handlePayNow(paymentMethod)}>
+                {isPaying ? t("payNowLoading") : t("payNowButton")}
+              </Button>
+            </>
+          )}
+        </section>
+      )}
 
       <section className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm">

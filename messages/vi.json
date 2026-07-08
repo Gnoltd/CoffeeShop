@@ -232,7 +232,12 @@
     "payNowPrompt": "Đơn hàng của bạn đã được phục vụ. Hoàn tất thanh toán khi bạn sẵn sàng.",
     "payNowButton": "Thanh Toán Ngay",
     "payNowLoading": "Đang chuyển đến trang thanh toán…",
-    "paymentRetryNotice": "Thanh toán không thành công — vui lòng thử lại."
+    "paymentRetryNotice": "Thanh toán không thành công — vui lòng thử lại.",
+    "choosePaymentMethodPrompt": "Đơn hàng của bạn đã được phục vụ. Bạn muốn thanh toán bằng cách nào?",
+    "payMethodCash": "Tiền Mặt",
+    "payMethodCard": "Thẻ",
+    "payMethodVNPay": "VNPay",
+    "cashAwaitingStaffNote": "Bạn đã chọn Tiền Mặt — nhân viên sẽ đến thu tiền trong giây lát."
   },
   "TableLanding": {
     "orderingAt": "Bạn đang đặt món tại",

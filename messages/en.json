@@ -232,7 +232,12 @@
     "payNowPrompt": "Your order has been served. Complete payment whenever you're ready.",
     "payNowButton": "Pay Now",
     "payNowLoading": "Redirecting to payment…",
-    "paymentRetryNotice": "Payment didn't go through — please try again."
+    "paymentRetryNotice": "Payment didn't go through — please try again.",
+    "choosePaymentMethodPrompt": "Your order has been served. How would you like to pay?",
+    "payMethodCash": "Cash",
+    "payMethodCard": "Card",
+    "payMethodVNPay": "VNPay",
+    "cashAwaitingStaffNote": "You chose Cash — a staff member will collect payment shortly."
   },
   "TableLanding": {
     "orderingAt": "You're ordering at",
