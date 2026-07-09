@@ -1,9 +1,11 @@
 "use client"
 
+import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { Play, CheckCircle2, PackageCheck, Utensils, ShoppingBag, ListTodo, RefreshCw, CheckCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatOrderId } from "@/lib/format"
+import { SegmentedControl } from "@/components/motion/segmented-control"
 import { KitchenTablesColumn } from "@/components/staff/kitchen-tables-column"
 import type { KdsStatus, KdsOrder } from "@/hooks/useKitchenOrders"
 
@@ -18,6 +20,8 @@ const COLUMNS: {
   { status: "preparing", headerClass: "bg-amber-600", labelKey: "columnPreparing", icon: RefreshCw, iconClass: "animate-spin [animation-duration:3s]" },
   { status: "ready", headerClass: "bg-green-600", labelKey: "columnReady", icon: CheckCheck },
 ]
+
+type BoardColumnKey = "paid" | "preparing" | "ready" | "tables"
 
 export function formatElapsed(createdAt: number, now: number): string {
   const totalSeconds = Math.max(0, Math.floor((now - createdAt) / 1000))
@@ -37,16 +41,34 @@ export function KitchenBoard({
 }) {
   const locale = useLocale()
   const t = useTranslations("KitchenDisplay")
+  const [activeColumn, setActiveColumn] = useState<BoardColumnKey>("paid")
 
   return (
-    <div className="grid h-full grid-cols-1 gap-4 overflow-hidden p-4 md:grid-cols-4">
+    <div className="flex h-full flex-col gap-4 overflow-hidden p-4 md:grid md:grid-cols-4">
+      <SegmentedControl
+        variant="tabs"
+        layoutId="kds-column-pill"
+        className="shrink-0 md:hidden"
+        value={activeColumn}
+        onChange={setActiveColumn}
+        options={[
+          { value: "paid", label: t("columnNew") },
+          { value: "preparing", label: t("columnPreparing") },
+          { value: "ready", label: t("columnReady") },
+          { value: "tables", label: t("columnTables") },
+        ]}
+      />
       {COLUMNS.map((column) => {
         const columnOrders = orders.filter((o) => o.status === column.status)
         const Icon = column.icon
         return (
           <section
             key={column.status}
-            className="flex h-full flex-col overflow-hidden rounded-xl border bg-muted"
+            className={cn(
+              "h-full flex-col overflow-hidden rounded-xl border bg-muted",
+              activeColumn === column.status ? "flex" : "hidden",
+              "md:flex"
+            )}
           >
             <header className={cn("flex shrink-0 items-center justify-between p-4 text-white", column.headerClass)}>
               <h2 className="flex items-center gap-2 text-lg font-bold">
@@ -165,7 +187,7 @@ export function KitchenBoard({
           </section>
         )
       })}
-      <KitchenTablesColumn />
+      <KitchenTablesColumn active={activeColumn === "tables"} />
     </div>
   )
 }

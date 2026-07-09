@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { useTables } from "@/hooks/useTables"
 import { useKitchenOrders } from "@/hooks/useKitchenOrders"
 
-export function KitchenTablesColumn() {
+export function KitchenTablesColumn({ active }: { active: boolean }) {
   const locale = useLocale()
   const t = useTranslations("KitchenDisplay")
   const { tables, setStatus } = useTables()
@@ -15,7 +15,13 @@ export function KitchenTablesColumn() {
   const [error, setError] = useState<string | null>(null)
 
   return (
-    <section className="flex h-full flex-col overflow-hidden rounded-xl border bg-muted">
+    <section
+      className={cn(
+        "h-full flex-col overflow-hidden rounded-xl border bg-muted",
+        active ? "flex" : "hidden",
+        "md:flex"
+      )}
+    >
       <header className="flex shrink-0 items-center justify-between bg-zinc-600 p-4 text-white">
         <h2 className="flex items-center gap-2 text-lg font-bold">
           {t("columnTables")}
