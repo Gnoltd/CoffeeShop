@@ -16,6 +16,8 @@ import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
 import { TAP_SCALE, TAP_TRANSITION } from "@/components/motion/press-feedback"
 import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
 
+const ALL_CATEGORY = "all"
+
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
   "cup-soda": CupSoda,
@@ -42,7 +44,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
   const router = useRouter()
   const { addItem, itemCount, subtotal } = useCart()
 
-  const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id ?? "")
+  const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORY)
   const [searchQuery, setSearchQuery] = useState("")
   const [extrasPopupItem, setExtrasPopupItem] = useState<MenuItem | null>(null)
 
@@ -53,7 +55,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
   const visibleItems = useMemo(() => {
     const query = searchQuery.trim().toLowerCase()
     return items.filter((item) => {
-      const matchesCategory = item.categoryId === selectedCategory
+      const matchesCategory = selectedCategory === ALL_CATEGORY || item.categoryId === selectedCategory
       const matchesQuery =
         query === "" ||
         item.nameVi.toLowerCase().includes(query) ||
@@ -105,7 +107,10 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
         className="mb-6"
         value={selectedCategory}
         onChange={setSelectedCategory}
-        options={categories.map((category) => ({ value: category.id, label: categoryLabel(category) }))}
+        options={[
+          { value: ALL_CATEGORY, label: t("allCategories") },
+          ...categories.map((category) => ({ value: category.id, label: categoryLabel(category) })),
+        ]}
       />
 
       {visibleItems.length === 0 && (
