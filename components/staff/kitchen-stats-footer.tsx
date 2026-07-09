@@ -42,16 +42,19 @@ export function KitchenStatsFooter({ orders, now }: { orders: KdsOrder[]; now: n
   })
 
   return (
-    <footer className="flex h-12 shrink-0 items-center gap-8 rounded-xl border bg-muted px-6">
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-bold text-muted-foreground">{t("currentLoad")}:</span>
-        <div className="h-2 w-32 overflow-hidden rounded-full bg-border">
-          <div className={cn("h-full transition-all", LOAD_STYLES[level].bar)} style={{ width: `${barWidth}%` }} />
+    <footer className="flex shrink-0 flex-col gap-2 rounded-xl border bg-muted px-4 py-3 md:h-12 md:flex-row md:items-center md:gap-8 md:px-6 md:py-0">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-muted-foreground">{t("currentLoad")}:</span>
+          <div className="h-2 w-20 overflow-hidden rounded-full bg-border md:w-32">
+            <div className={cn("h-full transition-all", LOAD_STYLES[level].bar)} style={{ width: `${barWidth}%` }} />
+          </div>
+          <span className={cn("text-xs font-bold", LOAD_STYLES[level].text)}>{t(LOAD_STYLES[level].labelKey)}</span>
         </div>
-        <span className={cn("text-xs font-bold", LOAD_STYLES[level].text)}>{t(LOAD_STYLES[level].labelKey)}</span>
+        <span className="text-base font-bold text-primary md:hidden">{clock}</span>
       </div>
-      <div className="h-4 w-px bg-border" />
-      <div className="flex items-center gap-4">
+      <div className="hidden h-4 w-px bg-border md:block" />
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
         <span className="text-sm text-muted-foreground">
           {t("queueLabel")}: <strong className="text-card-foreground">{t("queueOrders", { count: activeCount })}</strong>
         </span>
@@ -59,7 +62,7 @@ export function KitchenStatsFooter({ orders, now }: { orders: KdsOrder[]; now: n
           {t("waitTimeLabel")}: <strong className="text-card-foreground">{t("waitTimeValue", { minutes: avgWaitMinutes })}</strong>
         </span>
       </div>
-      <span className="ml-auto text-lg font-bold text-primary">{clock}</span>
+      <span className="ml-auto hidden text-lg font-bold text-primary md:block">{clock}</span>
     </footer>
   )
 }
