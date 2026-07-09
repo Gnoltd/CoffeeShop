@@ -18,7 +18,7 @@ export function KitchenTopBar() {
         <div className="h-6 w-px bg-border" />
         <span className="text-sm font-semibold text-muted-foreground">{t("stationLabel")}</span>
       </div>
-      <div className="mr-16 flex items-center gap-3 md:mr-52">
+      <div className="mr-48 flex items-center gap-3 md:mr-52">
         <div className="flex items-center gap-2 rounded-lg border bg-muted px-3 py-1.5">
           <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
           <span className="text-xs text-muted-foreground">{t("systemOnline")}</span>
