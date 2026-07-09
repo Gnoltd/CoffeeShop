@@ -9,10 +9,10 @@ export function RouteTransition({ children }: { children: React.ReactNode }) {
     <AnimatePresence mode="popLayout" initial={false}>
       <motion.div
         key={pathname}
-        initial={{ opacity: 0, x: 8 }}
+        initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -8 }}
-        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+        exit={{ opacity: 0, x: -20 }}
+        transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
       >
         {children}
       </motion.div>

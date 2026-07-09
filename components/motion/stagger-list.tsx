@@ -4,13 +4,13 @@ import { AnimatePresence, motion } from "framer-motion"
 
 const CONTAINER_VARIANTS = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.05 } },
+  show: { transition: { staggerChildren: 0.08 } },
 }
 
 const ITEM_VARIANTS = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const } },
-  exit: { opacity: 0, height: 0, marginBottom: 0, transition: { duration: 0.2 } },
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] as const } },
+  exit: { opacity: 0, height: 0, marginBottom: 0, transition: { duration: 0.25 } },
 }
 
 export function StaggerList({

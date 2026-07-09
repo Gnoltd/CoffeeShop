@@ -35,7 +35,7 @@ export function AnimatedTabBar({
               <motion.span
                 layoutId="tab-bar-active-pill"
                 className="absolute inset-0 rounded-xl bg-primary shadow-sm"
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
               />
             )}
             <span className="relative">

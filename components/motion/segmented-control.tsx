@@ -64,7 +64,7 @@ export function SegmentedControl<T extends string>({
               <motion.span
                 layoutId={layoutId}
                 className={styles.pill}
-                transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                transition={{ type: "spring", stiffness: 300, damping: 22 }}
               />
             )}
             <span className="relative">{option.label}</span>
