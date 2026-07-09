@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart } from "@/hooks/useCart"
-import { QuickAddExtrasPopup } from "@/components/customer/quick-add-extras-popup"
+import { QuickAddPopup } from "@/components/customer/quick-add-popup"
 import { SegmentedControl } from "@/components/motion/segmented-control"
 import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
 import { TAP_SCALE, TAP_TRANSITION } from "@/components/motion/press-feedback"
@@ -46,7 +46,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
 
   const [selectedCategory, setSelectedCategory] = useState<string>(ALL_CATEGORY)
   const [searchQuery, setSearchQuery] = useState("")
-  const [extrasPopupItem, setExtrasPopupItem] = useState<MenuItem | null>(null)
+  const [quickAddItem, setQuickAddItem] = useState<MenuItem | null>(null)
 
   const name = (item: MenuItem) => (locale === "vi" ? item.nameVi : item.nameEn)
   const description = (item: MenuItem) => (locale === "vi" ? item.descriptionVi : item.descriptionEn)
@@ -71,13 +71,9 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
 
   function quickAdd(item: MenuItem) {
     if (!item.isAvailable) return
-    const needsSizeDecision = item.hasSizeOptions && item.sizes.length > 0
-    if (needsSizeDecision) {
-      openItem(item)
-      return
-    }
-    if (item.modifierGroups.length > 0) {
-      setExtrasPopupItem(item)
+    const needsChoice = (item.hasSizeOptions && item.sizes.length > 0) || item.modifierGroups.length > 0
+    if (needsChoice) {
+      setQuickAddItem(item)
       return
     }
     addItem({
@@ -181,8 +177,8 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
         </Link>
       )}
 
-      {extrasPopupItem && (
-        <QuickAddExtrasPopup item={extrasPopupItem} onClose={() => setExtrasPopupItem(null)} />
+      {quickAddItem && (
+        <QuickAddPopup item={quickAddItem} onClose={() => setQuickAddItem(null)} />
       )}
     </div>
   )
