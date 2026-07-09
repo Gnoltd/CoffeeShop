@@ -15,7 +15,8 @@
     "tables": "Bàn",
     "staff": "Nhân Viên",
     "settings": "Cài Đặt",
-    "foodCost": "Chi Phí Thực Phẩm"
+    "foodCost": "Chi Phí Thực Phẩm",
+    "openMenu": "Mở menu"
   },
   "Landing": {
     "title": "Chào Mừng Đến PhaDinCoffee",

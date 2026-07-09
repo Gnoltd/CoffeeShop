@@ -15,7 +15,8 @@
     "tables": "Tables",
     "staff": "Staff",
     "settings": "Settings",
-    "foodCost": "Food Cost"
+    "foodCost": "Food Cost",
+    "openMenu": "Open menu"
   },
   "Landing": {
     "title": "Welcome to PhaDinCoffee",
