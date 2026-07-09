@@ -22,22 +22,100 @@ expensive whole-tree layout measurement on unrelated interactions
 `docs/superpowers/{specs,plans}/2026-07-09-starbucks-customer-motion*.md`.
 
 **In progress, paused for next session**: making Admin/KDS/POS
-phone-adaptable (currently laptop/PC-only). Decomposed into 3 sub-
-projects, starting with POS. Brainstorming so far: layout approach
-approved is "Menu ⇄ Order page-swap" (same pattern as the customer
-Menu→Cart flow) over a bottom-sheet or persistent-draggable-panel
-alternative. Tried to use the Stitch MCP tools to generate a real mobile
-mockup in the existing "PhaDin Coffee Management System" Stitch
-project — both `stitch` and `stitch-mcp` connectors can read projects/
-screens fine, but `generate_screen_from_text` fails identically on both
-(missing OAuth credential), confirmed via a fresh test project
-(`POS Mobile Test`, `projects/30714195502218776` — harmless, not yet
-cleaned up) that it's not project-specific. Falling back to hand-built
-wireframes (visual-companion tool) instead of live Stitch generation.
-No design doc written yet — next session should resume brainstorming
-from here (clarifying questions on the Order view's layout, then
-present design, before writing the spec). KDS and Admin mobile
-redesigns are queued after POS, each as their own spec/plan cycle.
+phone-adaptable (currently laptop/PC-only). Resumed brainstorming
+2026-07-09 (second session): Stitch *read* access is back
+(`list_projects`/`list_screens`/`list_design_systems` all work — the
+"PhaDin Coffee Management System"/"POS Mobile Test" projects are still
+gone, but a "Coffee Shop App" project (`4654820544595168289`) exists
+with a full desktop-only screen set for Admin Dashboard, KDS Board,
+Staff POS, Tables/Staff/Menu/Inventory Management, Order History, and
+System Settings, plus one shared design system, "Phố Coffee"
+(`assets/7846627771704298063`) matching this project's brand tokens).
+`generate_screen_from_text` itself (the actual generation call) still
+fails with the same missing-OAuth-credential error as before, even
+though read calls succeed — confirmed by directly attempting a
+generation this session, not just assumed. **Re-confirmed a third time
+2026-07-09 (third session)**, after a plugin reinstall/reload of
+`frontend-design` — read calls (`list_projects`) still work, but
+`generate_screen_from_text` against the same project/design-system
+still returns the identical "missing required authentication
+credential" OAuth error. The plugin reload does not affect Stitch's
+own auth store, so this isn't something reload/reinstall can fix.
+
+**Root cause found (still same session)**: `gcloud` is not on PATH,
+but a local `gcloud` SDK + real OAuth login for
+`dothanhlong166@gmail.com` already existed under
+`~/.stitch-mcp/google-cloud-sdk`/`~/.stitch-mcp/config` from an earlier
+`stitch-mcp init --local` — that wasn't actually the blocker. The real
+cause: both Stitch MCP entries in `~/.claude.json` (`stitch-mcp` stdio
+proxy's `STITCH_API_KEY` env, `stitch` HTTP server's `X-Goog-Api-Key`
+header) held an **expired** Stitch project API key — `stitch-mcp
+doctor` started returning 401 on the same key that once passed. User
+provided a fresh API key from the Stitch project; swapped it into both
+`~/.claude.json` entries (backed up the original file first). **Not
+yet verified live** — the already-running `stitch-mcp` subprocess for
+this session captured the old key at spawn time, so a live retry
+during this same session still 401's; a plain OS-level
+`STITCH_API_KEY` env var (separate from `~/.claude.json`, used only by
+the raw CLI) was also updated but is similarly stuck stale until a
+fresh process. **Needs a Claude Code session restart** (respawns the
+MCP subprocess with the corrected config) before `generate_screen_from_text`
+can be retried for real confirmation — next session should retry it
+first thing. If it still fails post-restart, the key itself (not just
+staleness) is the next thing to question.
+
+Design decisions locked in for when generation is unblocked (all
+approved, ready to execute without re-asking): scope covers all three
+areas together in one Stitch-generation pass (not just POS first).
+**POS**: "Menu ⇄ Order" page-swap (same pattern as the customer
+Menu→Cart flow) over a bottom-sheet/persistent-draggable-panel
+alternative; Order view's Charge action is a sticky bottom bar (not
+end-of-scroll). **KDS**: desktop's 5-column board (4 status columns +
+Tables) collapses to a horizontal segmented-control switcher — reusing
+the same segmented-control motion primitive already built for the
+customer Menu's category filter — one column visible at a time;
+sidebar shift-stats collapse into a compact top summary bar. **Admin**:
+left sidebar (7 sections — too many for a 5-slot BottomNav) becomes a
+slide-out hamburger drawer instead; Dashboard KPI cards stack vertically
+instead of desktop's grid.
+
+**Retried 2026-07-09 (fourth session, post-restart) — confirmed dead,
+Stitch generation abandoned for this feature.** Both connectors
+(`mcp__stitch__generate_screen_from_text` and
+`mcp__stitch-mcp__generate_screen_from_text`) still 401 on the exact
+key the third session had swapped in — ruling out subprocess
+staleness. Verified the key is identical (byte-for-byte) across all
+three places it's stored (`~/.claude.json` global `stitch`/`stitch-mcp`
+entries, plus a third project-scoped override under
+`projects["C:/Users/dotha/OneDrive/Desktop/CoffeeShop"].mcpServers.stitch`
+that config-sync had missed but happened to already hold the same
+value) — `stitch-mcp doctor` confirms 401 directly against the Stitch
+API, not a local config-sync problem. User re-supplied what turned out
+to be the same key twice more (clipboard/dashboard-tab staleness on
+their end); re-running `claude mcp add stitch` with it is a no-op since
+the value is unchanged. **Tried the OAuth/ADC fallback instead of the
+API key** (`~/.stitch-mcp` has a working `gcloud` login for
+`dothanhlong166@gmail.com` from an earlier `stitch-mcp init --local`):
+authenticates fine, but fails differently — **403**, not 401 — because
+the ADC has no `serviceusage.services.use` permission on the
+auto-created GCP project `light-phantasmata-nfs6l`
+(`gcloud auth application-default set-quota-project` fails with that
+exact IAM error). So there are now two independently-broken auth paths,
+both needing a fix only the user can make in a Google/Stitch web
+console (grant IAM on that GCP project, or get a genuinely new — not
+re-pasted — Stitch API key). **User chose to abandon live Stitch
+generation and fall back to the manual/reference approach.**
+
+Next session (or rest of this one): build the three mobile layouts by
+hand, using the existing desktop Stitch exports
+(`design/stitch-exports/10-staff-pos.html`,
+`11-staff-kitchen-display.html`, `12-admin-dashboard.html`) and this
+project's brand tokens as visual reference — no live Stitch generation.
+Design decisions already locked in above (POS Menu⇄Order page-swap,
+KDS segmented-control column switcher, Admin hamburger drawer) still
+apply as-is; skip straight to writing the design spec doc(s) per
+sub-project (starting with POS) and hand off to writing-plans, same
+convention as every other feature in this project.
 
 Deferred payment + table-driven service lifecycle and table status are
 both shipped, live-verified, and working — see CLAUDE.md for the
