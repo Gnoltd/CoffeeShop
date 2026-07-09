@@ -18,27 +18,29 @@ export function KitchenTopBar() {
         <div className="h-6 w-px bg-border" />
         <span className="text-sm font-semibold text-muted-foreground">{t("stationLabel")}</span>
       </div>
-      <div className="mr-52 flex items-center gap-3">
+      <div className="mr-16 flex items-center gap-3 md:mr-52">
         <div className="flex items-center gap-2 rounded-lg border bg-muted px-3 py-1.5">
           <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
           <span className="text-xs text-muted-foreground">{t("systemOnline")}</span>
         </div>
-        <button
-          type="button"
-          disabled
-          title="Not implemented yet — no notification system"
-          className="rounded-full p-2 text-muted-foreground opacity-50"
-        >
-          <Bell className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          disabled
-          title="Not implemented yet — no staff settings page"
-          className="rounded-full p-2 text-muted-foreground opacity-50"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
+        <div className="hidden items-center gap-3 md:flex">
+          <button
+            type="button"
+            disabled
+            title="Not implemented yet — no notification system"
+            className="rounded-full p-2 text-muted-foreground opacity-50"
+          >
+            <Bell className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            disabled
+            title="Not implemented yet — no staff settings page"
+            className="rounded-full p-2 text-muted-foreground opacity-50"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </header>
   )
