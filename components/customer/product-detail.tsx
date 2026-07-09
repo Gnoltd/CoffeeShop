@@ -81,17 +81,14 @@ export function ProductDetail({ item }: { item: MenuItem }) {
 
   return (
     <div className="mx-auto w-full max-w-2xl pb-28">
-      <motion.div
-        layoutId={`product-image-${item.id}`}
-        className="flex h-64 w-full items-center justify-center bg-muted text-muted-foreground sm:h-80"
-      >
+      <div className="flex h-64 w-full items-center justify-center bg-muted text-muted-foreground sm:h-80">
         {item.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={item.imageUrl} alt={name} className="h-full w-full object-cover" />
         ) : (
           <Icon className="h-20 w-20" />
         )}
-      </motion.div>
+      </div>
 
       <div className="px-4 pt-4 sm:px-6">
         <div className="flex items-start justify-between gap-3">
