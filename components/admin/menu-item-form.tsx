@@ -19,6 +19,7 @@ import {
   type RecipeEntry,
 } from "@/lib/supabase/inventory-data"
 import { RecipeChecklist, type RecipeSelection } from "@/components/admin/recipe-checklist"
+import { MenuItemReviewsPanel } from "@/components/admin/menu-item-reviews-panel"
 
 const ICON_OPTIONS: MenuIcon[] = ["coffee", "cup-soda", "cookie", "milk"]
 
@@ -641,6 +642,8 @@ export function MenuItemForm({
               quantityPlaceholder={t("recipeQuantityPlaceholder")}
             />
           </div>
+
+          {isEditing && initialItem && <MenuItemReviewsPanel itemId={initialItem.id} />}
         </div>
 
         <div className="flex justify-end gap-2 border-t px-6 py-4">
