@@ -1,6 +1,43 @@
-# Next up: live-verify the Admin Dashboard real data + Excel export
+# Next up: continue POS mobile-adaptive redesign (brainstorming in progress)
 
 ## Status
+
+Starbucks-style customer motion redesign (2026-07-09) is shipped,
+merged to `main`, and live-verified on
+`https://phadincoffee.vercel.app`. Framer Motion + a new
+`components/motion/` primitives layer (segmented control, stagger
+list, bottom sheet, animated counter/ring/step-progress, route/tab
+transitions) wired into every customer page (Menu, Product Detail,
+Cart, Checkout, Order Tracking, Order History, Profile, Loyalty,
+Bottom Nav) — colors/layout/business logic untouched, motion only.
+Also fixed along the way: Menu now has an "All" category option
+(defaults selected), and the landing page's top nav "Menu" link no
+longer has a permanently-active state that blocked its hover highlight
+(now matches Orders/Loyalty/Profile). Two real bugs found and fixed
+during live iteration: Framer Motion's `layout` prop on every list item
+plus a `layoutId` on every menu card's image were both forcing
+expensive whole-tree layout measurement on unrelated interactions
+(e.g. opening the quick-add bottom sheet) — dropped both, cutting a
+~1-1.5s interaction lag down to near-instant. Spec/plan:
+`docs/superpowers/{specs,plans}/2026-07-09-starbucks-customer-motion*.md`.
+
+**In progress, paused for next session**: making Admin/KDS/POS
+phone-adaptable (currently laptop/PC-only). Decomposed into 3 sub-
+projects, starting with POS. Brainstorming so far: layout approach
+approved is "Menu ⇄ Order page-swap" (same pattern as the customer
+Menu→Cart flow) over a bottom-sheet or persistent-draggable-panel
+alternative. Tried to use the Stitch MCP tools to generate a real mobile
+mockup in the existing "PhaDin Coffee Management System" Stitch
+project — both `stitch` and `stitch-mcp` connectors can read projects/
+screens fine, but `generate_screen_from_text` fails identically on both
+(missing OAuth credential), confirmed via a fresh test project
+(`POS Mobile Test`, `projects/30714195502218776` — harmless, not yet
+cleaned up) that it's not project-specific. Falling back to hand-built
+wireframes (visual-companion tool) instead of live Stitch generation.
+No design doc written yet — next session should resume brainstorming
+from here (clarifying questions on the Order view's layout, then
+present design, before writing the spec). KDS and Admin mobile
+redesigns are queued after POS, each as their own spec/plan cycle.
 
 Deferred payment + table-driven service lifecycle and table status are
 both shipped, live-verified, and working — see CLAUDE.md for the
@@ -36,6 +73,9 @@ live site — see Open below.
    a Realtime update after placing a new paid order, and the Excel
    export (all 5 sheets, correct Vietnamese text, real numeric cells
    for revenue/quantity columns — not text).
+2. **POS/KDS/Admin mobile redesign** — resume brainstorming for POS
+   first (see Status above for where it left off), then KDS, then
+   Admin, each its own spec/plan/build cycle.
 
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
