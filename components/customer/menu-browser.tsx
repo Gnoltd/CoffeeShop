@@ -126,7 +126,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
             >
               <ItemImage
                 item={item}
-                className={cn("h-20 w-20 shrink-0 rounded-lg", !item.isAvailable && "grayscale")}
+                className={cn("h-28 w-28 shrink-0 rounded-lg", !item.isAvailable && "grayscale")}
               />
               <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <div className="flex items-start justify-between gap-2">
