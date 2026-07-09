@@ -1,4 +1,4 @@
-# Next up: Admin mobile-adaptive redesign (POS + KDS done, Admin is the last of the 3 sub-projects)
+# Admin/KDS/POS mobile-adaptive redesign: all 3 sub-projects shipped
 
 ## Status
 
@@ -189,10 +189,49 @@ real fix later: seed `now` from `null`/skip the clock's first render
 until mounted, matching the common `suppressHydrationWarning`-or-
 mount-gate pattern for this kind of client-only-varying value.
 
-Next up: Admin mobile redesign (slide-out hamburger drawer replacing
-the 7-link sidebar, KPI cards stack vertically) — same process: write
-`docs/superpowers/specs/<date>-admin-mobile-redesign-design.md`, hand
-off to writing-plans, execute. This is the last of the 3 sub-projects.
+**Admin mobile redesign: shipped, same session — all 3 sub-projects
+now complete.** Design:
+`docs/superpowers/specs/2026-07-09-admin-mobile-redesign-design.md`,
+plan: `docs/superpowers/plans/2026-07-09-admin-mobile-redesign.md`.
+Turned out smaller in scope than POS/KDS: `dashboard-view.tsx` and
+every other admin page content file already stacked correctly below
+their existing breakpoints (`grid-cols-1` base + `sm:`/`lg:` overrides,
+`overflow-x-auto` table wrappers) — confirmed by reading each file
+during design, not assumed — so the only real blocker was the fixed
+`w-64` sidebar itself, no page content changes needed. New
+`components/motion/side-drawer.tsx` mirrors `bottom-sheet.tsx`'s
+scrim+spring conventions exactly, axis-flipped to slide in from the
+left instead of up from the bottom — the first time this session
+explicitly reused another primitive's *conventions* (spring constants,
+scrim treatment) rather than the primitive itself (KDS reused
+`SegmentedControl` outright; POS reused `RouteTransition`'s timing
+constants inline). `admin-sidebar.tsx`'s nav markup extracted into
+`AdminNavContent`, shared by the always-visible desktop `<aside>` and
+the drawer (same extraction pattern as POS's `OrderPanel`). New
+`AdminMobileHeader` is deliberately left-aligned only (no right-side
+content) specifically to dodge the KDS top-bar's overlap problem by
+construction — and even so, live measurement still caught a real
+**-3.8px overlap** with the global `RoleBadge`+`LanguageSwitcher`
+cluster (brand text just barely too wide), fixed by tightening
+gap/padding rather than by hiding content, confirmed clear at +14.2px
+afterward. Worth noting as a pattern now: **every one of the 3 mobile
+redesigns needed at least one live-measurement-driven fix against that
+same fixed badge cluster** — POS's `StaffNav` overlap (still unfixed,
+out of scope), KDS's top bar (4 iterations), Admin's header (1
+iteration, caught fast because it was measured immediately instead of
+eyeballed). A real fix to `StaffNav` is now the most valuable
+remaining follow-up in this general area.
+
+All three plans followed the same pipeline this session: brainstormed
+design decisions (from the pre-Stitch session) → written design spec →
+`writing-plans` → inline execution task-by-task → live Playwright
+verification (temporary script, deleted after use, never committed) →
+`daily.md` update. Live-verified end-to-end on
+`https://phadincoffee.vercel.app`: desktop pixel-identical on all
+three surfaces, mobile Menu⇄Order swap (POS), segmented-control column
+switcher (KDS), and hamburger drawer (Admin) all confirmed working,
+including real interactions (a full Cash charge on mobile POS,
+navigation + drawer auto-close on mobile Admin).
 
 Deferred payment + table-driven service lifecycle and table status are
 both shipped, live-verified, and working — see CLAUDE.md for the
