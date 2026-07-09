@@ -1,4 +1,55 @@
-# Follow-up fixes: StaffNav badge overlap fixed; KDS hydration warning still unresolved despite real effort
+# PWA/iOS home-screen support added; StaffNav badge overlap fixed; KDS hydration warning still unresolved
+
+## PWA / iOS "Add to Home Screen" support (new, same session)
+
+User asked why the site still opened like a website (Safari browser
+chrome, address bar) after "Add to Home Screen" — the app had **zero**
+PWA/home-screen configuration: no manifest, no `apple-touch-icon`, no
+`apple-mobile-web-app-capable` meta tag, no icon assets at all beyond
+generic Next.js starter SVGs in `public/`. Not a bug, a genuinely
+missing feature. Added:
+
+- `app/icon.png`/`app/apple-icon.png`/`app/favicon.ico` — a branded
+  coffee-cup glyph (brick-red `#b3341f` background, matching the
+  in-app `Coffee` lucide icon motif already used in `AdminSidebar`/
+  `StaffNav`/`KitchenTopBar`) generated at all required sizes via
+  `sharp` from an inline SVG (no source image assets existed
+  anywhere in the repo to start from). `favicon.ico` hand-built as a
+  real multi-size ICO container (16px+32px PNG-in-ICO) since `sharp`
+  can't emit `.ico` directly.
+- `app/manifest.ts` (Next.js's native manifest-route file convention)
+  — `display: "standalone"`, brand `theme_color`/`background_color`,
+  192/512px icons in `public/`.
+- `app/[locale]/layout.tsx`: `appleWebApp` metadata (capable, status
+  bar style, title) plus an explicit `other: { "apple-mobile-web-app-capable":
+  "yes" }` — Next's `appleWebApp` field only emits the newer
+  `mobile-web-app-capable` name; Apple's own docs still list the
+  `apple-` prefixed one as canonical, so both are now present for
+  broader iOS version coverage. Also added `export const viewport:
+  Viewport = { themeColor: "#b3341f" }` (the modern replacement for
+  the deprecated `metadata.themeColor` field).
+- **Real bug caught during verification, not just the missing
+  feature**: `middleware.ts`'s i18n matcher excluded `favicon.ico` and
+  image extensions but not `.webmanifest` — `/manifest.webmanifest`
+  was being caught by the locale-routing middleware and redirected to
+  `/vi/manifest.webmanifest`, which 404s (the manifest route lives
+  outside the `[locale]` segment). Confirmed via direct `curl` before
+  the fix (saw the redirect), confirmed 200 after
+  (`.*\\.(?:...|ico|webmanifest)$` added to the exclusion pattern,
+  plus the literal `manifest.webmanifest` for extra safety). Normal
+  page routing (`/menu` → `/vi/menu` 307) reconfirmed unaffected.
+
+Verified two ways: locally against a real production build (`next
+build && next start`, not `next dev`) since this is exactly the kind
+of thing that can differ between dev and prod serving; and live on
+`https://phadincoffee.vercel.app` via Playwright reading the actual
+rendered `<head>` (`apple-mobile-web-app-capable`, `mobile-web-app-capable`,
+`apple-touch-icon`, `manifest`, `apple-mobile-web-app-status-bar-style`,
+`theme-color`, `apple-mobile-web-app-title` all present and correct)
+plus direct `curl` 200s on all four new asset routes. **Note for the
+user**: any *existing* home-screen shortcut added before this deploy
+won't retroactively pick this up — it has to be removed and re-added
+from Safari for the new manifest/meta tags to take effect.
 
 ## Follow-up fixes (same session as the 3 mobile redesigns above)
 
