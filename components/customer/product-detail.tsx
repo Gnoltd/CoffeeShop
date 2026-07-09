@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { motion } from "framer-motion"
 import { Coffee, CupSoda, Cookie, Milk, Check } from "lucide-react"
@@ -10,7 +10,8 @@ import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart, type CartModifier } from "@/hooks/useCart"
 import { StarRating } from "@/components/customer/star-rating"
-import { MOCK_REVIEWS, MOCK_RATING, MOCK_REVIEW_COUNT } from "@/lib/mock-data/reviews"
+import { createClient } from "@/lib/supabase/client"
+import { getMenuItemReviews, type MenuItemReview } from "@/lib/supabase/reviews-data"
 import { SegmentedControl } from "@/components/motion/segmented-control"
 import { PressFeedback, TAP_SCALE, TAP_TRANSITION } from "@/components/motion/press-feedback"
 import type { MenuItem, MenuIcon } from "@/lib/supabase/menu-data"
@@ -28,6 +29,24 @@ export function ProductDetail({ item }: { item: MenuItem }) {
   const tProduct = useTranslations("ProductDetail")
   const router = useRouter()
   const { addItem } = useCart()
+  const [supabase] = useState(() => createClient())
+  const [reviews, setReviews] = useState<MenuItemReview[]>([])
+  const [avgRating, setAvgRating] = useState(0)
+  const [reviewCount, setReviewCount] = useState(0)
+
+  useEffect(() => {
+    let cancelled = false
+    getMenuItemReviews(supabase, item.id).then((result) => {
+      if (cancelled) return
+      setReviews(result.reviews)
+      setAvgRating(result.avgRating)
+      setReviewCount(result.reviewCount)
+    })
+    return () => {
+      cancelled = true
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item.id])
 
   const [selectedSizeId, setSelectedSizeId] = useState<string | null>(
     item.hasSizeOptions ? item.sizes?.find((s) => s.priceDelta === 0)?.id ?? item.sizes?.[0]?.id ?? null : null
@@ -96,12 +115,14 @@ export function ProductDetail({ item }: { item: MenuItem }) {
           <span className="whitespace-nowrap text-xl font-bold text-primary">{formatVND(price)}</span>
         </div>
 
-        <div className="mt-2 flex items-center gap-2">
-          <StarRating rating={MOCK_RATING} />
-          <span className="text-sm text-muted-foreground">
-            {MOCK_RATING.toFixed(1)} · {tProduct("reviewCount", { count: MOCK_REVIEW_COUNT })}
-          </span>
-        </div>
+        {reviewCount > 0 && (
+          <div className="mt-2 flex items-center gap-2">
+            <StarRating rating={avgRating} />
+            <span className="text-sm text-muted-foreground">
+              {avgRating.toFixed(1)} · {tProduct("reviewCount", { count: reviewCount })}
+            </span>
+          </div>
+        )}
 
         <p className="mt-3 text-sm text-muted-foreground">{description}</p>
 
@@ -178,34 +199,46 @@ export function ProductDetail({ item }: { item: MenuItem }) {
         <section className="mt-8 border-t pt-6">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-lg font-semibold text-card-foreground">{tProduct("reviewsTitle")}</h2>
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-bold text-primary">{MOCK_RATING.toFixed(1)}</span>
-              <StarRating rating={MOCK_RATING} size="lg" />
-            </div>
-          </div>
-          <div className="flex flex-col gap-3">
-            {MOCK_REVIEWS.map((review) => (
-              <div key={review.id} className="rounded-xl border bg-card p-3 shadow-sm">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
-                    {review.reviewerName.charAt(0)}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-semibold text-card-foreground">{review.reviewerName}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {tProduct("daysAgo", { days: review.daysAgo })}
-                      </span>
-                    </div>
-                    <StarRating rating={review.rating} />
-                  </div>
-                </div>
-                <p className="mt-2 text-sm text-card-foreground">
-                  {locale === "vi" ? review.commentVi : review.commentEn}
-                </p>
+            {reviewCount > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-2xl font-bold text-primary">{avgRating.toFixed(1)}</span>
+                <StarRating rating={avgRating} size="lg" />
               </div>
-            ))}
+            )}
           </div>
+          {reviewCount === 0 ? (
+            <p className="text-sm text-muted-foreground">{tProduct("noReviewsYet")}</p>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {reviews.map((review) => (
+                <div key={review.id} className="rounded-xl border bg-card p-3 shadow-sm">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
+                      {review.reviewerName.charAt(0)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">{review.reviewerName}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {tProduct("daysAgo", {
+                            days: Math.max(0, Math.floor((Date.now() - review.createdAt) / 86400000)),
+                          })}
+                        </span>
+                      </div>
+                      <StarRating rating={review.rating} />
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm text-card-foreground">{review.comment}</p>
+                  {review.staffReply && (
+                    <div className="ml-12 mt-2 rounded-lg bg-muted p-2">
+                      <p className="text-xs font-semibold text-secondary">{tProduct("shopReplyLabel")}</p>
+                      <p className="text-sm text-card-foreground">{review.staffReply}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </div>
 

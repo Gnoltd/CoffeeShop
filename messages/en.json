@@ -293,7 +293,9 @@
     "addToCart": "Add to Cart",
     "reviewsTitle": "Reviews",
     "reviewCount": "{count, plural, one {# review} other {# reviews}}",
-    "daysAgo": "{days, plural, one {# day ago} other {# days ago}}"
+    "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
+    "noReviewsYet": "No reviews yet.",
+    "shopReplyLabel": "Shop reply"
   },
   "Pos": {
     "searchPlaceholder": "Search items...",
