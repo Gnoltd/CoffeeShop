@@ -5,7 +5,7 @@ export type RealOrderType = "pickup" | "dine_in"
 export type OrderType = "pickup" | "dine-in"
 export type RealPaymentMethod = "stripe" | "cash" | "vnpay"
 
-export type OrderForTrackingItem = { nameVi: string; nameEn: string; quantity: number; unitPrice: number; note?: string }
+export type OrderForTrackingItem = { menuItemId: string; nameVi: string; nameEn: string; quantity: number; unitPrice: number; note?: string }
 
 export type OrderForTracking = {
   id: string
@@ -48,7 +48,7 @@ function fromRealOrderType(orderType: RealOrderType): OrderType {
   return orderType === "dine_in" ? "dine-in" : "pickup"
 }
 
-type TrackingJsonItem = { nameVi: string; nameEn: string; quantity: number; unitPrice: number; note: string | null }
+type TrackingJsonItem = { menuItemId: string; nameVi: string; nameEn: string; quantity: number; unitPrice: number; note: string | null }
 
 type TrackingJson = {
   id: string
@@ -124,14 +124,14 @@ type OrderRow = {
   payment_status: string
   payment_method: RealPaymentMethod | null
   tables: { table_number: string } | null
-  order_items: { menu_items: { name_vi: string; name_en: string }; quantity: number; unit_price: number; note: string | null }[]
+  order_items: { menu_item_id: string; menu_items: { name_vi: string; name_en: string }; quantity: number; unit_price: number; note: string | null }[]
 }
 
 const ORDER_SELECT = `
   id, created_at, order_type, status, subtotal, discount_amount, total,
   table_id, payment_status, payment_method,
   tables ( table_number ),
-  order_items ( quantity, unit_price, note, menu_items ( name_vi, name_en ) )
+  order_items ( menu_item_id, quantity, unit_price, note, menu_items ( name_vi, name_en ) )
 `
 
 function mapOrderRow(row: OrderRow): OrderForTracking {
@@ -141,6 +141,7 @@ function mapOrderRow(row: OrderRow): OrderForTracking {
     orderType: fromRealOrderType(row.order_type),
     table: row.tables?.table_number,
     items: row.order_items.map((oi) => ({
+      menuItemId: oi.menu_item_id,
       nameVi: oi.menu_items.name_vi,
       nameEn: oi.menu_items.name_en,
       quantity: oi.quantity,

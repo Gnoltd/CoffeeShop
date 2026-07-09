@@ -28,7 +28,7 @@ describe("getOrderForTracking", () => {
       subtotal: 50000,
       discount: 0,
       total: 50000,
-      items: [{ nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", quantity: 1, unitPrice: 50000, note: null }],
+      items: [{ menuItemId: "item-9", nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", quantity: 1, unitPrice: 50000, note: null }],
     }
     const rpcSpy = vi.fn(() => Promise.resolve({ data: result, error: null }))
     const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
@@ -39,6 +39,7 @@ describe("getOrderForTracking", () => {
     expect(order?.orderType).toBe("dine-in")
     expect(order?.table).toBe("3")
     expect(order?.status).toBe("preparing")
+    expect(order?.items[0].menuItemId).toBe("item-9")
   })
 
   it("returns null when the RPC returns null (not found or not permitted)", async () => {
@@ -96,7 +97,7 @@ describe("getMyOrders", () => {
       payment_status: "paid",
       payment_method: "cash",
       tables: { table_number: "2" },
-      order_items: [{ quantity: 1, unit_price: 29000, note: null, menu_items: { name_vi: "a", name_en: "b" } }],
+      order_items: [{ menu_item_id: "item-a", quantity: 1, unit_price: 29000, note: null, menu_items: { name_vi: "a", name_en: "b" } }],
     }
     const supabase = {
       from: () => ({ select: () => ({ order: () => Promise.resolve({ data: [row], error: null }) }) }),
@@ -105,6 +106,49 @@ describe("getMyOrders", () => {
     const result = await getMyOrders(supabase)
     expect(result[0].orderType).toBe("dine-in")
     expect(result[0].table).toBe("2")
+  })
+
+  it("includes menuItemId on each mapped item", async () => {
+    const row = {
+      id: "order-1",
+      created_at: "2026-07-10T10:00:00Z",
+      order_type: "dine_in",
+      status: "completed",
+      subtotal: 50000,
+      discount_amount: 0,
+      total: 50000,
+      table_id: "table-1",
+      payment_status: "paid",
+      payment_method: "cash",
+      tables: { table_number: "5" },
+      order_items: [
+        {
+          menu_item_id: "item-1",
+          quantity: 2,
+          unit_price: 25000,
+          note: null,
+          menu_items: { name_vi: "Cà Phê Đen", name_en: "Black Coffee" },
+        },
+      ],
+    }
+    const supabase = {
+      from: () => ({
+        select: () => ({
+          order: () => Promise.resolve({ data: [row], error: null }),
+        }),
+      }),
+    } as unknown as SupabaseClient
+
+    const result = await getMyOrders(supabase)
+
+    expect(result[0].items[0]).toEqual({
+      menuItemId: "item-1",
+      nameVi: "Cà Phê Đen",
+      nameEn: "Black Coffee",
+      quantity: 2,
+      unitPrice: 25000,
+      note: undefined,
+    })
   })
 })
 
