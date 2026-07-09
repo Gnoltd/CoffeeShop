@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { Search } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { formatOrderId, formatVND } from "@/lib/format"
-import { useOrderHistory, buildDateRange } from "@/hooks/useOrderHistory"
+import { useOrderHistory } from "@/hooks/useOrderHistory"
 import type { OrderHistoryFilters, RealOrderStatus, OrderType } from "@/lib/supabase/orders-data"
 
 const PAGE_SIZE = 20
@@ -77,18 +77,18 @@ export function OrderHistoryList() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           type="date"
-          value={dateFrom ?? buildDateRange(dateFrom, dateTo).dateFrom}
+          value={dateFrom ?? ""}
           onChange={(e) => {
-            setDateFrom(e.target.value)
+            setDateFrom(e.target.value || undefined)
             resetToFirstPage()
           }}
           className="rounded-lg border bg-card px-3 py-2 text-sm"
         />
         <input
           type="date"
-          value={dateTo ?? buildDateRange(dateFrom, dateTo).dateTo}
+          value={dateTo ?? ""}
           onChange={(e) => {
-            setDateTo(e.target.value)
+            setDateTo(e.target.value || undefined)
             resetToFirstPage()
           }}
           className="rounded-lg border bg-card px-3 py-2 text-sm"

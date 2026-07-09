@@ -2,11 +2,12 @@ import { describe, it, expect } from "vitest"
 import { buildDateRange } from "./useOrderHistory"
 
 describe("buildDateRange", () => {
-  it("defaults to the last 7 days when neither bound is given", () => {
-    const today = new Date().toISOString().slice(0, 10)
-    const result = buildDateRange(undefined, undefined)
-    expect(result.dateTo).toBe(today)
-    expect(new Date(result.dateFrom) < new Date(result.dateTo)).toBe(true)
+  it("leaves both bounds unset when neither is given (all time, no default window)", () => {
+    expect(buildDateRange(undefined, undefined)).toEqual({ dateFrom: undefined, dateTo: undefined })
+  })
+
+  it("passes a single bound through unchanged", () => {
+    expect(buildDateRange("2026-07-01", undefined)).toEqual({ dateFrom: "2026-07-01", dateTo: undefined })
   })
 
   it("passes both bounds through unchanged when from <= to", () => {

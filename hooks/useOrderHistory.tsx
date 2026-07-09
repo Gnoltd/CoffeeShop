@@ -4,11 +4,12 @@ import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { getOrderHistory, type OrderHistoryFilters, type OrderHistoryRow } from "@/lib/supabase/orders-data"
 
-export function buildDateRange(dateFrom?: string, dateTo?: string): { dateFrom: string; dateTo: string } {
-  const to = dateTo ? new Date(dateTo) : new Date()
-  const from = dateFrom ? new Date(dateFrom) : new Date(to.getTime() - 7 * 24 * 60 * 60 * 1000)
-  const [lo, hi] = from <= to ? [from, to] : [to, from]
-  return { dateFrom: lo.toISOString().slice(0, 10), dateTo: hi.toISOString().slice(0, 10) }
+/** No default window -- an unset bound means "all time," matching customers' own order history. */
+export function buildDateRange(dateFrom?: string, dateTo?: string): { dateFrom?: string; dateTo?: string } {
+  if (!dateFrom || !dateTo) return { dateFrom, dateTo }
+  const from = new Date(dateFrom)
+  const to = new Date(dateTo)
+  return from <= to ? { dateFrom, dateTo } : { dateFrom: dateTo, dateTo: dateFrom }
 }
 
 export function useOrderHistory(filters: OrderHistoryFilters, page: number, pageSize: number) {

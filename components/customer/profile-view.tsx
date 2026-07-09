@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { useParams } from "next/navigation"
 import {
@@ -20,12 +20,10 @@ import {
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { formatNumber } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
+import { getLoyaltyBalance } from "@/lib/supabase/loyalty-data"
 import { Button } from "@/components/ui/button"
 import { ROLE_HOME } from "@/lib/roles"
 import { PressFeedback } from "@/components/motion/press-feedback"
-
-/** Matches loyalty-view.tsx's mock balance — no real profile/loyalty tables yet. */
-const MOCK_POINTS_BALANCE = 1250
 
 type Field = "name" | "phone" | "email"
 
@@ -52,6 +50,15 @@ export function ProfileView({ role = null }: { role?: string | null }) {
   const [profile, setProfile] = useState(INITIAL_PROFILE)
   const [editingField, setEditingField] = useState<Field | null>(null)
   const [draft, setDraft] = useState("")
+  const [pointsBalance, setPointsBalance] = useState(0)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      getLoyaltyBalance(supabase, user.id).then(setPointsBalance)
+    })
+  }, [])
 
   function startEdit(field: Field) {
     setEditingField(field)
@@ -211,7 +218,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
             <span className="font-medium text-card-foreground">{t("menuLoyalty")}</span>
           </span>
           <span className="flex items-center gap-2">
-            <span className="font-bold text-primary">{formatNumber(MOCK_POINTS_BALANCE)} pts</span>
+            <span className="font-bold text-primary">{formatNumber(pointsBalance)} pts</span>
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </span>
         </Link>
