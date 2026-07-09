@@ -1,4 +1,4 @@
-# Next up: KDS mobile-adaptive redesign (POS done, queued next per daily.md's 3-sub-project sequence)
+# Next up: Admin mobile-adaptive redesign (POS + KDS done, Admin is the last of the 3 sub-projects)
 
 ## Status
 
@@ -138,12 +138,61 @@ cross-cutting gotchas was never applied to the staff layout) — not
 touched, since it predates this change and wasn't in scope, but worth
 a follow-up.
 
-Next up: KDS mobile redesign (segmented-control column switcher,
-reusing the same primitive as the customer Menu's category filter per
-the locked-in design above) — same process: write
-`docs/superpowers/specs/<date>-kds-mobile-redesign-design.md`, hand
-off to writing-plans, execute. Admin (hamburger drawer) queued after
-that.
+**KDS mobile redesign: shipped, same session.** Design:
+`docs/superpowers/specs/2026-07-09-kds-mobile-redesign-design.md`,
+plan: `docs/superpowers/plans/2026-07-09-kds-mobile-redesign.md`.
+`kitchen-board.tsx` switches `display` by breakpoint (`flex flex-col`
+mobile / `md:grid md:grid-cols-4` desktop, not CSS Grid `auto`-row
+sizing for a single visible child — that can't resolve `h-full`) with
+a `SegmentedControl` (New/Preparing/Ready/Tables) driving which column
+is visible below `md`; `kitchen-tables-column.tsx` got a matching
+`active` prop. `kitchen-sidebar.tsx`'s `<aside>` hidden below `md`,
+its nav links + shift-stats moved into a new `md:hidden` strip in
+`orders/layout.tsx` (shared by both `/staff/orders` and
+`/staff/orders/history`). `kitchen-stats-footer.tsx` got a 2-row
+mobile layout. All live-verified the same way as POS (temporary
+Playwright script, deleted after use) — desktop confirmed pixel-
+identical, mobile column-switching/nav-strip/history-nav all confirmed
+working.
+
+**`kitchen-top-bar.tsx` needed 4 live-verification iterations to get
+right** — worth remembering for any future header-chrome work: the
+original desktop-only `mr-52` (reserving space for the global fixed
+`RoleBadge`+`LanguageSwitcher` pill cluster in `app/[locale]/layout.tsx:64-67`,
+**not just the switcher alone** — a more precise root cause than the
+POS session's writeup assumed) needed a mobile equivalent. `mr-16`,
+then `mr-48`, then `mr-64` on the *child* all rendered **identically**
+(confirmed by direct measurement, not assumption) — because
+`justify-content: space-between` only distributes whatever free space
+actually exists between two flex items; once requested margin meets or
+exceeds that free space, the items just go edge-to-edge and any
+*additional* margin is silently absorbed with zero visual effect. This
+is a real, reusable CSS lesson: **on a cramped flex row, neither more
+child margin nor more parent padding fixes an overlap if the two
+items' own natural content width already exceeds the available space
+— the actual fix is shrinking content**, not requesting more space
+that doesn't exist. Fixed by hiding the "System Online" text label
+below `md` (keeping just the status dot) and hiding the
+divider+`stationLabel` text below `md` (it was wrapping into the badge
+cluster's zone) — confirmed clear via exact pixel measurement
+(`getBoundingClientRect()`), not just eyeballing a screenshot.
+
+**Also noticed, not fixed (pre-existing, out of scope)**: `/staff/orders`
+throws a React hydration error (#418, text-content mismatch) on every
+page load, both desktop and mobile, before and unrelated to this
+session's changes — almost certainly `kitchen-stats-footer.tsx`'s
+`now`/`clock` state (`useState(() => Date.now())`), which independently
+evaluates once at SSR time and again at client-hydration time, trivially
+producing a different clock string. Non-fatal (React recovers and every
+downstream interaction still worked in verification), but worth a
+real fix later: seed `now` from `null`/skip the clock's first render
+until mounted, matching the common `suppressHydrationWarning`-or-
+mount-gate pattern for this kind of client-only-varying value.
+
+Next up: Admin mobile redesign (slide-out hamburger drawer replacing
+the 7-link sidebar, KPI cards stack vertically) — same process: write
+`docs/superpowers/specs/<date>-admin-mobile-redesign-design.md`, hand
+off to writing-plans, execute. This is the last of the 3 sub-projects.
 
 Deferred payment + table-driven service lifecycle and table status are
 both shipped, live-verified, and working — see CLAUDE.md for the
