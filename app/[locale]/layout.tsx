@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
@@ -29,6 +29,18 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: "PhaDinCoffee",
   description: "Order ahead, track your order, and earn loyalty points.",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PhaDinCoffee",
+  },
+  other: {
+    "apple-mobile-web-app-capable": "yes",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#b3341f",
 };
 
 export const dynamic = "force-dynamic";
