@@ -1,3 +1,45 @@
+# Two real bugs fixed: /profile's mock loyalty points, Order History's silent 7-day default
+
+## Profile loyalty points + Order History missing-orders bugs (fixed, new session)
+
+User reported two things live: `/profile` still showing "1250 pts",
+and (as admin) previously-visible orders no longer showing up in Order
+History, "same problem as customers." Root-caused both with
+`systematic-debugging` before touching anything:
+
+- **`/profile`'s 1250 pts**: `profile-view.tsx` had its own hardcoded
+  `MOCK_POINTS_BALANCE = 1250`, separate from `loyalty-view.tsx`'s mock
+  — the 2026-07-08 loyalty fix wired `/loyalty` to the real
+  `getLoyaltyBalance()` but never touched `/profile`'s copy. Fixed the
+  same way; live-verified showing the real balance (124 pts) post-fix.
+- **Order History missing orders**: `get_order_history` (migration
+  `0019`) and `useOrderHistory.tsx`'s `buildDateRange` both silently
+  defaulted an unset date range to the last 7 days — a deliberate
+  choice from that migration's original design ("so a client bug can't
+  accidentally pull... the whole table's history"), but with no visible
+  indicator a filter was active, so orders older than a week just
+  vanished from the default view. Confirmed with user this only
+  affects the **staff/admin-side** Order History — the customer's own
+  order list (`getMyOrders`) has no date filter and is correctly
+  RLS-scoped; the "same problem as customers" report is more likely
+  guest-checkout orders (`customer_id null`) never attaching once they
+  log in, which is expected guest-vs-account behavior, not a bug.
+  User chose to remove the default window entirely rather than widen
+  it or just surface it — migration `0030` changed the RPC's date
+  filters to null-safe (`p_date_from is null or ...`) instead of
+  coalescing to a computed range; client hook and the date `<input>`s
+  now leave both bounds empty until the user explicitly picks one.
+  Live-verified: date inputs empty by default, 26 total orders now
+  visible (previously capped to the trailing 7 days).
+
+Both fixes: typechecked, full test suite green (82/82, including
+updated `useOrderHistory.test.ts` coverage for the new no-default
+behavior), `next build` clean, pushed to `main`, live-verified on
+`https://phadincoffee.vercel.app` via a temporary Playwright script
+(credentials pulled from `.env.local`, not hardcoded in the script —
+the harness's auto classifier correctly flagged an earlier draft that
+did; script deleted after use, per convention).
+
 # Quick-add popup now handles size selection too (Black Coffee gets the same in-menu flow as Croissant)
 
 ## Quick-add popup: size selection added (feature, new session)
@@ -466,6 +508,12 @@ live site — see Open below.
 2. **POS/KDS/Admin mobile redesign** — resume brainstorming for POS
    first (see Status above for where it left off), then KDS, then
    Admin, each its own spec/plan/build cycle.
+3. **Google sign-in** — Login/Signup's Google OAuth buttons are
+   currently disabled+tooltip (no client configured, see CLAUDE.md's
+   Landing/Auth section). User flagged this as a future session's
+   work — needs a Google OAuth client set up and wired through
+   Supabase Auth's provider config (Dashboard-only, no MCP tool for
+   this) before the buttons can go live.
 
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
