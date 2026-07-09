@@ -19,9 +19,9 @@ export function KitchenTopBar() {
         <span className="hidden text-sm font-semibold text-muted-foreground md:inline">{t("stationLabel")}</span>
       </div>
       <div className="flex items-center gap-3 md:mr-52">
-        <div className="flex items-center gap-2 rounded-lg border bg-muted px-3 py-1.5">
+        <div className="flex items-center gap-2 rounded-lg border bg-muted px-2 py-1.5 md:px-3">
           <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
-          <span className="text-xs text-muted-foreground">{t("systemOnline")}</span>
+          <span className="hidden text-xs text-muted-foreground md:inline">{t("systemOnline")}</span>
         </div>
         <div className="hidden items-center gap-3 md:flex">
           <button
