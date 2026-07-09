@@ -5,10 +5,10 @@ import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 
 const NAV_LINKS = [
-  { key: "navMenu", href: "/menu", active: true },
-  { key: "navOrders", href: "/orders", active: false },
-  { key: "navLoyalty", href: "/loyalty", active: false },
-  { key: "navProfile", href: "/profile", active: false },
+  { key: "navMenu", href: "/menu" },
+  { key: "navOrders", href: "/orders" },
+  { key: "navLoyalty", href: "/loyalty" },
+  { key: "navProfile", href: "/profile" },
 ] as const
 
 export function LandingNav() {
@@ -25,13 +25,11 @@ export function LandingNav() {
         <span className="font-playfair text-2xl italic text-white">PhaDinCoffee</span>
       </span>
       <div className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 rounded-full border border-white/30 bg-white/20 px-2 py-2 backdrop-blur-md md:flex">
-        {NAV_LINKS.map(({ key, href, active }) => (
+        {NAV_LINKS.map(({ key, href }) => (
           <Link
             key={key}
             href={href}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
-              active ? "text-white" : "text-white/80 hover:bg-white/20 hover:text-white"
-            }`}
+            className="rounded-full px-4 py-1.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/20 hover:text-white"
           >
             {t(key)}
           </Link>

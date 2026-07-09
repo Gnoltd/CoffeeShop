@@ -13,6 +13,8 @@ import { cancelPendingOrder } from "@/lib/supabase/orders-data"
 import { useCart } from "@/hooks/useCart"
 import { useTables } from "@/hooks/useTables"
 import { QrScannerOverlay } from "@/components/customer/qr-scanner-overlay"
+import { SegmentedControl } from "@/components/motion/segmented-control"
+import { PressFeedback } from "@/components/motion/press-feedback"
 
 type OrderType = "pickup" | "dine-in"
 type PaymentMethod = "stripe" | "cash" | "vnpay"
@@ -145,35 +147,20 @@ export function CheckoutView() {
     <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4 sm:px-6">
       <section className="mb-6 space-y-2">
         <h2 className="font-bold text-card-foreground">{t("orderType")}</h2>
-        <div className="flex gap-1 rounded-lg bg-muted p-1">
-          <button
-            type="button"
-            onClick={() => setOrderType("pickup")}
-            className={cn(
-              "flex-1 rounded-md py-3 text-sm font-bold transition-all",
-              orderType === "pickup"
-                ? "bg-card text-card-foreground shadow-sm"
-                : "text-muted-foreground"
-            )}
-          >
-            {t("pickup")}
-          </button>
-          <button
-            type="button"
-            disabled={!activeTable}
-            title={!activeTable ? t("dineInRequiresScan") : undefined}
-            onClick={() => activeTable && setOrderType("dine-in")}
-            className={cn(
-              "flex-1 rounded-md py-3 text-sm font-bold transition-all",
-              orderType === "dine-in"
-                ? "bg-card text-card-foreground shadow-sm"
-                : "text-muted-foreground",
-              !activeTable && "opacity-50"
-            )}
-          >
-            {t("dineIn")}
-          </button>
-        </div>
+        <SegmentedControl
+          layoutId="checkout-order-type-pill"
+          value={orderType}
+          onChange={(next) => (next === "dine-in" ? activeTable && setOrderType(next) : setOrderType(next))}
+          options={[
+            { value: "pickup" as const, label: t("pickup") },
+            {
+              value: "dine-in" as const,
+              label: t("dineIn"),
+              disabled: !activeTable,
+              title: !activeTable ? t("dineInRequiresScan") : undefined,
+            },
+          ]}
+        />
         {orderType === "dine-in" && activeTable && (
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/20 px-3 py-1.5 text-sm text-accent-foreground">
             <TableIcon className="h-4 w-4" />
@@ -286,28 +273,15 @@ export function CheckoutView() {
 
       <section className="mb-6 space-y-2">
         <h2 className="font-bold text-card-foreground">{t("payTiming")}</h2>
-        <div className="flex gap-1 rounded-lg bg-muted p-1">
-          <button
-            type="button"
-            onClick={() => setPayAt("now")}
-            className={cn(
-              "flex-1 rounded-md py-3 text-sm font-bold transition-all",
-              payAt === "now" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
-            )}
-          >
-            {t("payNow")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPayAt("later")}
-            className={cn(
-              "flex-1 rounded-md py-3 text-sm font-bold transition-all",
-              payAt === "later" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
-            )}
-          >
-            {t("payLater")}
-          </button>
-        </div>
+        <SegmentedControl
+          layoutId="checkout-pay-timing-pill"
+          value={payAt}
+          onChange={setPayAt}
+          options={[
+            { value: "now" as const, label: t("payNow") },
+            { value: "later" as const, label: t("payLater") },
+          ]}
+        />
         {payAt === "later" && <p className="text-sm text-muted-foreground">{t("payLaterNote")}</p>}
       </section>
 
@@ -316,7 +290,7 @@ export function CheckoutView() {
           <h2 className="font-bold text-card-foreground">{t("paymentMethod")}</h2>
           <div className="grid grid-cols-3 gap-2">
             {PAYMENT_OPTIONS.map(({ id, icon: Icon, labelKey, enabled }) => (
-              <button
+              <PressFeedback
                 key={id}
                 type="button"
                 disabled={!enabled}
@@ -332,7 +306,7 @@ export function CheckoutView() {
               >
                 <Icon className="h-7 w-7" />
                 <span className="text-xs font-bold">{t(labelKey)}</span>
-              </button>
+              </PressFeedback>
             ))}
           </div>
         </section>

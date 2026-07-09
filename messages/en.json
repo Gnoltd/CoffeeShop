@@ -127,6 +127,7 @@
   },
   "Menu": {
     "searchPlaceholder": "Search items...",
+    "allCategories": "All",
     "size": "Size",
     "add": "Add",
     "close": "Close",

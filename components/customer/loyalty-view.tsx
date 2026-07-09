@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils"
 import { formatNumber, formatDateVN, formatOrderId } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { getLoyaltyBalance, getLoyaltyTransactions, type LoyaltyTransaction, type LoyaltyTransactionType } from "@/lib/supabase/loyalty-data"
+import { AnimatedCounter } from "@/components/motion/animated-counter"
+import { ProgressRing } from "@/components/motion/progress-ring"
+import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
 
 /**
  * Tier progress has no real tier table yet — kept as a fixed mock
@@ -53,7 +56,7 @@ export function LoyaltyView() {
           </span>
         </div>
         <div className="mb-4 flex items-baseline gap-2">
-          <span className="text-5xl font-extrabold text-primary">{formatNumber(balance)}</span>
+          <AnimatedCounter value={balance} format={formatNumber} className="text-5xl font-extrabold text-primary" />
           <span className="font-bold text-primary/80">{t("pts")}</span>
         </div>
         <div className="space-y-3 rounded-xl border bg-card/60 p-4">
@@ -69,14 +72,12 @@ export function LoyaltyView() {
       </section>
 
       <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="flex flex-col justify-between rounded-xl border bg-card p-4 shadow-sm">
-          <h3 className="font-bold text-card-foreground">{t("tierName")}</h3>
-          <div className="mt-4">
-            <div className="mb-2 h-2 w-full rounded-full bg-muted">
-              <div className="h-full rounded-full bg-accent" style={{ width: `${TIER_PROGRESS_PERCENT}%` }} />
-            </div>
-            <p className="text-xs text-secondary">{t("tierProgress", { points: POINTS_TO_NEXT_TIER })}</p>
-          </div>
+        <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+          <h3 className="self-start font-bold text-card-foreground">{t("tierName")}</h3>
+          <ProgressRing percent={TIER_PROGRESS_PERCENT} size={88} strokeWidth={7}>
+            <span className="text-lg font-bold text-accent-foreground">{TIER_PROGRESS_PERCENT}%</span>
+          </ProgressRing>
+          <p className="text-center text-xs text-secondary">{t("tierProgress", { points: POINTS_TO_NEXT_TIER })}</p>
         </div>
         <button
           type="button"
@@ -115,38 +116,37 @@ export function LoyaltyView() {
         {transactions.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">{t("noHistory")}</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <StaggerList className="flex flex-col gap-2">
             {transactions.map((transaction) => {
               const meta = TRANSACTION_META[transaction.type]
               const Icon = meta.icon
               return (
-                <div
-                  key={transaction.id}
-                  className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", meta.iconClass)}>
-                      <Icon className="h-5 w-5" />
+                <StaggerItem key={transaction.id}>
+                  <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", meta.iconClass)}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-card-foreground">{t(meta.labelKey)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDateVN(new Date(transaction.createdAt))}
+                          {transaction.orderId && ` · #${formatOrderId(transaction.orderId)}`}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-card-foreground">{t(meta.labelKey)}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDateVN(new Date(transaction.createdAt))}
-                        {transaction.orderId && ` · #${formatOrderId(transaction.orderId)}`}
+                    <div className="text-right">
+                      <p className={cn("font-bold", meta.amountClass)}>
+                        {transaction.pointsChange > 0 ? "+" : ""}
+                        {transaction.pointsChange}
                       </p>
+                      <p className="text-[11px] text-muted-foreground">{t("pointsUnit")}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={cn("font-bold", meta.amountClass)}>
-                      {transaction.pointsChange > 0 ? "+" : ""}
-                      {transaction.pointsChange}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">{t("pointsUnit")}</p>
-                  </div>
-                </div>
+                </StaggerItem>
               )
             })}
-          </div>
+          </StaggerList>
         )}
       </section>
     </div>

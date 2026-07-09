@@ -2,18 +2,112 @@
 
 import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { motion, useMotionValue, type PanInfo } from "framer-motion"
 import { Minus, Plus, Trash2, ArrowRight, ShoppingBasket, Ticket, X } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { formatVND } from "@/lib/format"
 import { useCart, type CartItem } from "@/hooks/useCart"
+import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
+import { AnimatedCounter } from "@/components/motion/animated-counter"
 
 function lineLabel(item: CartItem, locale: string): string {
   const parts: string[] = []
   if (item.size) parts.push(item.size.label)
   item.modifiers.forEach((m) => parts.push(locale === "vi" ? m.labelVi : m.labelEn))
   return parts.join(", ")
+}
+
+const SWIPE_DISMISS_THRESHOLD = -80
+
+function CartRow({
+  item,
+  locale,
+  t,
+  onRemove,
+  onUpdateQuantity,
+}: {
+  item: CartItem
+  locale: string
+  t: ReturnType<typeof useTranslations>
+  onRemove: (id: string) => void
+  onUpdateQuantity: (id: string, quantity: number) => void
+}) {
+  const x = useMotionValue(0)
+  const name = locale === "vi" ? item.nameVi : item.nameEn
+  const label = lineLabel(item, locale)
+
+  function handleDragEnd(_event: unknown, info: PanInfo) {
+    if (info.offset.x < SWIPE_DISMISS_THRESHOLD) onRemove(item.cartItemId)
+  }
+
+  return (
+    <motion.div
+      style={{ x }}
+      drag="x"
+      dragConstraints={{ left: -96, right: 0 }}
+      dragElastic={{ left: 0.15, right: 0 }}
+      onDragEnd={handleDragEnd}
+      className="flex gap-3 rounded-xl border bg-card p-3 shadow-sm"
+    >
+      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
+        <ShoppingBasket className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <div className="flex flex-1 flex-col justify-between">
+        <div>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-semibold leading-tight text-card-foreground">{name}</h3>
+            <button
+              type="button"
+              onClick={() => onRemove(item.cartItemId)}
+              className="text-muted-foreground transition-colors hover:text-destructive"
+              aria-label={t("remove")}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+          {label && <p className="mt-1 text-xs text-muted-foreground">{label}</p>}
+          {item.note && (
+            <p className="mt-1 text-xs italic text-muted-foreground">
+              {t("noteLabel")}: {item.note}
+            </p>
+          )}
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <div className="flex flex-col">
+            <span className="font-bold text-primary">
+              {formatVND(item.unitPrice * item.quantity)}
+            </span>
+            {item.quantity > 1 && (
+              <span className="text-[10px] text-muted-foreground">
+                {formatVND(item.unitPrice)} × {item.quantity}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-1 rounded-full bg-muted px-1 py-1">
+            <button
+              type="button"
+              onClick={() => onUpdateQuantity(item.cartItemId, item.quantity - 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-background"
+              aria-label={t("decrease")}
+            >
+              <Minus className="h-4 w-4" />
+            </button>
+            <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
+            <button
+              type="button"
+              onClick={() => onUpdateQuantity(item.cartItemId, item.quantity + 1)}
+              className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-background"
+              aria-label={t("increase")}
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  )
 }
 
 export function CartView() {
@@ -46,74 +140,13 @@ export function CartView() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-4 sm:px-6">
-      <div className="flex flex-col gap-3">
-        {items.map((item) => {
-          const name = locale === "vi" ? item.nameVi : item.nameEn
-          const label = lineLabel(item, locale)
-          return (
-            <div
-              key={item.cartItemId}
-              className="flex gap-3 rounded-xl border bg-card p-3 shadow-sm"
-            >
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <ShoppingBasket className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <div className="flex flex-1 flex-col justify-between">
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-semibold leading-tight text-card-foreground">{name}</h3>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(item.cartItemId)}
-                      className="text-muted-foreground transition-colors hover:text-destructive"
-                      aria-label={t("remove")}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                  {label && <p className="mt-1 text-xs text-muted-foreground">{label}</p>}
-                  {item.note && (
-                    <p className="mt-1 text-xs italic text-muted-foreground">
-                      {t("noteLabel")}: {item.note}
-                    </p>
-                  )}
-                </div>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-primary">
-                      {formatVND(item.unitPrice * item.quantity)}
-                    </span>
-                    {item.quantity > 1 && (
-                      <span className="text-[10px] text-muted-foreground">
-                        {formatVND(item.unitPrice)} × {item.quantity}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 rounded-full bg-muted px-1 py-1">
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.cartItemId, item.quantity - 1)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-background"
-                      aria-label={t("decrease")}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </button>
-                    <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                    <button
-                      type="button"
-                      onClick={() => updateQuantity(item.cartItemId, item.quantity + 1)}
-                      className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-background"
-                      aria-label={t("increase")}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        })}
-      </div>
+      <StaggerList className="flex flex-col gap-3">
+        {items.map((item) => (
+          <StaggerItem key={item.cartItemId}>
+            <CartRow item={item} locale={locale} t={t} onRemove={removeItem} onUpdateQuantity={updateQuantity} />
+          </StaggerItem>
+        ))}
+      </StaggerList>
 
       {promoCode ? (
         <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
@@ -158,7 +191,7 @@ export function CartView() {
       <section className="mt-6 space-y-3 rounded-2xl bg-muted p-5">
         <div className="flex items-center justify-between">
           <span className="text-muted-foreground">{t("subtotal")}</span>
-          <span className="font-medium">{formatVND(subtotal)}</span>
+          <AnimatedCounter value={subtotal} format={formatVND} className="font-medium" />
         </div>
         {promoDiscount > 0 && (
           <div className="flex items-center justify-between">
@@ -169,7 +202,7 @@ export function CartView() {
         <div className="h-px bg-border" />
         <div className="flex items-center justify-between">
           <span className="text-lg font-bold text-card-foreground">{t("total")}</span>
-          <span className="text-lg font-bold text-primary">{formatVND(total)}</span>
+          <AnimatedCounter value={total} format={formatVND} className="text-lg font-bold text-primary" />
         </div>
       </section>
 
