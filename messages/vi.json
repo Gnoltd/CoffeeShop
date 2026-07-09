@@ -303,7 +303,9 @@
     "tax": "Thuế (8%)",
     "charge": "Thanh Toán",
     "paymentMethodComingSoon": "Sắp có — chưa khả dụng",
-    "chargeError": "Thanh toán thất bại. Vui lòng thử lại."
+    "chargeError": "Thanh toán thất bại. Vui lòng thử lại.",
+    "backToMenu": "Về Thực Đơn",
+    "viewOrder": "Xem Đơn ({count})"
   },
   "KitchenDisplay": {
     "columnNew": "Mới",

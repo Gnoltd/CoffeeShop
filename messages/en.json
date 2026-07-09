@@ -303,7 +303,9 @@
     "tax": "Tax (8%)",
     "charge": "Charge",
     "paymentMethodComingSoon": "Coming soon — not available yet",
-    "chargeError": "Failed to charge order. Try again."
+    "chargeError": "Failed to charge order. Try again.",
+    "backToMenu": "Back to Menu",
+    "viewOrder": "View Order ({count})"
   },
   "KitchenDisplay": {
     "columnNew": "New",
