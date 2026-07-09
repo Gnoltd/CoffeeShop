@@ -1,4 +1,4 @@
-# Next up: continue POS mobile-adaptive redesign (brainstorming in progress)
+# Next up: KDS mobile-adaptive redesign (POS done, queued next per daily.md's 3-sub-project sequence)
 
 ## Status
 
@@ -106,16 +106,44 @@ console (grant IAM on that GCP project, or get a genuinely new — not
 re-pasted — Stitch API key). **User chose to abandon live Stitch
 generation and fall back to the manual/reference approach.**
 
-Next session (or rest of this one): build the three mobile layouts by
-hand, using the existing desktop Stitch exports
-(`design/stitch-exports/10-staff-pos.html`,
-`11-staff-kitchen-display.html`, `12-admin-dashboard.html`) and this
-project's brand tokens as visual reference — no live Stitch generation.
-Design decisions already locked in above (POS Menu⇄Order page-swap,
-KDS segmented-control column switcher, Admin hamburger drawer) still
-apply as-is; skip straight to writing the design spec doc(s) per
-sub-project (starting with POS) and hand off to writing-plans, same
-convention as every other feature in this project.
+**POS mobile redesign: shipped, same session.** Built by hand (no
+Stitch mockup, per the fallback above) — design:
+`docs/superpowers/specs/2026-07-09-pos-mobile-redesign-design.md`,
+plan: `docs/superpowers/plans/2026-07-09-pos-mobile-redesign.md`, both
+executed inline task-by-task. `components/staff/pos-terminal.tsx`'s
+order-ticket JSX extracted into a local `OrderPanel` subcomponent
+(shared by both the desktop `<aside>` and a new mobile-only overlay,
+zero duplication); below `md` the layout is a "Menu ⇄ Order" swap
+driven by local `mobileView` state, animated with the same
+`AnimatePresence`/timing curve as `RouteTransition` (keyed on state
+instead of `pathname`, since POS has no separate routes to swap
+between); a sticky "View Order (N) · total" bar appears over the Menu
+view once the ticket has items; the Order view's Charge action was
+already effectively sticky (outside the scrolling line-item region in
+the original flex layout) and stays that way on mobile. Desktop
+(≥`md`) is confirmed pixel-identical — every mobile class is paired
+with an `md:` override. Live-verified on
+`https://phadincoffee.vercel.app` via a temporary Playwright script
+(installed with `npm install --no-save playwright`, not committed,
+deleted after use): logged in as `admin@phadincoffee.dev`, confirmed
+the desktop two-pane layout is unchanged, then on a 390×844 mobile
+viewport confirmed the sticky bar's item count/total, the swap
+animation, the back button, and a full real Cash charge through
+`place-order` (order created, ticket cleared, view auto-returns to
+Menu) — all passed, screenshots reviewed directly. **One pre-existing,
+out-of-scope issue spotted incidentally**: at phone width, `StaffNav`'s
+nav links visually overlap the fixed `LanguageSwitcher` pill (the
+Admin-layout `pt-16` compensation mentioned in `CLAUDE.md`'s
+cross-cutting gotchas was never applied to the staff layout) — not
+touched, since it predates this change and wasn't in scope, but worth
+a follow-up.
+
+Next up: KDS mobile redesign (segmented-control column switcher,
+reusing the same primitive as the customer Menu's category filter per
+the locked-in design above) — same process: write
+`docs/superpowers/specs/<date>-kds-mobile-redesign-design.md`, hand
+off to writing-plans, execute. Admin (hamburger drawer) queued after
+that.
 
 Deferred payment + table-driven service lifecycle and table status are
 both shipped, live-verified, and working — see CLAUDE.md for the
