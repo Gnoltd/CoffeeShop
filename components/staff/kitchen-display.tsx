@@ -8,9 +8,10 @@ import { useKitchenOrders } from "@/hooks/useKitchenOrders"
 
 export function KitchenDisplay() {
   const { orders, pendingPaymentOrders, advance, confirmCashPayment } = useKitchenOrders()
-  const [now, setNow] = useState(() => Date.now())
+  const [now, setNow] = useState(0)
 
   useEffect(() => {
+    setNow(Date.now())
     const interval = setInterval(() => setNow(Date.now()), 1000)
     return () => clearInterval(interval)
   }, [])
