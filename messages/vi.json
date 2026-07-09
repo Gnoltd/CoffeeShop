@@ -248,7 +248,14 @@
     "payMethodCash": "Tiền Mặt",
     "payMethodCard": "Thẻ",
     "payMethodVNPay": "VNPay",
-    "cashAwaitingStaffNote": "Bạn đã chọn Tiền Mặt — nhân viên sẽ đến thu tiền trong giây lát."
+    "cashAwaitingStaffNote": "Bạn đã chọn Tiền Mặt — nhân viên sẽ đến thu tiền trong giây lát.",
+    "rateReviewButton": "Đánh giá",
+    "submitReviewButton": "Gửi đánh giá",
+    "reviewSubmitLoading": "Đang gửi…",
+    "reviewCancelButton": "Hủy",
+    "reviewCommentPlaceholder": "Chia sẻ cảm nhận của bạn về món này…",
+    "reviewRatingRequiredError": "Vui lòng chọn số sao đánh giá.",
+    "reviewSubmitError": "Không thể gửi đánh giá — vui lòng thử lại."
   },
   "TableLanding": {
     "orderingAt": "Bạn đang đặt món tại",

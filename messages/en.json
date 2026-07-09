@@ -248,7 +248,14 @@
     "payMethodCash": "Cash",
     "payMethodCard": "Card",
     "payMethodVNPay": "VNPay",
-    "cashAwaitingStaffNote": "You chose Cash — a staff member will collect payment shortly."
+    "cashAwaitingStaffNote": "You chose Cash — a staff member will collect payment shortly.",
+    "rateReviewButton": "Rate & Review",
+    "submitReviewButton": "Submit Review",
+    "reviewSubmitLoading": "Submitting…",
+    "reviewCancelButton": "Cancel",
+    "reviewCommentPlaceholder": "Share your thoughts about this item…",
+    "reviewRatingRequiredError": "Please select a star rating.",
+    "reviewSubmitError": "Couldn't submit your review — please try again."
   },
   "TableLanding": {
     "orderingAt": "You're ordering at",

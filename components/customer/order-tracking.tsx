@@ -15,6 +15,7 @@ import { payExistingOrder, type RealPaymentMethod } from "@/lib/supabase/orders-
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
 import { StepProgress } from "@/components/motion/step-progress"
 import { PressFeedback } from "@/components/motion/press-feedback"
+import { ReviewForm } from "@/components/customer/review-form"
 
 const MOCK_SHOP_PHONE = "+84281234567"
 const GUEST_POLL_INTERVAL_MS = 10000
@@ -58,6 +59,8 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
   const [isPaying, setIsPaying] = useState(false)
   const [paymentNotice, setPaymentNotice] = useState(false)
   const [cashConfirmed, setCashConfirmed] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [openReviewIndex, setOpenReviewIndex] = useState<number | null>(null)
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -97,6 +100,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
       if (!found) return
 
       const { data: { user } } = await supabase.auth.getUser()
+      if (!cancelled) setIsLoggedIn(Boolean(user))
       if (!user) {
         // No session at all — this can only be a guest's own order (the
         // RPC already refused anything else). Realtime's authorization
@@ -268,14 +272,29 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
         </div>
         <div className="space-y-2">
           {order.items.map((item, index) => (
-            <div key={index} className="flex items-center justify-between rounded-xl p-3">
-              <div>
-                <h5 className="font-bold text-card-foreground">
-                  {item.quantity}x {locale === "vi" ? item.nameVi : item.nameEn}
-                </h5>
-                {item.note && <p className="text-xs italic text-accent-foreground">+ {item.note}</p>}
+            <div key={index} className="rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h5 className="font-bold text-card-foreground">
+                    {item.quantity}x {locale === "vi" ? item.nameVi : item.nameEn}
+                  </h5>
+                  {item.note && <p className="text-xs italic text-accent-foreground">+ {item.note}</p>}
+                </div>
+                <span className="text-sm font-bold text-primary">{formatVND(item.unitPrice * item.quantity)}</span>
               </div>
-              <span className="text-sm font-bold text-primary">{formatVND(item.unitPrice * item.quantity)}</span>
+              {isLoggedIn && order.status === "completed" && (
+                openReviewIndex === index ? (
+                  <ReviewForm itemId={item.menuItemId} onDone={() => setOpenReviewIndex(null)} />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setOpenReviewIndex(index)}
+                    className="mt-1 text-xs font-semibold text-secondary hover:underline"
+                  >
+                    {t("rateReviewButton")}
+                  </button>
+                )
+              )}
             </div>
           ))}
         </div>
