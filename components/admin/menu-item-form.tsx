@@ -57,6 +57,7 @@ export function MenuItemForm({
   const [ownsPreviewUrl, setOwnsPreviewUrl] = useState(false)
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const supabase = createClient()
   const [extraGroups, setExtraGroups] = useState<MenuModifierGroup[]>([])
@@ -115,7 +116,16 @@ export function MenuItemForm({
   }, [imagePreviewUrl, ownsPreviewUrl])
 
   function selectFile(file: File | null) {
-    if (!file || !file.type.startsWith("image/")) return
+    if (!file) return
+    if (!file.type.startsWith("image/")) {
+      setError(t("imageInvalidTypeError"))
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError(t("imageTooLargeError"))
+      return
+    }
+    setError(null)
     if (imagePreviewUrl && ownsPreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
     setImageFile(file)
     setImagePreviewUrl(URL.createObjectURL(file))
@@ -199,7 +209,7 @@ export function MenuItemForm({
     }
   }
 
-  function handleSave() {
+  async function handleSave() {
     const parsedPrice = Number(price)
     if (!nameVi.trim() || !nameEn.trim() || !categoryId || !Number.isFinite(parsedPrice) || parsedPrice <= 0) {
       setError(t("requiredFieldsError"))
@@ -216,6 +226,26 @@ export function MenuItemForm({
     }
     setRecipeError(null)
 
+    // imagePreviewUrl is a blob: URL only when imageFile is also set (see
+    // selectFile/removeImage above, which always set/clear both together) —
+    // so a real upload is needed exactly when imageFile is present; any
+    // inherited real URL (editing without changing the photo) or null
+    // (removed) passes through untouched.
+    let finalImageUrl: string | null = imagePreviewUrl
+    if (imageFile) {
+      setIsUploading(true)
+      const path = `${crypto.randomUUID()}-${imageFile.name}`
+      const { error: uploadError } = await supabase.storage.from("menu-item-images").upload(path, imageFile)
+      if (uploadError) {
+        setError(t("imageUploadError"))
+        setIsUploading(false)
+        return
+      }
+      finalImageUrl = supabase.storage.from("menu-item-images").getPublicUrl(path).data.publicUrl
+      setIsUploading(false)
+    }
+
+    setError(null)
     onSave(
       {
         categoryId,
@@ -228,10 +258,7 @@ export function MenuItemForm({
         isAvailable,
         isPopular,
         hasSizeOptions,
-        // A blob: URL is per-tab/ephemeral (URL.createObjectURL) — never
-        // persist it to the real DB. Only pass through a real, persistable
-        // URL (inherited initialItem.imageUrl) or null.
-        imageUrl: imagePreviewUrl?.startsWith("blob:") ? null : imagePreviewUrl,
+        imageUrl: finalImageUrl,
       },
       selectedExtraIds,
       recipeEntries
@@ -331,7 +358,7 @@ export function MenuItemForm({
             {imagePreviewUrl ? (
               <div className="flex items-center gap-3 rounded-lg border p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imagePreviewUrl} alt="" className="h-16 w-16 rounded-lg object-cover" />
+                <img src={imagePreviewUrl} alt="" className="h-24 w-24 rounded-lg object-cover" />
                 <span className="flex-1 truncate text-sm text-muted-foreground">
                   {imageFile?.name ?? t("currentPhoto")}
                 </span>
@@ -620,7 +647,9 @@ export function MenuItemForm({
           <Button variant="outline" onClick={onCancel}>
             {t("cancel")}
           </Button>
-          <Button onClick={handleSave}>{t("save")}</Button>
+          <Button onClick={handleSave} disabled={isUploading}>
+            {isUploading ? t("uploadingButton") : t("save")}
+          </Button>
         </div>
       </div>
     </div>
