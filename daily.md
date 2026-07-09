@@ -1,4 +1,53 @@
-# Fixed: quick-add extras popup's Add button hidden behind BottomNav on mobile (z-index conflict)
+# Quick-add popup now handles size selection too (Black Coffee gets the same in-menu flow as Croissant)
+
+## Quick-add popup: size selection added (feature, new session)
+
+Follow-up to the z-index fix above — user then asked for Black Coffee
+(3 real sizes) to get the same in-menu quick-add flow as Butter
+Croissant (extras only), instead of navigating to the full Product
+Detail Page. Renamed `quick-add-extras-popup.tsx` →
+`components/customer/quick-add-popup.tsx` (`QuickAddExtrasPopup` →
+`QuickAddPopup`, since "extras" no longer describes its scope) and
+gave it a size section, copying Product Detail's `SegmentedControl`
+pattern and default-size logic (0-priceDelta size, else first size)
+exactly rather than inventing a new one — read `product-detail.tsx`
+in full first to confirm the pattern before replicating it.
+`menu-browser.tsx`'s `quickAdd()` now opens the popup whenever an item
+has size options **or** extras (previously size options always forced
+navigation to the full page, since the old popup couldn't resolve
+size); items with neither still add straight to cart, unchanged.
+
+**Real gap caught while generalizing, not just a rename**: the old
+popup assumed every modifier group was optional (its own doc comment
+said so) and never initialized `required`-group defaults the way
+Product Detail does — harmless while scope was "extras only" (this
+project's modifier groups all happen to be optional today), but would
+have silently produced a cart line missing a required modifier the
+moment quick-add started handling arbitrary items via this shared
+component. Fixed to mirror Product Detail's required-group handling
+exactly (default-select `options[0]` for required groups, block
+deselecting them) so the two entry points can't drift apart.
+
+**Process note — commit mistake caught immediately**: the first commit
+attempt (`git add fileA fileB nonexistent-deleted-path`) silently
+failed to stage `fileA`/`fileB` because one pathspec in the same
+invocation didn't match anything, and the commit went through anyway
+using only what `git rm` had already staged (the old file's deletion)
+— leaving `main` pushed in a broken state for about a minute (import
+pointing at a deleted file) before `git status` caught it and a second
+commit fixed it. Lesson: after any `git add` with multiple paths,
+check `git status`/`git diff --stat HEAD` before trusting the commit
+succeeded as intended, especially when one of the paths was just
+deleted in the same breath.
+
+Live-verified on `https://phadincoffee.vercel.app` at 390px width:
+Black Coffee's popup shows Size (S/M/L, M pre-selected) + Extra Shot,
+price updates live when switching to L (25.000đ → 33.000đ), Add stays
+on `/menu` and updates the cart bar. Regression-checked Croissant
+(still extras-only, no Size section, Add works) and a zero-option item
+Egg Coffee (still adds directly, no popup at all) — all three quick-add
+paths (direct-add / extras-only / size+extras) confirmed working
+side by side.
 
 ## Quick-add extras popup: Add button hidden behind BottomNav (fixed, new session)
 
