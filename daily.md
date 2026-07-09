@@ -1,4 +1,45 @@
-# PWA/iOS home-screen support added; StaffNav badge overlap fixed; KDS hydration warning still unresolved
+# Fixed: quick-add extras popup's Add button hidden behind BottomNav on mobile (z-index conflict)
+
+## Quick-add extras popup: Add button hidden behind BottomNav (fixed, new session)
+
+User reported the Menu page's "+" quick-add for **Butter Croissant**
+wasn't letting them submit — they had to go to the full Product Detail
+page instead, when they expected a small popup they could complete
+without leaving Menu. Used `systematic-debugging`: read
+`menu-browser.tsx`'s `quickAdd()` logic first (looked correct —
+`needsSizeDecision = hasSizeOptions && sizes.length > 0` gates
+navigation, falls through to the extras popup otherwise), then queried
+the actual DB row for both items to check the hypothesis that
+`has_size_options` was misconfigured — **Butter Croissant has
+`has_size_options: true` but `size_count: 0`**, so per the JS logic
+`needsSizeDecision` correctly evaluates `false` and it should already
+reach the popup branch. Static analysis said this should already work,
+so reproduced live instead of guessing further: at desktop width the
+popup opened fine; **at a 390px mobile viewport, the popup's price and
+Add button were completely hidden behind the fixed `BottomNav`** —
+both `components/motion/bottom-sheet.tsx`'s scrim and
+`components/motion/animated-tab-bar.tsx` (`BottomNav`) used `z-50`,
+and since `<BottomNav />` renders *after* `{children}` in
+`app/[locale]/(customer)/layout.tsx`, equal z-index ties break by DOM
+order and the nav bar painted on top, clipping the sheet's footer.
+Confirmed `BottomSheet` has exactly one consumer
+(`quick-add-extras-popup.tsx`) via grep, so bumped its z-index to
+`z-[60]` (checked every other `z-*` usage in the codebase first — no
+collisions). Live-verified the complete flow post-fix: Add button
+visible, tapped the Extra Shot modifier, tapped Add, popup closed,
+cart badge updated to 1, "View Cart · 1 item · 43.000đ" bar appeared —
+all without leaving `/menu`.
+
+**Not addressed (out of scope, noted but not touched)**: the user also
+mentioned Black Coffee's "+" still navigates to the full Product
+Detail page — that's because it has 3 real size options
+(`size_count: 3`), which `QuickAddExtrasPopup` doesn't support
+(extras-only by design, per its own doc comment). Making
+QuickAddExtrasPopup also handle size selection would be a real feature
+addition (new popup UI for a size picker), not a bug fix — the user's
+explicit final ask ("have button to submit **if its have extra
+option**") scoped this to the extras case specifically, which is now
+fixed. Revisit only if asked.
 
 ## PWA / iOS "Add to Home Screen" support (new, same session)
 
