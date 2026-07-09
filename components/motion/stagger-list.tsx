@@ -31,7 +31,7 @@ export function StaggerList({
 
 export function StaggerItem({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
-    <motion.div layout variants={ITEM_VARIANTS} exit="exit" className={className}>
+    <motion.div variants={ITEM_VARIANTS} exit="exit" className={className}>
       {children}
     </motion.div>
   )
