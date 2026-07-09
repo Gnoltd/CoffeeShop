@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { Link, usePathname } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
+import { SideDrawer } from "@/components/motion/side-drawer"
 
 const NAV_ITEMS = [
   { href: "/admin/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
@@ -31,14 +32,14 @@ const FULFILLMENT_NAV_ITEMS = [
   { href: "/staff/orders", labelKey: "kitchenDisplay", icon: CookingPot },
 ] as const
 
-export function AdminSidebar() {
+function AdminNavContent({ onNavigate }: { onNavigate?: () => void }) {
   const tBrand = useTranslations("Brand")
   const tNav = useTranslations("Nav")
   const pathname = usePathname()
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col overflow-y-auto border-r bg-card py-4">
-      <Link href="/" className="mb-6 flex items-center gap-2 px-4">
+    <>
+      <Link href="/" className="mb-6 flex items-center gap-2 px-4" onClick={onNavigate}>
         <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Coffee className="h-5 w-5" />
         </div>
@@ -51,6 +52,7 @@ export function AdminSidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors",
                 isActive
@@ -71,6 +73,7 @@ export function AdminSidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors",
                 isActive
@@ -84,6 +87,23 @@ export function AdminSidebar() {
           )
         })}
       </nav>
-    </aside>
+    </>
+  )
+}
+
+export function AdminSidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <>
+      <aside className="hidden w-64 shrink-0 flex-col overflow-y-auto border-r bg-card py-4 md:flex">
+        <AdminNavContent />
+      </aside>
+      {open && (
+        <SideDrawer onClose={onClose}>
+          <div className="flex h-full flex-col overflow-y-auto py-4">
+            <AdminNavContent onNavigate={onClose} />
+          </div>
+        </SideDrawer>
+      )}
+    </>
   )
 }
