@@ -16,7 +16,7 @@ export function KitchenSidebar({
   const isHistoryActive = pathname === "/staff/orders/history"
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r bg-muted/40 py-4">
+    <aside className="hidden w-64 shrink-0 flex-col border-r bg-muted/40 py-4 md:flex">
       <div className="flex items-center gap-3 px-6 pb-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary">
           <CookingPot className="h-5 w-5" />
