@@ -15,8 +15,8 @@ export function KitchenTopBar() {
           <Coffee className="h-5 w-5" />
           {tBrand("name")}
         </Link>
-        <div className="h-6 w-px bg-border" />
-        <span className="text-sm font-semibold text-muted-foreground">{t("stationLabel")}</span>
+        <div className="hidden h-6 w-px bg-border md:block" />
+        <span className="hidden text-sm font-semibold text-muted-foreground md:inline">{t("stationLabel")}</span>
       </div>
       <div className="mr-48 flex items-center gap-3 md:mr-52">
         <div className="flex items-center gap-2 rounded-lg border bg-muted px-3 py-1.5">
