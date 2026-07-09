@@ -9,7 +9,7 @@ export function KitchenTopBar() {
   const t = useTranslations("KitchenDisplay")
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card px-4">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card pl-4 pr-52 md:px-4">
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <Coffee className="h-5 w-5" />
@@ -18,7 +18,7 @@ export function KitchenTopBar() {
         <div className="hidden h-6 w-px bg-border md:block" />
         <span className="hidden text-sm font-semibold text-muted-foreground md:inline">{t("stationLabel")}</span>
       </div>
-      <div className="mr-64 flex items-center gap-3 md:mr-52">
+      <div className="flex items-center gap-3 md:mr-52">
         <div className="flex items-center gap-2 rounded-lg border bg-muted px-3 py-1.5">
           <span className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
           <span className="text-xs text-muted-foreground">{t("systemOnline")}</span>
