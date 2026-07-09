@@ -1,4 +1,59 @@
-# Admin/KDS/POS mobile-adaptive redesign: all 3 sub-projects shipped
+# Follow-up fixes: StaffNav badge overlap fixed; KDS hydration warning still unresolved despite real effort
+
+## Follow-up fixes (same session as the 3 mobile redesigns above)
+
+**StaffNav badge overlap: fixed and live-verified.** The `flex-wrap`
+attempt didn't actually trigger — brand (138px) + nav (~200px) fit
+inside the header's own 358px content width without needing to wrap,
+so `flex-wrap`'s own algorithm never kicked in (fitting-in-width and
+not-colliding-with-an-external-fixed-overlay are different
+conditions). Switched to an unconditional `flex-col`/`md:flex-row`
+stack instead — nav always renders on its own row below the badge
+cluster's fixed vertical span on mobile, regardless of whether it
+would have technically fit on one line. First attempt still had a 6px
+vertical / 9px horizontal corner clip (row 2 started 2px before the
+badge's bottom edge) — widened the row gap from `gap-2` to `gap-5`,
+re-measured, confirmed clear (row 2 now starts at y=52, badge bottom
+is y=46). Desktop confirmed pixel-identical (`header` height still
+exactly 56px, single row, unchanged). This completes the "every mobile
+redesign this session hit the same fixed badge cluster" pattern noted
+above — all four known instances (POS, KDS, Admin, and now StaffNav)
+are fixed.
+
+**KDS hydration warning (React #418): investigated hard, NOT fixed —
+reporting honestly rather than claiming success.** Changed
+`kitchen-display.tsx`'s `now` state from `useState(() => Date.now())`
+to `useState(0)` + setting the real value in a `useEffect` after
+mount — the textbook-correct fix for exactly this class of bug (a
+`Date.now()` lazy initializer runs once during SSR and again during
+client hydration, producing two different embedded values). This is a
+real, deployed improvement (removes a genuine mismatch source), but
+the live error **persists on `https://phadincoffee.vercel.app`
+regardless** — confirmed via direct Playwright `pageerror` capture,
+full stack trace pulled (unhelpful, fully minified, no component
+names). Extensive attempts to reproduce it anywhere *other than* the
+live Vercel deployment all failed to trigger it at all: local `next
+dev`, local `next start` (production build, matching Vercel's runtime
+mode) across 3 repeated loads, and local `next start` under
+CDP-emulated network throttling (500kbps down/up, 400ms latency,
+intended to simulate the real SSR→hydration timing gap Vercel's actual
+network round-trip introduces). Grepped every KDS-related file
+(`kitchen-*.tsx`, `orders/layout.tsx`, `useKitchenOrders.tsx`,
+`useTables.tsx`) for other `Date.now()`/`Math.random()`/`localStorage`-
+during-render patterns — found none; `useTables.tsx`'s `activeTable`
+already has its own `hydrated` guard flag, so that's not it either.
+**Root cause is still unidentified.** Given it's non-fatal (React
+recovers by re-rendering client-side; every KDS interaction has been
+verified working correctly across all three mobile redesigns' live
+testing despite this warning being present throughout), and given the
+`now=0` fix is a genuine improvement even if incomplete, this is being
+left as a known, low-priority, non-blocking issue rather than chased
+further right now. Next real lead if picked back up: deploy a
+temporary debug build with `next.config`'s `productionBrowserSourceMaps:
+true` (not currently enabled) to get an actual component name/line
+number out of the minified stack trace instead of guessing further, or
+add explicit `console.log` instrumentation to a suspect render path
+and read Vercel's function logs.
 
 ## Status
 
