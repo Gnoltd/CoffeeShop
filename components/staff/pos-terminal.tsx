@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
+import { AnimatePresence, motion } from "framer-motion"
 import { Coffee, CupSoda, Cookie, Milk, Search, Minus, Plus, Trash2, ArrowRight, ArrowLeft } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
@@ -46,6 +47,8 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash")
   const [isCharging, setIsCharging] = useState(false)
   const [chargeError, setChargeError] = useState<string | null>(null)
+  const [mobileView, setMobileView] = useState<"menu" | "order">("menu")
+  const orderItemCount = order.reduce((n, line) => n + line.quantity, 0)
 
   const selectedTable = tables.find((tbl) => tbl.id === selectedTableId) ?? tables[0]
 
@@ -120,6 +123,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
       })
       if (invokeError || data?.error) throw invokeError ?? new Error(data.error)
       setOrder([])
+      setMobileView("menu")
     } catch {
       setChargeError(t("chargeError"))
     } finally {
@@ -129,7 +133,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
 
   return (
     <div className="flex h-full overflow-hidden">
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className={cn("flex-1 flex-col overflow-hidden", mobileView === "order" ? "hidden md:flex" : "flex")}>
         <div className="border-b p-4">
           <div className="relative max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -166,7 +170,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
           ))}
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 pb-24 md:pb-4">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-4">
             {visibleItems.map((item) => {
               const Icon = ICONS[item.icon]
@@ -191,7 +195,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
         </div>
       </div>
 
-      <aside className="flex w-[380px] shrink-0 flex-col border-l bg-muted">
+      <aside className="hidden w-[380px] shrink-0 flex-col border-l bg-muted md:flex">
         <OrderPanel
           order={order}
           updateQuantity={updateQuantity}
@@ -211,6 +215,50 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
           handleCharge={handleCharge}
         />
       </aside>
+
+      {mobileView === "menu" && order.length > 0 && (
+        <button
+          type="button"
+          onClick={() => setMobileView("order")}
+          className="fixed inset-x-4 bottom-4 z-20 flex items-center justify-between rounded-xl bg-primary px-5 py-4 text-primary-foreground shadow-lg md:hidden"
+        >
+          <span className="text-sm font-bold">{t("viewOrder", { count: orderItemCount })}</span>
+          <span className="text-sm font-bold">{formatVND(total)}</span>
+        </button>
+      )}
+
+      <AnimatePresence>
+        {mobileView === "order" && (
+          <motion.div
+            key="mobile-order"
+            className="fixed inset-0 z-30 flex flex-col bg-muted md:hidden"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <OrderPanel
+              order={order}
+              updateQuantity={updateQuantity}
+              clearOrder={() => setOrder([])}
+              orderType={orderType}
+              setOrderType={setOrderType}
+              tables={tables}
+              selectedTableId={selectedTableId}
+              setSelectedTableId={setSelectedTableId}
+              paymentMethod={paymentMethod}
+              setPaymentMethod={setPaymentMethod}
+              subtotal={subtotal}
+              tax={tax}
+              total={total}
+              chargeError={chargeError}
+              isCharging={isCharging}
+              handleCharge={handleCharge}
+              onBack={() => setMobileView("menu")}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
