@@ -20,6 +20,10 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [view, setView] = useState<"login" | "requestReset" | "resetSent">("login")
+  const [resetEmail, setResetEmail] = useState("")
+  const [resetError, setResetError] = useState<string | null>(null)
+  const [isSendingReset, setIsSendingReset] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -48,6 +52,97 @@ export function LoginForm() {
       provider: "google",
       options: { redirectTo: `${window.location.origin}/${locale}/callback` },
     })
+  }
+
+  async function handleSendResetLink() {
+    setResetError(null)
+    setIsSendingReset(true)
+    const supabase = createClient()
+    const { error: resetSendError } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/${locale}/reset-password`,
+    })
+    setIsSendingReset(false)
+    if (resetSendError) {
+      setResetError(resetSendError.message)
+      return
+    }
+    setView("resetSent")
+  }
+
+  if (view === "resetSent") {
+    return (
+      <div className="mx-auto w-full max-w-sm px-4 text-center">
+        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
+          <Mail className="h-8 w-8 text-primary" />
+        </div>
+        <h1 className="text-xl font-bold text-card-foreground">{t("checkEmailTitle")}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{t("resetEmailSentBody")}</p>
+        <button
+          type="button"
+          onClick={() => setView("login")}
+          className="mt-6 inline-block font-bold text-primary hover:underline"
+        >
+          {t("login")}
+        </button>
+      </div>
+    )
+  }
+
+  if (view === "requestReset") {
+    return (
+      <div className="mx-auto w-full max-w-sm px-4">
+        <div className="mb-6 flex flex-col items-center gap-3 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/15">
+            <Mail className="h-8 w-8 text-primary" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-card-foreground">{t("resetPasswordTitle")}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t("resetPasswordBody")}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <label htmlFor="reset-email" className="block px-1 text-xs font-medium text-muted-foreground">
+              {t("emailLabel")}
+            </label>
+            <div className="relative">
+              <Input
+                id="reset-email"
+                type="email"
+                required
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder={t("emailPlaceholder")}
+                className="h-12 rounded-xl pr-10"
+              />
+              <Mail className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            </div>
+          </div>
+
+          {resetError && (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{resetError}</p>
+          )}
+
+          <Button
+            type="button"
+            onClick={handleSendResetLink}
+            disabled={isSendingReset}
+            className="h-12 w-full rounded-xl text-base font-bold"
+          >
+            {isSendingReset ? t("sendingResetLink") : t("sendResetLinkButton")}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => setView("login")}
+            className="w-full text-center text-sm font-bold text-primary hover:underline"
+          >
+            {t("backToLogin")}
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -105,12 +200,13 @@ export function LoginForm() {
             </button>
           </div>
           <div className="flex justify-end">
-            <span
-              className="cursor-not-allowed text-xs text-muted-foreground opacity-60"
-              title="Not implemented yet — no password-reset flow wired up"
+            <button
+              type="button"
+              onClick={() => setView("requestReset")}
+              className="text-xs font-medium text-primary hover:underline"
             >
               {t("forgotPassword")}
-            </span>
+            </button>
           </div>
         </div>
 
