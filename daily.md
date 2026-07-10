@@ -1,4 +1,53 @@
-# Two real bugs fixed: /profile's mock loyalty points, Order History's silent 7-day default
+# Real profile persistence shipped; scheduled cloud routine only got partway through
+
+## Real persistence for Profile's name/phone, real read-only email (shipped, new session)
+
+Implements `docs/superpowers/plans/2026-07-10-profile-real-persistence.md`.
+New `lib/supabase/profile-data.ts` (`getProfile`/`updateProfile`, DI'd
+like every other query module) wired into `profile-view.tsx` —
+replaces the hardcoded `INITIAL_PROFILE` mock. Name/phone keep the
+existing inline pencil-edit flow, now writing through
+`profiles.full_name`/`profiles.phone` via plain RLS-scoped updates (no
+RPC needed, `profiles_update_own` already authorizes it), with an
+inline error message on save failure (mirrors
+`tables-management.tsx`'s `saveEditing` pattern) instead of failing
+silently. Email is now the real logged-in Auth email, deliberately
+**read-only** — no `profiles.email` column exists, and editing the
+real Auth email would trigger Supabase's confirmation-email flow,
+which this project's shared email sender already has a documented low
+rate limit on.
+
+**Note on how this actually got built**: earlier tonight this was
+scheduled as a one-time cloud routine (`RemoteTrigger`, "MSI" local
+bridge environment) to build both this plan and the Admin/KDS/POS nav
+switcher plan overnight. The routine's claude.ai page reported
+"completed," but checking the repo afterward showed it had only gotten
+through 3 of this plan's 6 tasks (query layer, i18n key, wiring the
+UI) — typechecked and tested clean, but never ran the build/live-verify
+step, never pushed to `main`, never touched the nav switcher plan at
+all, and never wrote the "if you hit a blocker, document it" note it
+was explicitly instructed to leave. So "completed" on the routine's
+own status page meant "the cloud session ended," not "the plan
+finished." Picked up from there in a live session instead: `.next`
+had to be cleared first (`rm -rf .next` — a stray `EPERM` on
+`next build` unlinking old chunks, unrelated to the code, likely a
+leftover process holding a file lock; ~20 stray `node.exe` processes
+were observed running, left untouched rather than killed blindly),
+then build/push/live-verify completed normally. Live-verified on
+`https://phadincoffee.vercel.app` as the admin test account: real
+name/phone shown (not the old mock), email shown read-only with the
+real address and no edit control, editing the name and reloading
+confirmed the new value persisted through a real write — then reset
+the test account's name back via a direct SQL update so the admin
+account's data stays clean for future testing.
+
+**Lesson for next time a build gets scheduled this way**: verify
+completion by checking the actual repo state (`git log`, `git status`
+against `origin/main`) and `daily.md`, not just the routine's own
+"completed" status — that status reflects whether the session exited,
+not whether the plan was fulfilled.
+
+
 
 ## Profile loyalty points + Order History missing-orders bugs (fixed, new session)
 
