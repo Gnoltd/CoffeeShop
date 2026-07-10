@@ -1,6 +1,18 @@
 # Open / not started
 
-1. **Live-verify the Admin Dashboard by hand** — KPIs are real
+1. **Profile Settings — Connect Google not yet verified.** Change
+   Password is shipped and fully live-verified (real password-change
+   round trip: old password rejected, new password works, confirmed on
+   the test customer account, then restored). "Connect Google"/"Unlink"
+   (`components/customer/profile-settings-view.tsx`,
+   `supabase.auth.linkIdentity`/`unlinkIdentity`) can't be verified the
+   same way — needs a real Google account clicking through the real
+   consent screen, same limitation as Google sign-in. **Also needs
+   confirming**: "Manual linking" is enabled in the Supabase Dashboard
+   (Authentication → configuration) — off by default, required for
+   `linkIdentity()` to work at all, no MCP tool for it. Plan:
+   `docs/superpowers/plans/2026-07-11-profile-settings.md`.
+2. **Live-verify the Admin Dashboard by hand** — KPIs are real
    (`get_dashboard_stats()`, migration `0026`), but a full manual
    walkthrough hasn't been confirmed: real KPI numbers (cross-check
    Orders Today against Staff Order History), the 7-day chart's
@@ -8,7 +20,7 @@
    Realtime update after placing a new paid order, and the Excel
    export (all 5 sheets, correct Vietnamese text, real numeric cells
    for revenue/quantity columns — not text).
-2. **Shift closing feature — live verification not confirmed done.**
+3. **Shift closing feature — live verification not confirmed done.**
    Code for Tasks 1-4 is committed and pushed (`shifts` table +
    `orders.paid_at` + RPCs, query layer, i18n, `/admin/shift` page +
    nav entries), but Task 5 (live-verify the open/report/close flow +
