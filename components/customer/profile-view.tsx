@@ -280,11 +280,9 @@ export function ProfileView({ role = null }: { role?: string | null }) {
           </span>
         </button>
 
-        <button
-          type="button"
-          disabled
-          title="Not implemented yet — no customer settings page"
-          className="flex w-full items-center justify-between border-b p-4 text-left opacity-50"
+        <Link
+          href="/profile/settings"
+          className="flex items-center justify-between border-b p-4 transition-colors hover:bg-muted"
         >
           <span className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -293,7 +291,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
             <span className="font-medium text-card-foreground">{t("menuSettings")}</span>
           </span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </button>
+        </Link>
 
         <PressFeedback
           type="button"
