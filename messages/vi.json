@@ -107,6 +107,7 @@
     "languageEn": "English",
     "save": "Lưu",
     "cancel": "Hủy",
+    "saveError": "Không thể lưu — vui lòng thử lại.",
     "staffAccessHeadlineStaff": "Tài Khoản Nhân Viên",
     "staffAccessSubtextStaff": "Bạn có quyền truy cập nhân viên.",
     "staffAccessButtonStaff": "Đến Quầy Order",

@@ -107,6 +107,7 @@
     "languageEn": "English",
     "save": "Save",
     "cancel": "Cancel",
+    "saveError": "Couldn't save — please try again.",
     "staffAccessHeadlineStaff": "Staff Account",
     "staffAccessSubtextStaff": "You have staff access.",
     "staffAccessButtonStaff": "Go to POS",
