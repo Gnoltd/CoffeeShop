@@ -43,7 +43,6 @@
   staff-side "Mark Cash"/"Undo" surface (unlike dine-in's table card in
   KDS) — only the customer's own tracking page can choose/change a
   method for it. Pickup has no table to attach that control to.
-- Rewards catalog/redemption UI is disabled+tooltip — no backing table.
 
 Two throwaway test accounts (staff/customer roles, credentials in
 `.env.local` and the gitignored `test-accounts.md`) are kept

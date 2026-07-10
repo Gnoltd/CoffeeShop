@@ -269,8 +269,19 @@ you need to find your way around; check the dated docs for full detail.
   server-side for the "Go to [X]" shortcut shown to logged-in
   staff/admin browsing the customer side.
 - Loyalty rates are real (`loyalty_settings`: 10,000 VND = 1 point, 100
-  pts = 10,000 VND off); rewards catalog/redemption UI is
-  disabled+tooltip (no table).
+  pts = 10,000 VND off). Rewards catalog/redemption is real (migration
+  `0035`): `rewards` table (4 seeded rewards, bilingual `name_*`/
+  `description_*`, `points_cost`, `active`, `sort_order`) +
+  `reward_redemptions` table + `redeem_reward(p_reward_id)` RPC
+  (`security definer`, resolves `auth.uid()`, checks active + sufficient
+  balance, then atomically inserts a `reward_redemptions` row + a
+  `redeem` `loyalty_transactions` row + decrements the balance; raises
+  machine-readable `not_authenticated`/`reward_not_found`/
+  `reward_inactive`/`insufficient_points` on failure). Query layer:
+  `lib/supabase/rewards-data.ts` (`getRewardsCatalog`/`redeemReward`);
+  the Loyalty page's "Redeem Rewards" card opens
+  `components/customer/rewards-catalog-modal.tsx` (a `BottomSheet`),
+  which re-fetches balance + transactions on a successful redemption.
 - Profile's name/phone are real (`lib/supabase/profile-data.ts`,
   `profiles_update_own` RLS), inline pencil-edit writes through directly
   (no RPC needed). Email is the real logged-in Auth email, deliberately

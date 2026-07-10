@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { Star, Info, Gift, ArrowRight, CheckCircle2, Wallet, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -10,6 +10,7 @@ import { getLoyaltyBalance, getLoyaltyTierProgress, getLoyaltyTransactions, type
 import { AnimatedCounter } from "@/components/motion/animated-counter"
 import { ProgressRing } from "@/components/motion/progress-ring"
 import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
+import { RewardsCatalogModal } from "@/components/customer/rewards-catalog-modal"
 
 const TRANSACTION_META: Record<
   LoyaltyTransactionType,
@@ -27,6 +28,15 @@ export function LoyaltyView() {
   const [balance, setBalance] = useState(0)
   const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([])
   const [tier, setTier] = useState<LoyaltyTierProgress | null>(null)
+  const [rewardsOpen, setRewardsOpen] = useState(false)
+
+  const refreshLoyalty = useCallback(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      getLoyaltyBalance(supabase, user.id).then(setBalance)
+    })
+    getLoyaltyTransactions(supabase).then(setTransactions)
+  }, [supabase])
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -81,9 +91,8 @@ export function LoyaltyView() {
         </div>
         <button
           type="button"
-          disabled
-          title="Not implemented yet — no rewards catalog to redeem from"
-          className="flex flex-col justify-between rounded-xl bg-primary/40 p-4 text-left text-primary-foreground opacity-70"
+          onClick={() => setRewardsOpen(true)}
+          className="flex flex-col justify-between rounded-xl bg-primary p-4 text-left text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
         >
           <h3 className="font-bold">{t("redeemAction")}</h3>
           <div className="mt-4 flex justify-end">
@@ -149,6 +158,14 @@ export function LoyaltyView() {
           </StaggerList>
         )}
       </section>
+
+      {rewardsOpen && (
+        <RewardsCatalogModal
+          balance={balance}
+          onClose={() => setRewardsOpen(false)}
+          onRedeemed={refreshLoyalty}
+        />
+      )}
     </div>
   )
 }
