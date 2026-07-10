@@ -13,14 +13,7 @@
    Landing/Auth section). Needs a Google OAuth client set up and wired
    through Supabase Auth's provider config (Dashboard-only, no MCP
    tool for this) before the buttons can go live.
-3. **Admin/KDS/POS nav-switcher plan — live verification not confirmed
-   done.** Code for all 5 tasks is committed (`canAccessAdmin` helper,
-   `StaffNav`/`KitchenSidebar` role-gated Admin links, `staff/orders`
-   layout split, POS passing real role to `StaffNav`), but Task 6
-   (live-verify on `https://phadincoffee.vercel.app` + this file's
-   entry) has no recorded evidence of having run. Plan:
-   `docs/superpowers/plans/2026-07-10-admin-kds-pos-nav-switcher.md`.
-4. **Shift closing feature — live verification not confirmed done.**
+3. **Shift closing feature — live verification not confirmed done.**
    Code for Tasks 1-4 is committed and pushed (`shifts` table +
    `orders.paid_at` + RPCs, query layer, i18n, `/admin/shift` page +
    nav entries), but Task 5 (live-verify the open/report/close flow +
