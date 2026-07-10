@@ -58,6 +58,8 @@
     "hidePassword": "Hide",
     "forgotPassword": "Forgot password?",
     "continueWithGoogle": "Continue with Google",
+    "oauthRedirecting": "Signing you in…",
+    "oauthCallbackError": "Something went wrong signing in with Google.",
     "or": "or",
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",

@@ -58,6 +58,8 @@
     "hidePassword": "Ẩn",
     "forgotPassword": "Quên mật khẩu?",
     "continueWithGoogle": "Tiếp Tục Với Google",
+    "oauthRedirecting": "Đang đăng nhập…",
+    "oauthCallbackError": "Có lỗi xảy ra khi đăng nhập bằng Google.",
     "or": "hoặc",
     "noAccount": "Chưa có tài khoản?",
     "haveAccount": "Đã có tài khoản?",
