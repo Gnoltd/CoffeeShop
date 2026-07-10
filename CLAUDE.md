@@ -226,8 +226,12 @@ you need to find your way around; check the dated docs for full detail.
 
 ### Landing / Auth / Profile / Loyalty / Order History
 - Login/Signup use real Supabase Auth; redirect to `ROLE_HOME[role]`
-  (`lib/roles.ts`, shared with `middleware.ts`). Google OAuth buttons
-  are disabled+tooltip (no client configured). Signup email
+  (`lib/roles.ts`, shared with `middleware.ts`). Google OAuth sign-in
+  is real (both buttons call `signInWithOAuth`; a callback page at
+  `app/[locale]/(auth)/callback/page.tsx` — note this resolves to the
+  bare URL `/<locale>/callback`, since `(auth)` is a route group and
+  contributes no URL segment, same as `login`/`signup` — resolves role
+  via `getCurrentRole` and redirects to `ROLE_HOME[role]`). Signup email
   confirmation frequently fails — this hosted project's shared email
   sender has a very low rate limit; no MCP tool can configure SMTP.
 - `lib/get-current-role.ts` (`getCurrentRole(supabase)`) resolves role
@@ -525,10 +529,10 @@ correction, real reviews, real menu-image upload, and real Profile
 persistence are shipped and verified live. Real Admin Dashboard KPIs,
 the Admin/KDS/POS nav-link gaps, and shift closing (above) are shipped
 but still need a hand live-verification pass — see `daily.md`'s Open
-list. Remaining known-mock surfaces: loyalty tier progress (no tier
-table), rewards catalog/redemption (no table), Google sign-in
-(disabled, no OAuth client configured) — check `daily.md` for current
-status. When adding anything new:
+list. Google sign-in is shipped and live-verified end-to-end. Remaining
+known-mock surfaces: loyalty tier progress (no tier table), rewards
+catalog/redemption (no table) — check `daily.md` for current status.
+When adding anything new:
 shared brand tokens, `useTranslations`/`getTranslations` with both
 message files updated together, Base UI's `render` prop for polymorphic
 Buttons, "disabled + tooltip" for unbacked actions, DI'd query-layer
