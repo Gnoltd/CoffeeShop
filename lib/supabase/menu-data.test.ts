@@ -7,6 +7,7 @@ import { getModifierGroups } from "./menu-data"
 import { createModifierGroup } from "./menu-data"
 import { setItemModifierGroups } from "./menu-data"
 import { updateModifierGroup } from "./menu-data"
+import { setItemSizes } from "./menu-data"
 
 function fakeSupabase(rows: unknown[]) {
   return {
@@ -45,7 +46,7 @@ describe("getMenuItems", () => {
       is_popular: true,
       image_url: null,
       has_size_options: true,
-      menu_item_sizes: [{ id: "size-1", name: "M", price_delta: 0 }],
+      menu_item_sizes: [{ id: "size-1", name: "M", price_delta: 0, sort_order: 0 }],
       menu_item_modifier_groups: [
         {
           modifier_groups: {
@@ -63,7 +64,9 @@ describe("getMenuItems", () => {
     const supabase = {
       from: () => ({
         select: () => ({
-          order: () => Promise.resolve({ data: [row], error: null }),
+          order: () => ({
+            order: () => Promise.resolve({ data: [row], error: null }),
+          }),
         }),
       }),
     } as unknown as SupabaseClient
@@ -84,7 +87,7 @@ describe("getMenuItems", () => {
         isPopular: true,
         imageUrl: null,
         hasSizeOptions: true,
-        sizes: [{ id: "size-1", name: "M", priceDelta: 0 }],
+        sizes: [{ id: "size-1", name: "M", priceDelta: 0, sortOrder: 0 }],
         modifierGroups: [
           {
             id: "grp-1",
@@ -273,6 +276,46 @@ describe("setItemModifierGroups", () => {
     } as unknown as SupabaseClient
 
     await setItemModifierGroups(supabase, "item-1", [])
+
+    expect(deleteEqSpy).toHaveBeenCalledWith("menu_item_id", "item-1")
+    expect(insertSpy).not.toHaveBeenCalled()
+  })
+})
+
+describe("setItemSizes", () => {
+  it("deletes existing sizes then inserts the new set with sort_order matching array index", async () => {
+    const deleteEqSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const insertSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const supabase = {
+      from: () => ({
+        delete: () => ({ eq: deleteEqSpy }),
+        insert: insertSpy,
+      }),
+    } as unknown as SupabaseClient
+
+    await setItemSizes(supabase, "item-1", [
+      { name: "M", priceDelta: 0 },
+      { name: "L", priceDelta: 8000 },
+    ])
+
+    expect(deleteEqSpy).toHaveBeenCalledWith("menu_item_id", "item-1")
+    expect(insertSpy).toHaveBeenCalledWith([
+      { menu_item_id: "item-1", name: "M", price_delta: 0, sort_order: 0 },
+      { menu_item_id: "item-1", name: "L", price_delta: 8000, sort_order: 1 },
+    ])
+  })
+
+  it("skips the insert call when sizes is empty", async () => {
+    const deleteEqSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const insertSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const supabase = {
+      from: () => ({
+        delete: () => ({ eq: deleteEqSpy }),
+        insert: insertSpy,
+      }),
+    } as unknown as SupabaseClient
+
+    await setItemSizes(supabase, "item-1", [])
 
     expect(deleteEqSpy).toHaveBeenCalledWith("menu_item_id", "item-1")
     expect(insertSpy).not.toHaveBeenCalled()

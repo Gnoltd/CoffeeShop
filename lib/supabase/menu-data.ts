@@ -13,6 +13,12 @@ export type MenuItemSize = {
   id: string
   name: string
   priceDelta: number
+  sortOrder: number
+}
+
+export type MenuItemSizeInput = {
+  name: string
+  priceDelta: number
 }
 
 export type MenuModifierOption = {
@@ -85,7 +91,7 @@ export async function getCategories(supabase: SupabaseClient): Promise<MenuCateg
 const MENU_ITEM_SELECT = `
   id, category_id, name_vi, name_en, description_vi, description_en,
   base_price, icon, is_available, is_popular, image_url, has_size_options,
-  menu_item_sizes ( id, name, price_delta ),
+  menu_item_sizes ( id, name, price_delta, sort_order ),
   menu_item_modifier_groups (
     modifier_groups ( id, name_vi, name_en, is_required, modifiers ( id, name_vi, name_en, price_delta ) )
   )
@@ -95,6 +101,7 @@ type SizeRow = {
   id: string
   name: string
   price_delta: number
+  sort_order: number
 }
 
 type ModifierRow = {
@@ -151,6 +158,7 @@ function mapMenuItemRow(row: MenuItemRow): MenuItem {
       id: s.id,
       name: s.name,
       priceDelta: s.price_delta,
+      sortOrder: s.sort_order,
     })),
     modifierGroups: (row.menu_item_modifier_groups ?? []).map((link) => ({
       id: link.modifier_groups.id,
@@ -168,7 +176,11 @@ function mapMenuItemRow(row: MenuItemRow): MenuItem {
 }
 
 export async function getMenuItems(supabase: SupabaseClient): Promise<MenuItem[]> {
-  const { data, error } = await supabase.from("menu_items").select(MENU_ITEM_SELECT).order("name_en")
+  const { data, error } = await supabase
+    .from("menu_items")
+    .select(MENU_ITEM_SELECT)
+    .order("name_en")
+    .order("sort_order", { foreignTable: "menu_item_sizes" })
   if (error) throw error
   return ((data ?? []) as unknown as MenuItemRow[]).map(mapMenuItemRow)
 }
@@ -178,6 +190,7 @@ export async function getMenuItemById(supabase: SupabaseClient, id: string): Pro
     .from("menu_items")
     .select(MENU_ITEM_SELECT)
     .eq("id", id)
+    .order("sort_order", { foreignTable: "menu_item_sizes" })
     .maybeSingle()
   if (error) throw error
   return data ? mapMenuItemRow(data as unknown as MenuItemRow) : null
@@ -345,5 +358,26 @@ export async function setItemModifierGroups(
   const { error: insertError } = await supabase
     .from("menu_item_modifier_groups")
     .insert(groupIds.map((groupId) => ({ menu_item_id: itemId, modifier_group_id: groupId })))
+  if (insertError) throw insertError
+}
+
+export async function setItemSizes(
+  supabase: SupabaseClient,
+  itemId: string,
+  sizes: MenuItemSizeInput[]
+): Promise<void> {
+  const { error: deleteError } = await supabase.from("menu_item_sizes").delete().eq("menu_item_id", itemId)
+  if (deleteError) throw deleteError
+
+  if (sizes.length === 0) return
+
+  const { error: insertError } = await supabase.from("menu_item_sizes").insert(
+    sizes.map((size, index) => ({
+      menu_item_id: itemId,
+      name: size.name,
+      price_delta: size.priceDelta,
+      sort_order: index,
+    }))
+  )
   if (insertError) throw insertError
 }
