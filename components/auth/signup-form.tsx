@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { Coffee, User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight } from "lucide-react"
 import { Link, useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { ROLE_HOME } from "@/lib/roles"
 
 export function SignupForm() {
   const t = useTranslations("Auth")
+  const locale = useLocale()
   const router = useRouter()
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
@@ -51,6 +52,14 @@ export function SignupForm() {
 
     await supabase.from("profiles").update({ full_name: name, phone }).eq("id", data.user!.id)
     router.push(ROLE_HOME.customer)
+  }
+
+  async function handleGoogleSignIn() {
+    const supabase = createClient()
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/${locale}/auth/callback` },
+    })
   }
 
   if (confirmEmailSent) {
@@ -188,8 +197,7 @@ export function SignupForm() {
 
       <Button
         variant="outline"
-        disabled
-        title="Not implemented yet — Google OAuth not wired up"
+        onClick={handleGoogleSignIn}
         className="h-12 w-full gap-3 rounded-xl text-sm font-medium"
       >
         <GoogleIcon />
