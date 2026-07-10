@@ -74,7 +74,22 @@
     "loginError": "Login failed",
     "signupError": "Sign up failed",
     "checkEmailTitle": "Check your email",
-    "checkEmailBody": "We've sent a confirmation link to your email address. Click it to activate your account, then come back and log in."
+    "checkEmailBody": "We've sent a confirmation link to your email address. Click it to activate your account, then come back and log in.",
+    "resetPasswordTitle": "Reset Password",
+    "resetPasswordBody": "Enter your email and we'll send you a link to reset your password.",
+    "sendResetLinkButton": "Send Reset Link",
+    "sendingResetLink": "Sending…",
+    "backToLogin": "Back to Login",
+    "resetEmailSentBody": "We've sent a password reset link to your email address. Click it to set a new password.",
+    "verifyingResetLink": "Verifying reset link…",
+    "newPasswordLabel": "New Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "passwordMismatchError": "Passwords don't match.",
+    "passwordTooShortError": "Password must be at least 6 characters.",
+    "setNewPasswordButton": "Set New Password",
+    "passwordResetSuccess": "Password reset! Redirecting…",
+    "resetLinkExpiredError": "This reset link is invalid or has expired.",
+    "passwordUpdateError": "Couldn't update password — please try again."
   },
   "Customer": {
     "back": "Back",

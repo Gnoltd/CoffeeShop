@@ -74,7 +74,22 @@
     "loginError": "Đăng nhập thất bại",
     "signupError": "Đăng ký thất bại",
     "checkEmailTitle": "Kiểm tra email của bạn",
-    "checkEmailBody": "Chúng tôi đã gửi một liên kết xác nhận đến email của bạn. Nhấp vào đó để kích hoạt tài khoản, sau đó quay lại đăng nhập."
+    "checkEmailBody": "Chúng tôi đã gửi một liên kết xác nhận đến email của bạn. Nhấp vào đó để kích hoạt tài khoản, sau đó quay lại đăng nhập.",
+    "resetPasswordTitle": "Đặt Lại Mật Khẩu",
+    "resetPasswordBody": "Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu.",
+    "sendResetLinkButton": "Gửi Liên Kết Đặt Lại",
+    "sendingResetLink": "Đang gửi…",
+    "backToLogin": "Quay Lại Đăng Nhập",
+    "resetEmailSentBody": "Chúng tôi đã gửi liên kết đặt lại mật khẩu đến email của bạn. Nhấp vào đó để đặt mật khẩu mới.",
+    "verifyingResetLink": "Đang xác minh liên kết…",
+    "newPasswordLabel": "Mật Khẩu Mới",
+    "confirmPasswordLabel": "Xác Nhận Mật Khẩu",
+    "passwordMismatchError": "Mật khẩu không khớp.",
+    "passwordTooShortError": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "setNewPasswordButton": "Đặt Mật Khẩu Mới",
+    "passwordResetSuccess": "Đã đặt lại mật khẩu! Đang chuyển hướng…",
+    "resetLinkExpiredError": "Liên kết đặt lại này không hợp lệ hoặc đã hết hạn.",
+    "passwordUpdateError": "Không thể cập nhật mật khẩu — vui lòng thử lại."
   },
   "Customer": {
     "back": "Quay Lại",
