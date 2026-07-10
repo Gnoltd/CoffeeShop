@@ -13,11 +13,13 @@ import {
   deleteMenuItem,
   getMenuItemById,
   setItemModifierGroups,
+  setItemSizes,
   updateMenuItem,
   type MenuCategory,
   type MenuIcon,
   type MenuItem,
   type MenuItemInput,
+  type MenuItemSizeInput,
 } from "@/lib/supabase/menu-data"
 import { setMenuItemIngredients, type RecipeEntry } from "@/lib/supabase/inventory-data"
 import { MenuItemForm } from "@/components/admin/menu-item-form"
@@ -113,6 +115,7 @@ export function MenuManagement({
     input: MenuItemInput,
     extraGroupIds: string[],
     recipeEntries: RecipeEntry[],
+    sizes: MenuItemSizeInput[],
     editingId: string | null
   ) {
     setError(null)
@@ -122,6 +125,7 @@ export function MenuManagement({
         : await createMenuItem(supabase, input)
       await setItemModifierGroups(supabase, saved.id, extraGroupIds)
       await setMenuItemIngredients(supabase, saved.id, recipeEntries)
+      await setItemSizes(supabase, saved.id, sizes)
       const refreshed = (await getMenuItemById(supabase, saved.id)) ?? saved
       setItems((prev) =>
         editingId ? prev.map((item) => (item.id === editingId ? refreshed : item)) : [refreshed, ...prev]
@@ -154,8 +158,8 @@ export function MenuManagement({
           categories={categories}
           initialItem={formMode.type === "edit" ? formMode.item : undefined}
           onCancel={() => setFormMode(null)}
-          onSave={(input, extraGroupIds, recipeEntries) =>
-            saveItem(input, extraGroupIds, recipeEntries, formMode?.type === "edit" ? formMode.item.id : null)
+          onSave={(input, extraGroupIds, recipeEntries, sizes) =>
+            saveItem(input, extraGroupIds, recipeEntries, sizes, formMode?.type === "edit" ? formMode.item.id : null)
           }
         />
       )}
