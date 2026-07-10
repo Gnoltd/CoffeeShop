@@ -14,6 +14,15 @@
    nav entries), but Task 5 (live-verify the open/report/close flow +
    this file's entry) has no recorded evidence of having run. Plan:
    `docs/superpowers/plans/2026-07-10-shift-closing.md`.
+3. **Forgot password — real-email round trip unconfirmed.** Shipped and
+   live-verified end-to-end except for the actual emailed link: request
+   flow (email entry → "check your email" screen, works regardless of
+   whether the address is registered), navigation between views, and
+   `/reset-password`'s expired-link handling with no valid session all
+   confirmed live. Clicking a real reset email, setting a new password,
+   and confirming login with it afterward hasn't been confirmed — same
+   documented shared-email-sender rate-limit risk as signup confirmation
+   and Google-linking. Plan: `docs/superpowers/plans/2026-07-11-forgot-password.md`.
 
 ## Known gaps (documented, not hidden — pick up whenever that area is next touched)
 
