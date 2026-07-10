@@ -57,7 +57,9 @@ export function MenuItemReviewsPanel({ itemId }: { itemId: string }) {
           {reviews.map((review) => (
             <div key={review.id} className="space-y-1.5 border-b pb-3 last:border-b-0 last:pb-0">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold text-card-foreground">{review.reviewerName}</span>
+                <span className="text-sm font-semibold text-card-foreground">
+                  {review.reviewerName ?? t("anonymousReviewer")}
+                </span>
                 <StarRating rating={review.rating} />
               </div>
               <p className="text-sm text-card-foreground">{review.comment}</p>

@@ -296,7 +296,8 @@
     "reviewCount": "{count} đánh giá",
     "daysAgo": "{days} ngày trước",
     "noReviewsYet": "Chưa có đánh giá nào.",
-    "shopReplyLabel": "Phản hồi từ quán"
+    "shopReplyLabel": "Phản hồi từ quán",
+    "anonymousReviewer": "Khách hàng"
   },
   "Pos": {
     "searchPlaceholder": "Tìm kiếm món...",
@@ -486,6 +487,7 @@
     "replyButton": "Phản hồi",
     "replySubmitError": "Không thể đăng phản hồi — vui lòng thử lại.",
     "shopReplyLabel": "Phản hồi từ quán",
+    "anonymousReviewer": "Khách hàng",
     "cancel": "Hủy",
     "save": "Lưu Món",
     "requiredFieldsError": "Vui lòng nhập đầy đủ tên, giá và danh mục.",

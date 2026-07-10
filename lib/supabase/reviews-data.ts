@@ -2,7 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js"
 
 export type MenuItemReview = {
   id: string
-  reviewerName: string
+  reviewerName: string | null
   rating: number
   comment: string
   staffReply: string | null
@@ -18,7 +18,7 @@ export type MenuItemReviewsResult = {
 
 type ReviewJsonRow = {
   id: string
-  reviewer_name: string
+  reviewer_name: string | null
   rating: number
   comment: string
   staff_reply: string | null

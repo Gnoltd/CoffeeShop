@@ -214,11 +214,13 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                 <div key={review.id} className="rounded-xl border bg-card p-3 shadow-sm">
                   <div className="flex items-center gap-3">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
-                      {review.reviewerName.charAt(0)}
+                      {(review.reviewerName ?? tProduct("anonymousReviewer")).charAt(0)}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-card-foreground">{review.reviewerName}</span>
+                        <span className="font-semibold text-card-foreground">
+                          {review.reviewerName ?? tProduct("anonymousReviewer")}
+                        </span>
                         <span className="shrink-0 text-xs text-muted-foreground">
                           {tProduct("daysAgo", {
                             days: Math.max(0, Math.floor((Date.now() - review.createdAt) / 86400000)),

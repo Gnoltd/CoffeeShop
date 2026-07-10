@@ -296,7 +296,8 @@
     "reviewCount": "{count, plural, one {# review} other {# reviews}}",
     "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
     "noReviewsYet": "No reviews yet.",
-    "shopReplyLabel": "Shop reply"
+    "shopReplyLabel": "Shop reply",
+    "anonymousReviewer": "Customer"
   },
   "Pos": {
     "searchPlaceholder": "Search items...",
@@ -486,6 +487,7 @@
     "replyButton": "Reply",
     "replySubmitError": "Couldn't post reply — please try again.",
     "shopReplyLabel": "Shop reply",
+    "anonymousReviewer": "Customer",
     "cancel": "Cancel",
     "save": "Save Item",
     "requiredFieldsError": "Please fill in name, price, and category.",
