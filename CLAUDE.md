@@ -9,15 +9,17 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (32
+role-gated), full customer/staff/admin UI, live Supabase DB (33
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
 Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
 Now/Pay Later) payment with method-chosen-at-serving-time (including
 a served-but-unpaid order's method being changeable/undoable), all
 three payment methods (Cash/Stripe/VNPay), real customer reviews, real
 admin menu-image upload, real Profile persistence, real Admin
-Dashboard KPIs, and shift closing (cash reconciliation) all work
-end-to-end. Deployed at
+Dashboard KPIs, shift closing (cash reconciliation), real Google
+sign-in, real Profile Settings (password change + Google account
+linking), an admin-editable per-item Sizes editor, and a real
+forgot-password/reset-via-email flow all work end-to-end. Deployed at
 **https://phadincoffee.vercel.app**, auto-deploys on push to `main`. See
 `daily.md` for what's currently open — it's kept short and recap-free by
 design, so check it before this file for "what's left."
@@ -208,6 +210,12 @@ you need to find your way around; check the dated docs for full detail.
   size picker for a single-size item regardless of how many
   `menu_item_sizes` rows exist — an explicit toggle in
   `menu-item-form.tsx`, not automatic based on row count.
+- Single-option modifier groups (extra shot, extra milk, etc.) render as
+  one grouped list with prices shown inline, not one grid-column per
+  extra — `product-detail.tsx`/`quick-add-popup.tsx` split
+  `modifierGroups` into `extraGroups` (`options.length === 1`) vs
+  `otherGroups` (`options.length > 1`, unchanged grid layout with prices
+  added).
 - `lib/supabase/loyalty-data.ts` — real `getLoyaltyBalance`/
   `getLoyaltyTransactions`, backing the Loyalty page's balance and
   transaction history (was a hardcoded mock until 2026-07-08). Tier
@@ -234,6 +242,22 @@ you need to find your way around; check the dated docs for full detail.
   via `getCurrentRole` and redirects to `ROLE_HOME[role]`). Signup email
   confirmation frequently fails — this hosted project's shared email
   sender has a very low rate limit; no MCP tool can configure SMTP.
+- Login's "Forgot password?" is real: a 3-view swap inside
+  `login-form.tsx` (`"login" | "requestReset" | "resetSent"`) calls
+  `supabase.auth.resetPasswordForEmail`, always landing on a
+  Signup-style "check your email" screen regardless of whether the
+  address is registered (Supabase's anti-enumeration behavior — never
+  reveal account existence). The emailed link lands on
+  `/reset-password` (`app/[locale]/(auth)/reset-password/page.tsx` +
+  `components/auth/reset-password-view.tsx`) — same bare-URL route-group
+  lesson as `/callback`. That page waits on `onAuthStateChange` for the
+  session the recovery link establishes (same pattern as the OAuth
+  callback), then reuses Settings' change-password form pattern
+  (`updateUser({ password })`) before redirecting via
+  `getCurrentRole`/`ROLE_HOME`. Shares the same shared-email-sender
+  rate-limit risk as signup confirmation — shipped anyway per explicit
+  decision; the real-emailed-link round trip is unconfirmed, see
+  `daily.md`.
 - `lib/get-current-role.ts` (`getCurrentRole(supabase)`) resolves role
   server-side for the "Go to [X]" shortcut shown to logged-in
   staff/admin browsing the customer side.
@@ -321,6 +345,12 @@ you need to find your way around; check the dated docs for full detail.
   back the two operations plain RLS updates can't safely express.
   `activeTable` (a browser tab's dine-in session) deliberately keeps
   `localStorage` persistence — must survive a locale-switch remount.
+- Menu Management: real Sizes editor — admin can add/remove/reorder
+  per-item sizes with an editable name + price each (e.g. a drink can
+  offer only M/L, not S), backed by `menu_item_sizes.sort_order`
+  (migration `0033`) and `lib/supabase/menu-data.ts`'s `setItemSizes`
+  (bulk delete-then-insert, called from `menu-management.tsx`'s
+  `saveItem`).
 - Menu Management: real image upload — `menu-item-form.tsx` shows an
   instant local `URL.createObjectURL()` preview (`ownsPreviewUrl` flag
   prevents revoking a blob URL still live elsewhere), then on Save
@@ -472,7 +502,7 @@ you need to find your way around; check the dated docs for full detail.
 
 ## Database (`supabase/migrations/`)
 
-32 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+33 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -498,6 +528,7 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0030` | `get_order_history()` date filters made null-safe (removed a silent 7-day default) |
 | `0031` | `shifts` table + `orders.paid_at` + shift open/report/close RPCs |
 | `0032` | `change_order_payment_method()` (Pay Later method correction) |
+| `0033` | `menu_item_sizes.sort_order` (admin Sizes editor display order) |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
@@ -539,11 +570,15 @@ All Stitch-designed pages are ported; all four original "make all data
 real-time" sub-projects (Inventory, Tables, Orders, Staff accounts),
 all three payment methods (Cash, Stripe, VNPay), table occupancy/
 cleaning, deferred payment + service lifecycle, payment method
-correction, real reviews, real menu-image upload, and real Profile
-persistence are shipped and verified live. Real Admin Dashboard KPIs,
-the Admin/KDS/POS nav-link gaps, and shift closing (above) are shipped
-but still need a hand live-verification pass — see `daily.md`'s Open
-list. Google sign-in is shipped and live-verified end-to-end. Remaining
+correction, real reviews, real menu-image upload, real Profile
+persistence, the admin Sizes editor, and the Admin/KDS/POS nav-link
+gaps are shipped and verified live. Google sign-in and Profile Settings
+(password change + Google account linking) are shipped and
+live-verified end-to-end. Forgot password is shipped and verified live
+except for the actual emailed-link round trip (shared email-sender
+rate-limit risk, same as signup confirmation). Real Admin Dashboard
+KPIs and shift closing (above) are shipped but still need a hand
+live-verification pass — see `daily.md`'s Open list. Remaining
 known-mock surfaces: loyalty tier progress (no tier table), rewards
 catalog/redemption (no table) — check `daily.md` for current status.
 When adding anything new:
