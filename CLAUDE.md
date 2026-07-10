@@ -248,6 +248,20 @@ you need to find your way around; check the dated docs for full detail.
   (rate-limit gotcha, see Auth above). Logout is real
   (`supabase.auth.signOut()` → `/menu` as guest, not `/login` — guest
   ordering stays available).
+- Profile's "Settings" row is real: `/profile/settings`
+  (`components/customer/profile-settings-view.tsx`, gated behind login
+  via `lib/middleware-rules.ts`'s `AUTH_REQUIRED_EXACT_PATHS` — note
+  this list is exact-match, not prefix-match, so a new page nested under
+  an already-gated path still needs its own entry). Change Password
+  calls `supabase.auth.updateUser({ password })` directly (no "current
+  password" field — already-authenticated session). Connect/Disconnect
+  Google uses real identity linking (`linkIdentity`/`unlinkIdentity`/
+  `getUserIdentities`) — requires "Manual linking" enabled in the
+  Supabase Dashboard (Authentication → configuration, off by default,
+  no MCP tool for it). "Unlink" is only ever rendered enabled when the
+  account has 2+ linked identities, mirroring Supabase's own
+  server-side rule for the same thing — this is what actually prevents
+  anyone locking themselves out, not custom logic.
 
 ### Reviews (real, all end-to-end)
 - `menu_item_reviews` table + three `security definer` RPCs:
