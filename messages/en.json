@@ -141,7 +141,9 @@
     "outOfStock": "Out of Stock",
     "viewCart": "View Cart",
     "itemCount": "{count, plural, one {# item} other {# items}}",
-    "emptyResults": "No matching items found."
+    "emptyResults": "No matching items found.",
+    "extrasLabel": "Extras",
+    "freeLabel": "Free"
   },
   "Cart": {
     "empty": "Your cart is empty.",
@@ -300,7 +302,9 @@
     "daysAgo": "{days, plural, one {# day ago} other {# days ago}}",
     "noReviewsYet": "No reviews yet.",
     "shopReplyLabel": "Shop reply",
-    "anonymousReviewer": "Customer"
+    "anonymousReviewer": "Customer",
+    "extrasLabel": "Extras",
+    "freeLabel": "Free"
   },
   "Pos": {
     "searchPlaceholder": "Search items...",

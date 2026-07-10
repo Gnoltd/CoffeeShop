@@ -141,7 +141,9 @@
     "outOfStock": "Hết Hàng",
     "viewCart": "Xem Giỏ Hàng",
     "itemCount": "{count} món",
-    "emptyResults": "Không tìm thấy món phù hợp."
+    "emptyResults": "Không tìm thấy món phù hợp.",
+    "extrasLabel": "Món Thêm",
+    "freeLabel": "Miễn phí"
   },
   "Cart": {
     "empty": "Giỏ hàng của bạn đang trống.",
@@ -300,7 +302,9 @@
     "daysAgo": "{days} ngày trước",
     "noReviewsYet": "Chưa có đánh giá nào.",
     "shopReplyLabel": "Phản hồi từ quán",
-    "anonymousReviewer": "Khách hàng"
+    "anonymousReviewer": "Khách hàng",
+    "extrasLabel": "Món Thêm",
+    "freeLabel": "Miễn phí"
   },
   "Pos": {
     "searchPlaceholder": "Tìm kiếm món...",
