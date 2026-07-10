@@ -219,7 +219,14 @@ you need to find your way around; check the dated docs for full detail.
 - `lib/supabase/loyalty-data.ts` — real `getLoyaltyBalance`/
   `getLoyaltyTransactions`, backing the Loyalty page's balance and
   transaction history (was a hardcoded mock until 2026-07-08). Tier
-  progress still has no real tier table — documented mock.
+  progress is real too (2026-07-10): `loyalty_tiers` table (migration
+  `0034`, Bronze/Silver/Gold/Diamond by lifetime points earned,
+  bilingual `name_vi`/`name_en`) + `get_my_loyalty_tier_progress()` RPC
+  (no args, resolves `auth.uid()` internally, returns current/next tier
+  name + points-to-next + progress percent), surfaced via
+  `getLoyaltyTierProgress` and the Loyalty page's tier card (localized
+  tier name, real `ProgressRing`, and a max-tier "reached the top"
+  message when there's no next tier).
 - Landing's "Scan QR at Table" is real camera scanning
   (`components/customer/qr-scanner-overlay.tsx`, `jsQR`, no other new
   dependency) — decodes a table's printed QR code and routes into the
@@ -578,9 +585,10 @@ live-verified end-to-end. Forgot password is shipped and verified live
 except for the actual emailed-link round trip (shared email-sender
 rate-limit risk, same as signup confirmation). Real Admin Dashboard
 KPIs and shift closing (above) are shipped but still need a hand
-live-verification pass — see `daily.md`'s Open list. Remaining
-known-mock surfaces: loyalty tier progress (no tier table), rewards
-catalog/redemption (no table) — check `daily.md` for current status.
+live-verification pass — see `daily.md`'s Open list. Loyalty tier
+progress is now real (migration `0034`, above). Remaining known-mock
+surface: rewards catalog/redemption (no table) — check `daily.md` for
+current status.
 When adding anything new:
 shared brand tokens, `useTranslations`/`getTranslations` with both
 message files updated together, Base UI's `render` prop for polymorphic
