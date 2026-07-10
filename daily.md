@@ -1,3 +1,124 @@
+# Payment method correction shipped; real reviews + real menu images backfilled into this log
+
+## Payment method correction: tracking-page change + KDS Undo Cash (shipped, new session)
+
+Implements `docs/superpowers/plans/2026-07-10-payment-method-correction.md`
+(design: `docs/superpowers/specs/2026-07-10-payment-method-correction-design.md`).
+Fixes three real Pay Later gaps: a served customer who taps Cash on the
+tracking page had `payment_method` recorded instantly with no way to
+switch to Card/VNPay; a customer who picked Card/VNPay and abandoned the
+gateway page came back locked to that method; staff who tapped "Mark
+Cash" on the wrong KDS table card had no undo. One new guest-safe
+`security definer` RPC, `change_order_payment_method(p_order_id,
+p_method default null)` (migration `0032`) — guarded to only act when
+`status = 'served' AND payment_status = 'pending'`, the one window
+where a recorded method is still safely changeable; `null` resets to
+"no method chosen." The `UPDATE` names only `payment_method`, so it
+can't accidentally re-fire `handle_order_paid` or
+`complete_order_when_served_and_paid` (both gate on `payment_status`).
+Wired through a new `changeOrderPaymentMethod` in
+`lib/supabase/orders-data.ts` into two surfaces: the customer's
+tracking page ("Change payment method" under the Cash-awaiting note,
+"Choose a different method" next to the gateway retry button) and
+KDS's table card (an "Undo" button next to Confirm Cash). **Known,
+accepted edge** (documented, not fixed): if a customer abandons a
+Stripe/VNPay session, switches to cash, pays, and the abandoned gateway
+session *then* completes anyway, the existing webhook guards prevent
+order-state corruption but the money would be collected twice —
+resolved by a manual gateway-dashboard refund, consistent with this
+project's existing manual-refunds stance.
+
+Picked up mid-flight this session: Task 1 (the RPC) and part of Tasks
+2-3 (query wrapper, UI wiring) were already sitting uncommitted in the
+working tree from an earlier interrupted pass — verified each file
+against the plan line-by-line before trusting it, rather than
+re-deriving from scratch. `npx tsc --noEmit`, full `vitest run`
+(101/101), and `next build` all clean before committing. Live-verified
+end-to-end on `https://phadincoffee.vercel.app` via a temporary
+Playwright script (credentials read from gitignored `test-accounts.md`
+at runtime, not hardcoded — the harness's auto-mode classifier flagged
+an early draft that did hardcode them into a debug file, even though
+the same credentials the same way had already run once without
+flagging; treated as a one-off classifier flag rather than a real new
+policy, per explicit user direction to continue with the existing
+test-account convention): placed a real Pay Later dine-in order,
+advanced it to `served` via KDS, picked Cash → "Change payment method"
+returned the 3-way picker; picked VNPay → real redirect to
+`sandbox.vnpayment.vn` → abandoned it → tracking correctly showed the
+retry state with "Choose a different method" → tapped it → picker
+returned; picked Cash again → KDS table card showed both Confirm Cash
+and Undo → tapped Undo → customer's picker returned; picked Cash a
+final time and had staff Confirm Cash → order auto-completed normally,
+confirming the correction feature didn't disturb the existing flow.
+The RPC's guard itself (no-op against a `paid` order) was verified by
+code review rather than a live SQL call — the auto-mode classifier
+correctly declined a raw mutation-call against an arbitrary real
+production order for a check with no user-named target, and the guard
+clause (`status = 'served' and payment_status = 'pending'`) is
+unambiguous on its own.
+
+## Real reviews + real/bigger menu images (shipped earlier this session, backfilled into this log)
+
+Implements `docs/superpowers/plans/2026-07-10-menu-reviews-and-images.md`
+(design: `docs/superpowers/specs/2026-07-10-menu-reviews-and-images-design.md`).
+Two independent fixes bundled from one user request: reviews were
+entirely mock (`lib/mock-data/reviews.ts`, deleted), and admin-uploaded
+menu images never actually persisted.
+
+**Real reviews**: new `menu_item_reviews` table (migration `0027`) plus
+three `security definer` RPCs — `submit_menu_item_review` (verified-
+purchase only: requires a real `completed` order containing the item;
+upserts on `(menu_item_id, customer_id)`, so a second submission edits
+the existing review instead of duplicating), `reply_to_review`
+(manager/admin only), and `get_menu_item_reviews` (public read,
+`security definer` because resolving the reviewer's display name needs
+`profiles.full_name`, which plain RLS would block for anyone who isn't
+that reviewer or staff). New `lib/supabase/reviews-data.ts` query
+module. Submission lives on the customer's Order Tracking/History
+detail page (a "Rate & Review" action per item, only for `completed`
+orders); Product Detail shows the real review list + aggregate rating
+and any shop reply; a new admin reply panel
+(`menu-item-reviews-panel.tsx`) sits in the Menu Management item
+editor. Discovered mid-build that Order Tracking's data actually comes
+from a *different* path than `getMyOrders` (`get_order_for_tracking`,
+migration `0014`/`0022`) — needed its own migration (`0029`) to carry
+`menuItemId` through, since the review action needs to know which item
+it's reviewing.
+
+**Real image upload**: the actual reported bug — `menu-item-form.tsx`'s
+`selectFile` only ever created a local `blob:` preview, and `handleSave`
+explicitly discarded any `blob:`-prefixed URL on save
+(`imageUrl: imagePreviewUrl?.startsWith("blob:") ? null : imagePreviewUrl`),
+so an admin-uploaded photo silently vanished every time. New public
+`menu-item-images` Storage bucket (migration `0028`, admin/manager-only
+write via `current_user_role()`); `handleSave` now really uploads via
+`supabase.storage.from("menu-item-images").upload(...)` and uses the
+resulting public URL. Menu list thumbnails enlarged 80px → 112px per
+the user's "make images bigger, take an F&B app as reference" ask.
+
+**One real bug caught live, not just during code review**: Product
+Detail crashed (`Cannot read properties of null (reading 'charAt')`)
+the first time a review came from a customer whose `profiles.full_name`
+was `null` — a common case (Profile's name field is local-state-only,
+not yet persisted, at the time this shipped). `reviewerName` is now
+`string | null` throughout with a translated "anonymous" fallback in
+both display surfaces.
+
+Live-verified end-to-end on `https://phadincoffee.vercel.app`, same
+temporary-Playwright-script convention as above: real image upload
+persisting as a genuine Supabase Storage URL at the new larger size;
+a full order → completed → review-submission → Product-Detail-display
+cycle; admin reply appearing publicly including to a logged-out guest;
+re-opening the review form pre-filling with the existing rating/comment
+and updating the same row (not a duplicate) on resubmit.
+
+**Noted, not investigated further**: a concurrent session (a scheduled
+cloud routine, per the entry below) was pushing unrelated commits
+(Profile persistence, staff nav role-gating) to `main` while this work
+was in progress. No file conflicts occurred and both sessions' work
+merged and built cleanly, but worth knowing this repo can have more
+than one active session at once.
+
 # Real profile persistence shipped; scheduled cloud routine only got partway through
 
 ## Real persistence for Profile's name/phone, real read-only email (shipped, new session)
