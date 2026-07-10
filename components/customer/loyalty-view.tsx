@@ -1,26 +1,15 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { Star, Info, Gift, ArrowRight, CheckCircle2, Wallet, Sparkles } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatNumber, formatDateVN, formatOrderId } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
-import { getLoyaltyBalance, getLoyaltyTransactions, type LoyaltyTransaction, type LoyaltyTransactionType } from "@/lib/supabase/loyalty-data"
+import { getLoyaltyBalance, getLoyaltyTierProgress, getLoyaltyTransactions, type LoyaltyTierProgress, type LoyaltyTransaction, type LoyaltyTransactionType } from "@/lib/supabase/loyalty-data"
 import { AnimatedCounter } from "@/components/motion/animated-counter"
 import { ProgressRing } from "@/components/motion/progress-ring"
 import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
-
-/**
- * Tier progress has no real tier table yet — kept as a fixed mock
- * (matches the approved Stitch mockup), documented not hidden. Balance
- * and transaction history below are both real (profiles.loyalty_points_balance,
- * loyalty_transactions), wired 2026-07-08 after being caught still
- * showing a hardcoded 1250/mock rows despite Checkout already earning/
- * redeeming real points via place_order/handle_order_paid.
- */
-const POINTS_TO_NEXT_TIER = 250
-const TIER_PROGRESS_PERCENT = 75
 
 const TRANSACTION_META: Record<
   LoyaltyTransactionType,
@@ -33,18 +22,25 @@ const TRANSACTION_META: Record<
 
 export function LoyaltyView() {
   const t = useTranslations("Loyalty")
+  const locale = useLocale()
   const [supabase] = useState(() => createClient())
   const [balance, setBalance] = useState(0)
   const [transactions, setTransactions] = useState<LoyaltyTransaction[]>([])
+  const [tier, setTier] = useState<LoyaltyTierProgress | null>(null)
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       getLoyaltyBalance(supabase, user.id).then(setBalance)
+      getLoyaltyTierProgress(supabase).then(setTier)
     })
     getLoyaltyTransactions(supabase).then(setTransactions)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  const currentTierName = tier ? (locale === "vi" ? tier.currentTierNameVi : tier.currentTierNameEn) : ""
+  const nextTierName = tier ? (locale === "vi" ? tier.nextTierNameVi : tier.nextTierNameEn) : null
+  const progressPercent = tier?.progressPercent ?? 0
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-4">
@@ -73,11 +69,15 @@ export function LoyaltyView() {
 
       <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
-          <h3 className="self-start font-bold text-card-foreground">{t("tierName")}</h3>
-          <ProgressRing percent={TIER_PROGRESS_PERCENT} size={88} strokeWidth={7}>
-            <span className="text-lg font-bold text-accent-foreground">{TIER_PROGRESS_PERCENT}%</span>
+          <h3 className="self-start font-bold text-card-foreground">{currentTierName}</h3>
+          <ProgressRing percent={progressPercent} size={88} strokeWidth={7}>
+            <span className="text-lg font-bold text-accent-foreground">{progressPercent}%</span>
           </ProgressRing>
-          <p className="text-center text-xs text-secondary">{t("tierProgress", { points: POINTS_TO_NEXT_TIER })}</p>
+          <p className="text-center text-xs text-secondary">
+            {nextTierName && tier?.pointsToNext != null
+              ? t("tierProgress", { points: tier.pointsToNext, tier: nextTierName })
+              : t("tierMaxReached")}
+          </p>
         </div>
         <button
           type="button"
