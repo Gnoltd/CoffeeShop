@@ -252,6 +252,19 @@ export async function setOrderPaymentMethodCash(supabase: SupabaseClient, orderI
   if (error) throw error
 }
 
+export async function changeOrderPaymentMethod(
+  supabase: SupabaseClient,
+  orderId: string,
+  method: RealPaymentMethod | null
+): Promise<boolean> {
+  const { data, error } = await supabase.rpc("change_order_payment_method", {
+    p_order_id: orderId,
+    p_method: method,
+  })
+  if (error) throw error
+  return data as boolean
+}
+
 export async function cancelPendingOrder(supabase: SupabaseClient, orderId: string): Promise<boolean> {
   const { data, error } = await supabase.rpc("cancel_pending_order", { p_order_id: orderId })
   if (error) throw error

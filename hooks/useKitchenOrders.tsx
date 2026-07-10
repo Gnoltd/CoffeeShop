@@ -9,6 +9,7 @@ import {
   getKitchenOrders,
   getPendingPaymentOrders,
   setOrderPaymentMethodCash,
+  changeOrderPaymentMethod,
   type KdsOrderRow,
   type RealOrderStatus,
 } from "@/lib/supabase/orders-data"
@@ -37,6 +38,7 @@ type KitchenOrdersContextValue = {
   serveTable: (orderIds: string[]) => Promise<void>
   confirmCashPayment: (orderId: string) => Promise<void>
   markCashPayment: (orderId: string) => Promise<void>
+  undoCashPayment: (orderId: string) => Promise<void>
   completedCount: number
   avgTimeLabel: string
 }
@@ -120,6 +122,10 @@ export function KitchenOrdersProvider({ children }: { children: ReactNode }) {
     await setOrderPaymentMethodCash(supabase, orderId)
   }
 
+  async function undoCashPayment(orderId: string) {
+    await changeOrderPaymentMethod(supabase, orderId, null)
+  }
+
   const avgTimeLabel =
     completedDurations.length === 0
       ? "--:--"
@@ -135,6 +141,7 @@ export function KitchenOrdersProvider({ children }: { children: ReactNode }) {
         serveTable,
         confirmCashPayment,
         markCashPayment,
+        undoCashPayment,
         completedCount,
         avgTimeLabel,
       }}

@@ -11,7 +11,7 @@ import { formatOrderId, formatVND } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
-import { payExistingOrder, type RealPaymentMethod } from "@/lib/supabase/orders-data"
+import { payExistingOrder, changeOrderPaymentMethod, type RealPaymentMethod } from "@/lib/supabase/orders-data"
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
 import { StepProgress } from "@/components/motion/step-progress"
 import { PressFeedback } from "@/components/motion/press-feedback"
@@ -84,6 +84,21 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
       setIsPaying(false)
     } catch {
       setPaymentNotice(true)
+      setIsPaying(false)
+    }
+  }
+
+  async function handleChangeMethod() {
+    setIsPaying(true)
+    try {
+      await changeOrderPaymentMethod(supabase, orderId, null)
+      setCashConfirmed(false)
+      setPaymentNotice(false)
+      const refreshed = await getOrder(orderId)
+      setOrder(refreshed)
+    } catch {
+      setPaymentNotice(true)
+    } finally {
       setIsPaying(false)
     }
   }
@@ -227,13 +242,31 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
               </div>
             </>
           ) : paymentMethod === "cash" || cashConfirmed ? (
-            <p className="text-sm text-muted-foreground">{t("cashAwaitingStaffNote")}</p>
+            <>
+              <p className="text-sm text-muted-foreground">{t("cashAwaitingStaffNote")}</p>
+              <button
+                type="button"
+                disabled={isPaying}
+                onClick={handleChangeMethod}
+                className="mt-3 text-sm font-bold text-primary underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                {t("changePaymentMethod")}
+              </button>
+            </>
           ) : (
             <>
               <p className="mb-3 text-sm font-medium text-card-foreground">{t("payNowPrompt")}</p>
               <Button className="h-11 w-full rounded-xl" disabled={isPaying} onClick={() => paymentMethod && handlePayNow(paymentMethod)}>
                 {isPaying ? t("payNowLoading") : t("payNowButton")}
               </Button>
+              <button
+                type="button"
+                disabled={isPaying}
+                onClick={handleChangeMethod}
+                className="mt-3 text-sm font-bold text-primary underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                {t("chooseDifferentMethod")}
+              </button>
             </>
           )}
         </section>

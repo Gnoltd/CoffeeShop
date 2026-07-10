@@ -11,7 +11,7 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
   const locale = useLocale()
   const t = useTranslations("KitchenDisplay")
   const { tables, setStatus } = useTables()
-  const { orders, serveTable, confirmCashPayment, markCashPayment } = useKitchenOrders()
+  const { orders, serveTable, confirmCashPayment, markCashPayment, undoCashPayment } = useKitchenOrders()
   const [error, setError] = useState<string | null>(null)
 
   return (
@@ -109,16 +109,28 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
                   </button>
                 )}
                 {awaitingPaymentOrder?.paymentMethod === "cash" && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setError(null)
-                      confirmCashPayment(awaitingPaymentOrder.id).catch(() => setError(t("updateError")))
-                    }}
-                    className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:brightness-110"
-                  >
-                    {t("confirmCashReceived")}
-                  </button>
+                  <div className="flex gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null)
+                        confirmCashPayment(awaitingPaymentOrder.id).catch(() => setError(t("updateError")))
+                      }}
+                      className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:brightness-110"
+                    >
+                      {t("confirmCashReceived")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError(null)
+                        undoCashPayment(awaitingPaymentOrder.id).catch(() => setError(t("updateError")))
+                      }}
+                      className="rounded-lg border px-3 py-2 text-xs font-bold text-muted-foreground hover:bg-muted"
+                    >
+                      {t("undoCash")}
+                    </button>
+                  </div>
                 )}
                 {awaitingPaymentOrder && awaitingPaymentOrder.paymentMethod === null && (
                   <button

@@ -10,6 +10,7 @@ import {
   confirmServedCashPayment,
   payExistingOrder,
   setOrderPaymentMethodCash,
+  changeOrderPaymentMethod,
   cancelPendingOrder,
   getOrderHistory,
   getOrderHistoryDetail,
@@ -184,6 +185,32 @@ describe("confirmCashPayment", () => {
 
     await confirmCashPayment(supabase, "ord-1")
     expect(updateSpy).toHaveBeenCalledWith({ status: "paid", payment_status: "paid" })
+  })
+})
+
+describe("changeOrderPaymentMethod", () => {
+  it("calls the RPC with the order id and method", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: true, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    const result = await changeOrderPaymentMethod(supabase, "ord-1", null)
+
+    expect(rpcSpy).toHaveBeenCalledWith("change_order_payment_method", { p_order_id: "ord-1", p_method: null })
+    expect(result).toBe(true)
+  })
+
+  it("returns false when the guard rejects the order", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: false, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    expect(await changeOrderPaymentMethod(supabase, "ord-paid", "vnpay")).toBe(false)
+  })
+
+  it("throws on RPC error", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: null, error: new Error("boom") }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    await expect(changeOrderPaymentMethod(supabase, "ord-1", "cash")).rejects.toThrow("boom")
   })
 })
 
