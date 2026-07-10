@@ -1,17 +1,21 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { CookingPot, Gauge, History, Boxes } from "lucide-react"
+import { CookingPot, Gauge, History, Boxes, ShoppingCart, LayoutDashboard } from "lucide-react"
 import { Link, usePathname } from "@/i18n/navigation"
+import { canAccessAdmin } from "@/lib/roles"
 
 export function KitchenSidebar({
   completedCount,
   avgTimeLabel,
+  role,
 }: {
   completedCount: number
   avgTimeLabel: string
+  role: string | null
 }) {
   const t = useTranslations("KitchenDisplay")
+  const tNav = useTranslations("Nav")
   const pathname = usePathname()
   const isHistoryActive = pathname === "/staff/orders/history"
 
@@ -59,6 +63,25 @@ export function KitchenSidebar({
           <Boxes className="h-4 w-4" />
           {t("inventoryNav")}
         </button>
+      </nav>
+
+      <nav className="space-y-1 border-t px-2 pt-3">
+        <Link
+          href="/staff/pos"
+          className="flex items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
+        >
+          <ShoppingCart className="h-4 w-4" />
+          {tNav("pos")}
+        </Link>
+        {canAccessAdmin(role) && (
+          <Link
+            href="/admin/dashboard"
+            className="flex items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            {tNav("dashboard")}
+          </Link>
+        )}
       </nav>
 
       <div className="mx-2 mt-auto rounded-xl border bg-card p-4">
