@@ -87,7 +87,8 @@
     "tableOrderTitle": "Dine-in Order",
     "tableTokenLabel": "Table token",
     "profileTitle": "Profile",
-    "loyaltyTitle": "Loyalty Points"
+    "loyaltyTitle": "Loyalty Points",
+    "settingsTitle": "Settings"
   },
   "RoleNav": {
     "badgeGuest": "Guest",
@@ -116,7 +117,21 @@
     "staffAccessButtonStaff": "Go to POS",
     "staffAccessHeadlineAdmin": "Admin Account",
     "staffAccessSubtextAdmin": "You have administrative access.",
-    "staffAccessButtonAdmin": "Go to Admin Dashboard"
+    "staffAccessButtonAdmin": "Go to Admin Dashboard",
+    "changePasswordTitle": "Change Password",
+    "newPasswordLabel": "New Password",
+    "confirmPasswordLabel": "Confirm Password",
+    "passwordMismatchError": "Passwords don't match.",
+    "passwordTooShortError": "Password must be at least 6 characters.",
+    "passwordUpdateSuccess": "Password updated.",
+    "passwordUpdateError": "Couldn't update password — please try again.",
+    "updatePasswordButton": "Update Password",
+    "connectedAccountsTitle": "Connected Accounts",
+    "connectedLabel": "Connected",
+    "connectGoogleButton": "Connect Google",
+    "unlinkButton": "Unlink",
+    "connectGoogleError": "Couldn't connect Google — please try again.",
+    "unlinkError": "Couldn't disconnect — please try again."
   },
   "Staff": {
     "posTitle": "POS",

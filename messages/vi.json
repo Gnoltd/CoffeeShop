@@ -87,7 +87,8 @@
     "tableOrderTitle": "Đặt Món Tại Bàn",
     "tableTokenLabel": "Mã Bàn",
     "profileTitle": "Cá Nhân",
-    "loyaltyTitle": "Điểm Tích Lũy"
+    "loyaltyTitle": "Điểm Tích Lũy",
+    "settingsTitle": "Cài Đặt"
   },
   "RoleNav": {
     "badgeGuest": "Khách",
@@ -116,7 +117,21 @@
     "staffAccessButtonStaff": "Đến Quầy Order",
     "staffAccessHeadlineAdmin": "Tài Khoản Quản Trị",
     "staffAccessSubtextAdmin": "Bạn có quyền quản trị hệ thống.",
-    "staffAccessButtonAdmin": "Đến Bảng Điều Khiển"
+    "staffAccessButtonAdmin": "Đến Bảng Điều Khiển",
+    "changePasswordTitle": "Đổi Mật Khẩu",
+    "newPasswordLabel": "Mật Khẩu Mới",
+    "confirmPasswordLabel": "Xác Nhận Mật Khẩu",
+    "passwordMismatchError": "Mật khẩu không khớp.",
+    "passwordTooShortError": "Mật khẩu phải có ít nhất 6 ký tự.",
+    "passwordUpdateSuccess": "Đã cập nhật mật khẩu.",
+    "passwordUpdateError": "Không thể cập nhật mật khẩu — vui lòng thử lại.",
+    "updatePasswordButton": "Cập Nhật Mật Khẩu",
+    "connectedAccountsTitle": "Tài Khoản Liên Kết",
+    "connectedLabel": "Đã Liên Kết",
+    "connectGoogleButton": "Liên Kết Google",
+    "unlinkButton": "Hủy Liên Kết",
+    "connectGoogleError": "Không thể liên kết Google — vui lòng thử lại.",
+    "unlinkError": "Không thể hủy liên kết — vui lòng thử lại."
   },
   "Staff": {
     "posTitle": "Bán Hàng",
