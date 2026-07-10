@@ -8,11 +8,22 @@
    Realtime update after placing a new paid order, and the Excel
    export (all 5 sheets, correct Vietnamese text, real numeric cells
    for revenue/quantity columns — not text).
-2. **Google sign-in** — Login/Signup's Google OAuth buttons are
-   currently disabled+tooltip (no client configured, see CLAUDE.md's
-   Landing/Auth section). Needs a Google OAuth client set up and wired
-   through Supabase Auth's provider config (Dashboard-only, no MCP
-   tool for this) before the buttons can go live.
+2. **Google sign-in — code wired and deployed, full round-trip not yet
+   confirmed by a real login.** Google Cloud OAuth client + Supabase
+   Auth provider are configured (user-side, done); both buttons now
+   call `signInWithOAuth`, and a new `/​<locale>​/auth/callback` route
+   resolves role via the existing `getCurrentRole` and redirects to
+   `ROLE_HOME[role]` (plan:
+   `docs/superpowers/plans/2026-07-11-google-oauth-signin.md`).
+   Live-verified so far: both buttons correctly redirect to a real
+   Google consent screen with the correct `client_id` and
+   `redirect_uri` all the way through. **Not yet verified**: an actual
+   completed Google login round-trip (can't be scripted — needs a real
+   Google account signing in by hand) — confirm it lands on the right
+   `ROLE_HOME` destination, a brand-new Google account gets a real
+   `profiles` row and lands on `/menu` as `customer`, and cancelling
+   the consent screen shows the callback page's timeout error instead
+   of hanging.
 3. **Shift closing feature — live verification not confirmed done.**
    Code for Tasks 1-4 is committed and pushed (`shifts` table +
    `orders.paid_at` + RPCs, query layer, i18n, `/admin/shift` page +
