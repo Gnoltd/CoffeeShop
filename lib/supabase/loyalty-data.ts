@@ -28,6 +28,39 @@ type LoyaltyTransactionRow = {
   points_change: number
 }
 
+export type LoyaltyTierProgress = {
+  lifetimePoints: number
+  currentTierNameVi: string
+  currentTierNameEn: string
+  nextTierNameVi: string | null
+  nextTierNameEn: string | null
+  pointsToNext: number | null
+  progressPercent: number
+}
+
+export async function getLoyaltyTierProgress(supabase: SupabaseClient): Promise<LoyaltyTierProgress> {
+  const { data, error } = await supabase.rpc("get_my_loyalty_tier_progress").single()
+  if (error) throw error
+  const row = data as {
+    lifetime_points: number
+    current_tier_name_vi: string
+    current_tier_name_en: string
+    next_tier_name_vi: string | null
+    next_tier_name_en: string | null
+    points_to_next: number | null
+    progress_percent: number
+  }
+  return {
+    lifetimePoints: row.lifetime_points,
+    currentTierNameVi: row.current_tier_name_vi,
+    currentTierNameEn: row.current_tier_name_en,
+    nextTierNameVi: row.next_tier_name_vi,
+    nextTierNameEn: row.next_tier_name_en,
+    pointsToNext: row.points_to_next,
+    progressPercent: row.progress_percent,
+  }
+}
+
 export async function getLoyaltyTransactions(supabase: SupabaseClient): Promise<LoyaltyTransaction[]> {
   const { data, error } = await supabase
     .from("loyalty_transactions")
