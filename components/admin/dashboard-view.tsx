@@ -66,7 +66,10 @@ export function DashboardView({ locale }: { locale: string }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <Link
+          href="/admin/shift"
+          className="rounded-xl border bg-card p-5 shadow-sm transition-colors hover:border-primary/40 hover:shadow-md"
+        >
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Banknote className="h-5 w-5" />
           </div>
@@ -74,7 +77,7 @@ export function DashboardView({ locale }: { locale: string }) {
           <h3 className="text-xl font-bold text-card-foreground">
             {isStatsLoading ? t("loadingStats") : formatVND(stats.todayRevenue)}
           </h3>
-        </div>
+        </Link>
         <div className="rounded-xl border bg-card p-5 shadow-sm">
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/15 text-secondary">
             <ShoppingBag className="h-5 w-5" />

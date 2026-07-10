@@ -12,6 +12,7 @@ import {
   Settings,
   ShoppingCart,
   CookingPot,
+  Wallet,
 } from "lucide-react"
 import { Link, usePathname } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { href: "/admin/tables", labelKey: "tables", icon: Table2 },
   { href: "/admin/staff", labelKey: "staff", icon: Users },
   { href: "/admin/food-cost", labelKey: "foodCost", icon: Calculator },
+  { href: "/admin/shift", labelKey: "shift", icon: Wallet },
   { href: "/admin/settings", labelKey: "settings", icon: Settings },
 ] as const
 
