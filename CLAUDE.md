@@ -9,11 +9,15 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (25
+role-gated), full customer/staff/admin UI, live Supabase DB (32
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
 Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
-Now/Pay Later) payment with method-chosen-at-serving-time, and all
-three payment methods (Cash/Stripe/VNPay) work end-to-end. Deployed at
+Now/Pay Later) payment with method-chosen-at-serving-time (including
+a served-but-unpaid order's method being changeable/undoable), all
+three payment methods (Cash/Stripe/VNPay), real customer reviews, real
+admin menu-image upload, real Profile persistence, real Admin
+Dashboard KPIs, and shift closing (cash reconciliation) all work
+end-to-end. Deployed at
 **https://phadincoffee.vercel.app**, auto-deploys on push to `main`. See
 `daily.md` for what's currently open — it's kept short and recap-free by
 design, so check it before this file for "what's left."
@@ -75,7 +79,7 @@ Relative to the locale prefix, under `app/[locale]/`:
   `/staff/orders/history/[orderId]` (real URL segments, not route
   groups — a route group would collide with `(customer)`'s bare paths)
 - `admin` — `/admin/dashboard`, `/menu`, `/inventory`, `/tables`,
-  `/food-cost`, `/staff` (admin-only), `/settings` (admin-only)
+  `/food-cost`, `/shift`, `/staff` (admin-only), `/settings` (admin-only)
 
 `middleware.ts` (+ `lib/middleware-rules.ts` for the pure/testable
 routing logic, extracted so it doesn't pull in `next-intl/middleware`
@@ -191,14 +195,15 @@ you need to find your way around; check the dated docs for full detail.
 - `hooks/useOrders.tsx` — Checkout/Tracking/History share one Context;
   wraps `get_order_for_tracking`/`getMyOrders` (real RPC/query, see
   "Orders + Realtime" below).
-- Product Detail Page has its own sticky Add-to-Cart bar; reviews/
-  ratings are still mock (`lib/mock-data/reviews.ts`) — no schema for
-  them yet.
+- Product Detail Page has its own sticky Add-to-Cart bar; reviews are
+  real (see "Reviews" below), shown here with the real aggregate rating.
 - Menu's "+" quick-add always adds directly to cart when an item needs
-  no size decision (`hasSizeOptions && sizes.length > 0`); if it has
-  extras, tapping "+" opens `components/customer/quick-add-extras-popup.tsx`
-  (extras only, no size/note) instead of the full Product Detail page —
-  tapping the item itself still opens the full page.
+  neither a size decision nor extras; otherwise tapping "+" opens
+  `components/customer/quick-add-popup.tsx` (`QuickAddPopup` — handles
+  both size selection and extras, not extras-only despite the older
+  `quick-add-extras-popup.tsx` name still floating around in commit
+  history) instead of the full Product Detail page — tapping the item
+  itself still opens the full page.
 - `menu_items.has_size_options` (migration `0020`) lets admin hide the
   size picker for a single-size item regardless of how many
   `menu_item_sizes` rows exist — an explicit toggle in
@@ -231,9 +236,34 @@ you need to find your way around; check the dated docs for full detail.
 - Loyalty rates are real (`loyalty_settings`: 10,000 VND = 1 point, 100
   pts = 10,000 VND off); rewards catalog/redemption UI is
   disabled+tooltip (no table).
-- Profile's inline-editable fields (name/phone/email) are local-state
-  only, not yet persisted; Logout is real (`supabase.auth.signOut()` →
-  `/menu` as guest, not `/login` — guest ordering stays available).
+- Profile's name/phone are real (`lib/supabase/profile-data.ts`,
+  `profiles_update_own` RLS), inline pencil-edit writes through directly
+  (no RPC needed). Email is the real logged-in Auth email, deliberately
+  **read-only** — no `profiles.email` column exists, and editing the
+  real Auth email would trigger Supabase's confirmation-email flow
+  (rate-limit gotcha, see Auth above). Logout is real
+  (`supabase.auth.signOut()` → `/menu` as guest, not `/login` — guest
+  ordering stays available).
+
+### Reviews (real, all end-to-end)
+- `menu_item_reviews` table + three `security definer` RPCs:
+  `submit_menu_item_review` (verified-purchase only — requires a real
+  `completed` order containing the item; upserts on
+  `(menu_item_id, customer_id)`, so resubmitting edits the existing
+  review rather than duplicating it), `reply_to_review`
+  (manager/admin only), `get_menu_item_reviews` (public read,
+  `security definer` because resolving the reviewer's display name
+  needs `profiles.full_name`, which plain RLS would block for anyone
+  who isn't that reviewer or staff). `lib/supabase/reviews-data.ts` is
+  the query module.
+- Submission lives on the customer's own Order Tracking/History detail
+  page (`/orders/[orderId]`, shared component) — a "Rate & Review"
+  action per item, shown only once that order is `completed`.
+- `reviewerName` is `string | null` throughout (a reviewer's
+  `profiles.full_name` is frequently unset) — always render with a
+  translated "anonymous" fallback, never assume non-null.
+- Admin/manager can post one public reply per review from a panel in
+  the Menu Management item editor (`menu-item-reviews-panel.tsx`).
 
 ### Staff pages (`/staff/pos`, `/staff/orders`, `/staff/orders/history`)
 - POS (`components/staff/pos-terminal.tsx`) — **known gap**: no
@@ -273,18 +303,26 @@ you need to find your way around; check the dated docs for full detail.
   back the two operations plain RLS updates can't safely express.
   `activeTable` (a browser tab's dine-in session) deliberately keeps
   `localStorage` persistence — must survive a locale-switch remount.
-- Menu Management: real image upload (`URL.createObjectURL`,
-  `ownsPreviewUrl` flag prevents revoking a blob URL still live
-  elsewhere), real pagination, real Add/Edit.
+- Menu Management: real image upload — `menu-item-form.tsx` shows an
+  instant local `URL.createObjectURL()` preview (`ownsPreviewUrl` flag
+  prevents revoking a blob URL still live elsewhere), then on Save
+  actually uploads to the public `menu-item-images` Storage bucket
+  (admin/manager-only write) and persists the real public URL. (Was
+  genuinely broken until 2026-07-09 — the blob URL was silently
+  discarded on save instead of uploaded; fixed.) Real pagination, real
+  Add/Edit. List/preview thumbnails are a consistent square crop
+  (`object-cover`).
 - Staff Accounts: `create-staff-account` Edge Function creates a real
   Auth account + shows a one-time generated password; `profiles` rows
   can only be created via the `handle_new_user` trigger, so this can't
   be a plain insert. `set_initial_staff_role()` RPC (migration `0017`)
   works around `on_profile_role_change`'s trigger blocking the very
   first role assignment on a service-role connection with no JWT.
-- **Known gap**: Dashboard's revenue/orders/loyalty KPIs and trend
-  badges remain fixed mock numbers — no `orders`/`loyalty_transactions`
-  aggregation built; deliberately not faked further than that.
+- Dashboard's revenue/orders/loyalty KPIs, 7-day chart, and best
+  sellers are real (`get_dashboard_stats()` RPC, migration `0026`),
+  Realtime on `orders`/`order_items`/`loyalty_transactions`. A 5-sheet
+  `.xlsx` export button (`xlsx`/SheetJS) sits alongside it. The Revenue
+  card links to `/admin/shift` (see "Shift closing" below).
 
 ### Orders + Realtime (core, all real)
 - `place_order` RPC (`security definer`) — the only place order money
@@ -319,8 +357,8 @@ you need to find your way around; check the dated docs for full detail.
   `cleaning_notified_at`), shown as an urgent badge on the KDS table
   card until cleared.
 - Admin Dashboard has a real-time "Table Status" card (3-way counts +
-  a cleaning-attention alert) — separate from the still-mock KPIs
-  above it (see Admin pages' known gap).
+  a cleaning-attention alert), alongside the real KPI cards above it
+  (see Admin pages above).
 - Design: `docs/superpowers/specs/2026-07-08-table-status-design.md`;
   plan: `docs/superpowers/plans/2026-07-08-table-status.md`.
 
@@ -361,9 +399,21 @@ you need to find your way around; check the dated docs for full detail.
   toggle is disabled until `activeTable` is set (no more fake
   fallback table number sending `table_id: null`, which used to make
   an order invisible to the entire table-driven KDS model).
+- **Payment method correction** (real, shipped 2026-07-10): a
+  served-but-unpaid order's recorded method can be changed or reset.
+  `change_order_payment_method(p_order_id, p_method default null)`
+  (guest-safe `security definer`, migration `0032`) only acts while
+  `status = 'served' AND payment_status = 'pending'`; `null` resets to
+  "no method chosen." Two surfaces: the customer's tracking page
+  ("Change payment method" under the Cash-awaiting note, "Choose a
+  different method" next to the gateway retry button) and KDS's table
+  card (an "Undo" button next to Confirm Cash — dine-in only, no
+  pickup equivalent, see known gaps below).
 - Design: `docs/superpowers/specs/2026-07-08-deferred-payment-service-lifecycle-design.md`
   (see its "Revision" section for the method-also-deferred correction);
   plan: `docs/superpowers/plans/2026-07-08-deferred-payment-service-lifecycle.md`.
+  Payment method correction: `docs/superpowers/specs/2026-07-10-payment-method-correction-design.md` /
+  `docs/superpowers/plans/2026-07-10-payment-method-correction.md`.
 
 ### Payments — Cash, Stripe, VNPay (all real, all end-to-end verified live)
 - **Cash**: self-checkout starts `pending_payment`; staff confirms via
@@ -389,9 +439,22 @@ you need to find your way around; check the dated docs for full detail.
   each gateway's dashboard), any in-person card/QR reader hardware
   integration (Stripe Terminal etc.).
 
+### Shift closing (real, shipped 2026-07-10)
+- `/admin/shift` — cash reconciliation: open a shift with a starting
+  cash amount, a live report tracks cash orders against it, close with
+  a counted amount to get an over/short summary.
+- `shifts` table + `orders.paid_at` column + three RPCs (migration
+  `0031`): open/report/close. `open_shift` errors cleanly (shown, not
+  crashed) if a shift is already open — only one open shift at a time.
+- `lib/supabase/shift-data.ts` query module; reachable from Admin
+  Dashboard's Revenue KPI card and the Admin sidebar. Manager/admin
+  only (same gate as the rest of `/admin/*`).
+- Plan: `docs/superpowers/plans/2026-07-10-shift-closing.md`; design:
+  `docs/superpowers/specs/2026-07-10-shift-closing-design.md`.
+
 ## Database (`supabase/migrations/`)
 
-25 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+32 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -410,6 +473,13 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0022`–`0023` | `served` order status + auto-completion trigger + `payAt`/nullable `payment_method` (deferred payment) |
 | `0024` | fixed `sync_table_occupancy`'s trigger column-scope gap (see gotcha below) |
 | `0025` | `tables_update_staff` RLS policy (staff-role gap, see gotcha below) |
+| `0026` | `get_dashboard_stats()` (real Admin Dashboard KPIs) |
+| `0027` | `menu_item_reviews` table + review RPCs |
+| `0028` | `menu-item-images` public Storage bucket |
+| `0029` | `get_order_for_tracking` carries `menuItemId` (needed by reviews) |
+| `0030` | `get_order_history()` date filters made null-safe (removed a silent 7-day default) |
+| `0031` | `shifts` table + `orders.paid_at` + shift open/report/close RPCs |
+| `0032` | `change_order_payment_method()` (Pay Later method correction) |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
@@ -450,10 +520,15 @@ auto-deploys, no manual `vercel deploy` needed).
 All Stitch-designed pages are ported; all four original "make all data
 real-time" sub-projects (Inventory, Tables, Orders, Staff accounts),
 all three payment methods (Cash, Stripe, VNPay), table occupancy/
-cleaning, and deferred payment + service lifecycle (above) are shipped
-and verified live. Only the Admin Dashboard's revenue/orders/loyalty
-KPIs remain mock — check `daily.md` for current status. When adding
-anything new:
+cleaning, deferred payment + service lifecycle, payment method
+correction, real reviews, real menu-image upload, and real Profile
+persistence are shipped and verified live. Real Admin Dashboard KPIs,
+the Admin/KDS/POS nav-link gaps, and shift closing (above) are shipped
+but still need a hand live-verification pass — see `daily.md`'s Open
+list. Remaining known-mock surfaces: loyalty tier progress (no tier
+table), rewards catalog/redemption (no table), Google sign-in
+(disabled, no OAuth client configured) — check `daily.md` for current
+status. When adding anything new:
 shared brand tokens, `useTranslations`/`getTranslations` with both
 message files updated together, Base UI's `render` prop for polymorphic
 Buttons, "disabled + tooltip" for unbacked actions, DI'd query-layer

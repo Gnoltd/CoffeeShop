@@ -16,14 +16,15 @@ always check it first.** This file is a historical log only; everything
 below is kept for record, not as a live task list. `daily.md` tracks
 what's currently open.
 
-**As of 2026-07-07**: the app is fully real end-to-end. All 19 DB
-migrations are live on the hosted Supabase project; every customer/
-staff/admin page uses real Supabase data with live Realtime (Menu,
-Inventory, Tables, Orders, Staff accounts); all three payment methods
-(Cash, Stripe, VNPay) work end-to-end, closing out the payments
-follow-up agreed when Orders Realtime shipped. Deployed at
-**https://phadincoffee.vercel.app**, auto-deploys on push to `main`. No
-backend work remains deferred.
+**As of 2026-07-07** (this snapshot — now behind current reality, see
+CLAUDE.md): the app was fully real end-to-end with 19 DB migrations
+live. Substantially more has shipped since (reviews, real menu-image
+upload, table status, deferred payment + service lifecycle, payment
+method correction, real Profile persistence, real Admin Dashboard
+KPIs, shift closing — 32 migrations as of the last CLAUDE.md update).
+This paragraph is intentionally left as a dated snapshot rather than
+kept live — **always check CLAUDE.md's "Status" section for the
+current count/state**, this file is history only.
 
 ## Key decisions
 
