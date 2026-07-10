@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { UploadCloud, X, Plus, Pencil } from "lucide-react"
+import { UploadCloud, X, Plus, Pencil, ChevronUp, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { createModifierGroup, getModifierGroups, updateModifierGroup } from "@/lib/supabase/menu-data"
-import type { MenuCategory, MenuIcon, MenuItem, MenuItemInput, MenuModifierGroup } from "@/lib/supabase/menu-data"
+import type { MenuCategory, MenuIcon, MenuItem, MenuItemInput, MenuItemSizeInput, MenuModifierGroup } from "@/lib/supabase/menu-data"
 import {
   getIngredients,
   getMenuItemIngredients,
@@ -32,7 +32,7 @@ export function MenuItemForm({
   categories: MenuCategory[]
   initialItem?: MenuItem
   onCancel: () => void
-  onSave: (input: MenuItemInput, extraGroupIds: string[], recipeEntries: RecipeEntry[]) => void
+  onSave: (input: MenuItemInput, extraGroupIds: string[], recipeEntries: RecipeEntry[], sizes: MenuItemSizeInput[]) => void
 }) {
   const t = useTranslations("AdminMenu")
   const locale = useLocale()
@@ -59,6 +59,37 @@ export function MenuItemForm({
   const [isDraggingOver, setIsDraggingOver] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+
+  const [sizes, setSizes] = useState<{ name: string; price: string }[]>(
+    initialItem?.sizes.map((s) => ({ name: s.name, price: String(s.priceDelta) })) ?? []
+  )
+  const [sizesError, setSizesError] = useState<string | null>(null)
+
+  function addSize() {
+    setSizes((prev) => [...prev, { name: "", price: "0" }])
+  }
+
+  function updateSizeName(index: number, name: string) {
+    setSizes((prev) => prev.map((s, i) => (i === index ? { ...s, name } : s)))
+  }
+
+  function updateSizePrice(index: number, price: string) {
+    setSizes((prev) => prev.map((s, i) => (i === index ? { ...s, price } : s)))
+  }
+
+  function removeSize(index: number) {
+    setSizes((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  function moveSize(index: number, direction: -1 | 1) {
+    setSizes((prev) => {
+      const target = index + direction
+      if (target < 0 || target >= prev.length) return prev
+      const next = [...prev]
+      ;[next[index], next[target]] = [next[target], next[index]]
+      return next
+    })
+  }
 
   const supabase = createClient()
   const [extraGroups, setExtraGroups] = useState<MenuModifierGroup[]>([])
@@ -227,6 +258,17 @@ export function MenuItemForm({
     }
     setRecipeError(null)
 
+    if (sizes.some((s) => !s.name.trim())) {
+      setSizesError(t("sizeRequiredFieldsError"))
+      return
+    }
+    const parsedSizes: MenuItemSizeInput[] = sizes.map((s) => ({ name: s.name.trim(), priceDelta: Number(s.price) }))
+    if (parsedSizes.some((s) => !Number.isFinite(s.priceDelta) || s.priceDelta < 0)) {
+      setSizesError(t("sizeRequiredFieldsError"))
+      return
+    }
+    setSizesError(null)
+
     // imagePreviewUrl is a blob: URL only when imageFile is also set (see
     // selectFile/removeImage above, which always set/clear both together) —
     // so a real upload is needed exactly when imageFile is present; any
@@ -262,7 +304,8 @@ export function MenuItemForm({
         imageUrl: finalImageUrl,
       },
       selectedExtraIds,
-      recipeEntries
+      recipeEntries,
+      parsedSizes
     )
   }
 
@@ -488,6 +531,66 @@ export function MenuItemForm({
                 )}
               />
             </button>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">{t("sizesLabel")}</label>
+            {sizesError && (
+              <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{sizesError}</p>
+            )}
+            <div className="space-y-2 rounded-lg border p-3">
+              {sizes.length === 0 && <p className="text-sm text-muted-foreground">{t("noSizesYet")}</p>}
+              {sizes.map((size, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <Input
+                    value={size.name}
+                    onChange={(e) => updateSizeName(index, e.target.value)}
+                    placeholder={t("sizeNamePlaceholder")}
+                    className="h-9 flex-1"
+                  />
+                  <Input
+                    type="number"
+                    min={0}
+                    value={size.price}
+                    onChange={(e) => updateSizePrice(index, e.target.value)}
+                    className="h-9 w-28"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => moveSize(index, -1)}
+                    disabled={index === 0}
+                    aria-label={t("moveSizeUp")}
+                    title={t("moveSizeUp")}
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    <ChevronUp className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => moveSize(index, 1)}
+                    disabled={index === sizes.length - 1}
+                    aria-label={t("moveSizeDown")}
+                    title={t("moveSizeDown")}
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-30"
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeSize(index)}
+                    aria-label={t("removeSize")}
+                    title={t("removeSize")}
+                    className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <Button type="button" variant="outline" size="sm" onClick={addSize}>
+              <Plus className="h-4 w-4" />
+              {t("addSize")}
+            </Button>
           </div>
 
           <div className="space-y-1.5">
