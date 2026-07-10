@@ -1,17 +1,19 @@
 "use client"
 
 import { useState, type FormEvent } from "react"
-import { useTranslations } from "next-intl"
+import { useLocale, useTranslations } from "next-intl"
 import { Coffee, Mail, Eye, EyeOff } from "lucide-react"
 import { Link, useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { GoogleIcon } from "@/components/auth/google-icon"
 import { createClient } from "@/lib/supabase/client"
+import { getCurrentRole } from "@/lib/get-current-role"
 import { ROLE_HOME } from "@/lib/roles"
 
 export function LoginForm() {
   const t = useTranslations("Auth")
+  const locale = useLocale()
   const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -36,17 +38,16 @@ export function LoginForm() {
       return
     }
 
-    let role: string | null = null
-    if (data.user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, is_active")
-        .eq("id", data.user.id)
-        .single()
-      role = profile ? (profile.is_active ? profile.role : "customer") : null
-    }
-
+    const role = data.user ? await getCurrentRole(supabase) : null
     router.push(ROLE_HOME[role ?? "customer"] ?? "/menu")
+  }
+
+  async function handleGoogleSignIn() {
+    const supabase = createClient()
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/${locale}/auth/callback` },
+    })
   }
 
   return (
@@ -136,8 +137,7 @@ export function LoginForm() {
 
       <Button
         variant="outline"
-        disabled
-        title="Not implemented yet — Google OAuth not wired up"
+        onClick={handleGoogleSignIn}
         className="h-12 w-full gap-3 rounded-xl text-sm font-medium"
       >
         <GoogleIcon />
