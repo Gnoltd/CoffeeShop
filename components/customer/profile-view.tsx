@@ -21,22 +21,18 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { formatNumber } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { getLoyaltyBalance } from "@/lib/supabase/loyalty-data"
+import { getProfile, updateProfile } from "@/lib/supabase/profile-data"
 import { Button } from "@/components/ui/button"
 import { ROLE_HOME } from "@/lib/roles"
 import { PressFeedback } from "@/components/motion/press-feedback"
 
-type Field = "name" | "phone" | "email"
+type Field = "name" | "phone"
 
-const INITIAL_PROFILE: Record<Field, string> = {
-  name: "Nguyễn Văn An",
-  phone: "+84 901 234 567",
-  email: "an.nguyen@email.com",
-}
+const EMPTY_PROFILE: Record<Field, string> = { name: "", phone: "" }
 
-const FIELD_LABEL_KEYS: Record<Field, "fullName" | "phoneNumber" | "email"> = {
+const FIELD_LABEL_KEYS: Record<Field, "fullName" | "phoneNumber"> = {
   name: "fullName",
   phone: "phoneNumber",
-  email: "email",
 }
 
 export function ProfileView({ role = null }: { role?: string | null }) {
@@ -47,33 +43,53 @@ export function ProfileView({ role = null }: { role?: string | null }) {
   const params = useParams()
   const isStaffRole = role === "staff" || role === "manager" || role === "admin"
 
-  const [profile, setProfile] = useState(INITIAL_PROFILE)
+  const [profile, setProfile] = useState(EMPTY_PROFILE)
+  const [email, setEmail] = useState("")
+  const [userId, setUserId] = useState<string | null>(null)
   const [editingField, setEditingField] = useState<Field | null>(null)
   const [draft, setDraft] = useState("")
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [pointsBalance, setPointsBalance] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
+      setUserId(user.id)
+      setEmail(user.email ?? "")
       getLoyaltyBalance(supabase, user.id).then(setPointsBalance)
+      getProfile(supabase, user.id).then((p) => setProfile({ name: p.fullName, phone: p.phone }))
     })
   }, [])
 
   function startEdit(field: Field) {
     setEditingField(field)
     setDraft(profile[field])
+    setSaveError(null)
   }
 
-  function saveEdit() {
-    if (!editingField) return
+  async function saveEdit() {
+    if (!editingField || !userId) return
     const trimmed = draft.trim()
-    if (trimmed) setProfile((prev) => ({ ...prev, [editingField]: trimmed }))
-    setEditingField(null)
+    if (!trimmed) {
+      setEditingField(null)
+      return
+    }
+    const supabase = createClient()
+    const key = editingField === "name" ? "fullName" : "phone"
+    try {
+      await updateProfile(supabase, userId, { [key]: trimmed })
+      setProfile((prev) => ({ ...prev, [editingField]: trimmed }))
+      setEditingField(null)
+      setSaveError(null)
+    } catch {
+      setSaveError(t("saveError"))
+    }
   }
 
   function cancelEdit() {
     setEditingField(null)
+    setSaveError(null)
   }
 
   function toggleLocale() {
@@ -140,7 +156,8 @@ export function ProfileView({ role = null }: { role?: string | null }) {
       )}
 
       <section className="mb-6 space-y-3">
-        {(["name", "phone", "email"] as Field[]).map((field) => {
+        {saveError && <p className="px-1 text-sm text-destructive">{saveError}</p>}
+        {(["name", "phone"] as Field[]).map((field) => {
           const isEditing = editingField === field
           return (
             <div key={field}>
@@ -191,6 +208,12 @@ export function ProfileView({ role = null }: { role?: string | null }) {
             </div>
           )
         })}
+        <div>
+          <label className="mb-1 block px-1 text-xs font-medium text-muted-foreground">{t("email")}</label>
+          <div className="flex h-11 w-full items-center rounded-xl bg-muted px-4">
+            <span className="text-card-foreground">{email}</span>
+          </div>
+        </div>
       </section>
 
       <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
