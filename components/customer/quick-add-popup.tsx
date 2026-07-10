@@ -43,6 +43,8 @@ export function QuickAddPopup({ item, onClose }: { item: MenuItem; onClose: () =
     return sum + (option?.priceDelta ?? 0)
   }, 0)
   const price = item.basePrice + sizeDelta + modifierDelta
+  const extraGroups = item.modifierGroups.filter((g) => g.options.length === 1)
+  const otherGroups = item.modifierGroups.filter((g) => g.options.length > 1)
 
   function handleAdd() {
     const size = item.sizes?.find((s) => s.id === selectedSizeId)
@@ -100,7 +102,51 @@ export function QuickAddPopup({ item, onClose }: { item: MenuItem; onClose: () =
           </div>
         )}
 
-        {item.modifierGroups.map((group) => (
+        {extraGroups.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {t("extrasLabel")}
+            </span>
+            <div className="flex flex-col gap-2">
+              {extraGroups.map((group) => {
+                const option = group.options[0]
+                const selected = selectedModifiers[group.id] === option.id
+                return (
+                  <PressFeedback
+                    key={group.id}
+                    type="button"
+                    onClick={() =>
+                      setSelectedModifiers((prev) => {
+                        if (prev[group.id] === option.id) {
+                          const next = { ...prev }
+                          delete next[group.id]
+                          return next
+                        }
+                        return { ...prev, [group.id]: option.id }
+                      })
+                    }
+                    className={cn(
+                      "flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm transition-colors",
+                      selected
+                        ? "border-primary bg-primary/10 font-semibold text-card-foreground"
+                        : "border-border text-card-foreground"
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Check className={cn("h-4 w-4 shrink-0", selected ? "text-primary" : "text-transparent")} />
+                      <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
+                    </div>
+                    <span className={selected ? "text-primary" : "text-muted-foreground"}>
+                      {option.priceDelta > 0 ? `+${formatVND(option.priceDelta)}` : t("freeLabel")}
+                    </span>
+                  </PressFeedback>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {otherGroups.map((group) => (
           <div key={group.id} className="flex flex-col gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {locale === "vi" ? group.nameVi : group.nameEn}
@@ -123,14 +169,19 @@ export function QuickAddPopup({ item, onClose }: { item: MenuItem; onClose: () =
                       })
                     }
                     className={cn(
-                      "flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm transition-colors",
+                      "flex flex-col items-start gap-0.5 rounded-lg border-2 px-3 py-2 text-sm transition-colors",
                       selected
                         ? "border-primary bg-primary/10 font-semibold text-card-foreground"
                         : "border-border text-card-foreground"
                     )}
                   >
-                    <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
-                    {selected && <Check className="h-4 w-4 text-primary" />}
+                    <div className="flex w-full items-center justify-between">
+                      <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
+                      {selected && <Check className="h-4 w-4 text-primary" />}
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {option.priceDelta > 0 ? `+${formatVND(option.priceDelta)}` : t("freeLabel")}
+                    </span>
                   </PressFeedback>
                 )
               })}
