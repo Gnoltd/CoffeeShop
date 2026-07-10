@@ -10,14 +10,23 @@
    for revenue/quantity columns — not text).
 2. **Google sign-in — code wired and deployed, full round-trip not yet
    confirmed by a real login.** Google Cloud OAuth client + Supabase
-   Auth provider are configured (user-side, done); both buttons now
-   call `signInWithOAuth`, and a new `/​<locale>​/auth/callback` route
-   resolves role via the existing `getCurrentRole` and redirects to
-   `ROLE_HOME[role]` (plan:
-   `docs/superpowers/plans/2026-07-11-google-oauth-signin.md`).
-   Live-verified so far: both buttons correctly redirect to a real
-   Google consent screen with the correct `client_id` and
-   `redirect_uri` all the way through. **Not yet verified**: an actual
+   Auth provider are configured (user-side, done); both buttons call
+   `signInWithOAuth`, and a callback route resolves role via the
+   existing `getCurrentRole` and redirects to `ROLE_HOME[role]` (plan:
+   `docs/superpowers/plans/2026-07-11-google-oauth-signin.md`). **Real
+   404 bug found and fixed same day**: the callback page lives under
+   `app/[locale]/(auth)/callback/page.tsx` — `(auth)` is a route group
+   (parentheses), which never contributes a URL segment, exactly like
+   `login`/`signup` already resolve to bare `/login`/`/signup` with no
+   `/auth/` prefix. The page therefore only ever existed at
+   `/<locale>/callback`, but `redirectTo` was constructed as
+   `/<locale>/auth/callback` — a URL that never existed. Confirmed live
+   (`/vi/auth/callback` 404s, `/vi/callback` 200s) before fixing both
+   forms' `redirectTo` to the real path; no Supabase Dashboard change
+   needed (redirect URL allowlist is a domain-wide wildcard). Live-
+   verified after the fix: both buttons redirect to Google's real
+   consent screen with the correct `client_id` and the corrected
+   `redirect_to=.../vi/callback`. **Still not verified**: an actual
    completed Google login round-trip (can't be scripted — needs a real
    Google account signing in by hand) — confirm it lands on the right
    `ROLE_HOME` destination, a brand-new Google account gets a real
