@@ -1,70 +1,50 @@
 # Open / not started
 
-1. **"Neubrutalist Modern" full-app redesign — Phases 1, 2 & 3 shipped
-   to `main`, live verification not yet done.**
+1. **"Neubrutalist Modern" full-app redesign — all 4 phases shipped to
+   `main`, live verification is the one remaining step.**
    Design spec: `docs/superpowers/specs/2026-07-12-elevated-warm-redesign-design.md`
    (title says "Elevated Warm" but the actual locked style is
-   Neubrutalist Modern — see the spec's revision note). Covers every
-   page: Landing, Menu, Cart/Checkout, Orders, Profile/Loyalty, POS,
-   KDS, and all 8 Admin views (Dashboard + Menu Mgmt/Inventory/Tables/
-   Food Cost/Shift/Staff/Settings). Validated via 8 full interactive
-   HTML mockups (Artifacts, ephemeral to that conversation — not in the
-   repo) with live pixel-level iteration, not static wireframes.
-   **Phase 1** (`docs/superpowers/plans/2026-07-12-neubrutalist-redesign-phase1-foundation-landing-menu.md`,
-   pushed `934e72c`): design tokens + working dark mode
-   (`hooks/useTheme.tsx`, `ThemeToggle`, no-flash init script —
-   `globals.css` already had a dormant `.dark` class from the shadcn
-   scaffold, never wired to a toggle until now), an additive `neubrutal`
-   variant on shared `Button`/`Badge`, Landing + Menu re-skinned
-   (including fixing the quick-add button's touch target from 32px to a
-   real 44px hit area).
-   **Phase 2** (`docs/superpowers/plans/2026-07-12-neubrutalist-redesign-phase2-cart-orders-profile-loyalty.md`,
-   pushed `099133b`): re-skinned Cart, Checkout, Order Tracking, Order
-   History, Profile, Loyalty. Fixed `components/motion/step-progress.tsx`
-   (shared by Order Tracking) so a completed step shows a green
-   checkmark instead of its own icon re-colored — the behavior approved
-   in the mockups that the component didn't actually have.
-   **Correction made during Phase 2 planning**: the mockups showed
-   Cart+Checkout, Orders-Tracking+History, and Profile+Loyalty as
-   tab-switcher pairs — that was purely a review convenience for
-   comparing two screens in one HTML file, not a real navigation
-   change. All six stayed separate routes exactly as today
-   (`/cart`, `/checkout`, `/orders/[orderId]`, `/orders`, `/profile`,
-   `/loyalty`), per the spec's own "No route/IA changes" constraint.
-   **Phase 3** (`docs/superpowers/plans/2026-07-12-neubrutalist-redesign-phase3-pos-kds.md`,
-   pushed `b9af9aa`): re-skinned `StaffNav`, POS, and all five KDS
-   components (top bar, board, tables column, pending-payment banner,
-   stats footer) at the denser Staff/Admin scale (`nb-border-sm`/
-   `nb-shadow-sm` throughout, not the Customer-scale `nb-border`/
-   `nb-shadow`). KDS's functional status colors (column header hues,
-   table-status backgrounds/pills) were deliberately left alone — those
-   are a status palette, not brand tokens.
-   **Correction made during Phase 3 planning**: the spec's note about
-   "a POS/KDS/Admin app-switcher in the staff top bar (new, not
-   previously specced)" was wrong — `components/staff/staff-nav.tsx`
-   already existed and already did exactly that (POS/Kitchen Display/
-   Rewards/Dashboard links with active-state highlighting); only its
-   visual re-skin was actually new work.
+   Neubrutalist Modern — thick ink-colored borders, flat hard-offset
+   shadows that collapse on press, first-ever dark mode; see the spec's
+   revision note). Validated via 8 full interactive HTML mockups
+   (Artifacts, ephemeral to that conversation, not in the repo) with
+   live pixel-level iteration, not static wireframes, before any real
+   code was touched.
+   - **Phase 1** (plan: `...phase1-foundation-landing-menu.md`, pushed `934e72c`):
+     design tokens, working dark mode (`hooks/useTheme.tsx`,
+     `ThemeToggle`, no-flash init script), additive `neubrutal` variant
+     on shared `Button`/`Badge`, Landing + Menu.
+   - **Phase 2** (plan: `...phase2-cart-orders-profile-loyalty.md`, pushed `099133b`):
+     Cart, Checkout, Order Tracking, Order History, Profile, Loyalty.
+     Fixed `components/motion/step-progress.tsx` so a completed step
+     shows a green checkmark instead of its own icon re-colored.
+   - **Phase 3** (plan: `...phase3-pos-kds.md`, pushed `b9af9aa`):
+     `StaffNav`, POS, all five KDS components, at the denser
+     `nb-border-sm`/`nb-shadow-sm` Staff/Admin scale.
+   - **Phase 4** (plan: `...phase4-admin.md`, pushed `7090e90`): Admin
+     sidebar/mobile drawer + all 8 views (Dashboard, Menu Mgmt,
+     Inventory, Tables, Food Cost, Shift, Staff, Settings).
    `tsc --noEmit` and the full test suite (140 tests) passed after every
-   task in all three phases. **Not yet confirmed**: the live Vercel
-   deploy hasn't been eye-verified for any phase (colors/dark-mode/
-   mobile — deliberately deferred by explicit user request, to be done
-   later).
-   Phase 4 (Admin, all 8 views: Dashboard + Menu Mgmt/Inventory/Tables/
-   Food Cost/Shift/Staff/Settings) is next and last per the spec's
-   rollout order.
-   Real requirements surfaced during design that implementation must
-   not skip on Phase 4: an explicit `color` on every `<button>` (found
-   black-text-in-dark-mode bugs from browser button-color
-   non-inheritance during mockup review — hasn't recurred in the real
-   codebase since every button here uses the shared shadcn `Button`
-   component, which always sets explicit text-color classes), 44×44pt
-   touch targets on customer-facing controls via hit-slop (not visual
-   resize — n/a to Admin, which is staff-only), and Shift's report
-   gaining a real Cash/Card/VNPay breakdown (UI-only —
-   `get_shift_report()` already returns this data per CLAUDE.md, just
-   needs wiring into the current + history views — this is genuinely
-   new work, unlike the app-switcher).
+   task across all four phases — no regressions to the underlying
+   business logic anywhere.
+   **Three assumptions from the design spec turned out wrong once
+   grounded against the real code** (worth remembering as a pattern —
+   mockup-review findings don't always carry over to the real
+   codebase): the Cart+Checkout/Tracking+History/Profile+Loyalty
+   tab-switcher pairing was a mockup-review convenience only, not a
+   real navigation change (all six stayed separate routes); the
+   "POS/KDS/Admin app-switcher" was already shipped as
+   `components/staff/staff-nav.tsx`, not new UI; and Shift's Cash/Card/
+   VNPay breakdown already existed in `shift-report-detail.tsx`, not
+   outstanding work. All three were corrected in the relevant phase's
+   plan doc rather than built again from scratch.
+   **The one remaining step**: live-verify the whole redesign on
+   **https://phadincoffee.vercel.app** — colors, dark mode toggle/
+   persistence, both locales, real mobile devices (iOS Safari + Android
+   Chrome, not just a resized desktop browser) — across all pages in
+   one pass now that everything is shipped, per the spec's own
+   verification plan. Deliberately deferred across all four phases by
+   explicit user request; do it as a single pass, not phase-by-phase.
 
 2. **Live-verify the Admin Dashboard by hand** — KPIs are real
    (`get_dashboard_stats()`, migration `0026`), but a full manual
