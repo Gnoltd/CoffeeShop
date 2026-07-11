@@ -18,15 +18,26 @@
    this file's entry) has no recorded evidence of having run. Same two
    stalled automated attempts as item 1 above. Plan:
    `docs/superpowers/plans/2026-07-10-shift-closing.md`.
-3. **Reward redemption code → staff lookup round trip not fully tested
-   end-to-end.** Each half verified independently live: a customer
-   redeeming shows a real code (`rewards-catalog-modal.tsx`), and staff
-   can search/fulfill at `/staff/rewards` (tested with a non-matching
-   code). Never verified with one real matching code all the way
-   through: redeem as a customer → copy the shown code → search it as
-   staff → confirm the right reward/customer/points appear → mark
-   fulfilled → confirm it can't be fulfilled twice.
-4. **Forgot password — real-email round trip unconfirmed.** Shipped and
+3. **Reward redemption checkout round trip not fully tested end-to-end.**
+   Redemption is now spendable at checkout (migration `0040`,
+   2026-07-11: flat `discount_value_vnd` per reward, multiple per order,
+   dynamic 1-year expiry that resets on >1,000,000 VND spend since
+   redemption) — code builds/deploys clean and each surface renders
+   correctly in isolation (redeem → code shown; `/loyalty/redemptions`
+   status list; checkout's "My Rewards" toggle list; `/staff/rewards`
+   lookup). Never verified with one real redemption all the way
+   through: redeem → select it at checkout → place the order → confirm
+   the total actually discounted → confirm `/loyalty/redemptions` shows
+   it "Used" → confirm `/staff/rewards` also shows "Used at checkout"
+   (not double-honorable). Blocked on the test customer account not
+   having enough loyalty points to redeem anything (28 pts, cheapest
+   reward is 50) — earn more via a real paid order, or ask to top up
+   the test account intentionally (wasn't done automatically; that's
+   fabricating production loyalty data without being asked).
+4. **Staff redemption lookup round trip not fully tested end-to-end**
+   (same underlying blocker as item 3) — search/fulfill only tested
+   with a non-matching code so far.
+5. **Forgot password — real-email round trip unconfirmed.** Shipped and
    live-verified end-to-end except for the actual emailed link: request
    flow (email entry → "check your email" screen, works regardless of
    whether the address is registered), navigation between views, and

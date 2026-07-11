@@ -9,7 +9,7 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (39
+role-gated), full customer/staff/admin UI, live Supabase DB (41
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
 Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
 Now/Pay Later) payment with method-chosen-at-serving-time (including
@@ -81,7 +81,8 @@ Relative to the locale prefix, under `app/[locale]/`:
   (route group, contributes no URL segment — bare paths)
 - `(customer)` — `/menu`, `/menu/[itemId]`, `/cart`, `/checkout`,
   `/orders`, `/orders/[orderId]`, `/table/[qrToken]`, `/profile`,
-  `/profile/settings`, `/profile/addresses`, `/loyalty`
+  `/profile/settings`, `/profile/addresses`, `/loyalty`,
+  `/loyalty/redemptions`
 - `staff` — `/staff/pos`, `/staff/orders`, `/staff/orders/history`,
   `/staff/orders/history/[orderId]`, `/staff/rewards` (real URL
   segments, not route groups — a route group would collide with
@@ -313,10 +314,43 @@ you need to find your way around; check the dated docs for full detail.
   `components/customer/rewards-catalog-modal.tsx` (a `BottomSheet`),
   which re-fetches balance + transactions on a successful redemption
   and shows the customer a real redemption code (`redeem_reward`'s
-  returned id, `formatOrderId`-truncated) to claim it with staff — was
-  a real gap until 2026-07-11 (points were deducted with nothing shown
-  to claim); see "Staff Reward Redemption lookup" below for the
-  staff-facing half of this loop.
+  returned id, `formatOrderId`-truncated) — usable two ways: applied
+  self-service at checkout (primary path, see below) or shown to staff
+  at `/staff/rewards` as a backup.
+  **Redemption is actually spendable** (migration `0040`, added
+  2026-07-11): every reward carries a flat `discount_value_vnd` (not
+  tied to a specific menu item — "Free Black Coffee" and "20,000₫ Off"
+  both apply the exact same way, no per-item cart-matching needed;
+  seeded from real menu prices at the time). Checkout
+  (`checkout-view.tsx`) fetches the customer's unused/unexpired
+  redemptions via `getMyRedemptions`, shows them as a toggleable "My
+  Rewards" list (**multiple per order allowed**, unlike the single-code
+  `promoCode`/`WELCOME10` mechanic), and sends the selected
+  `redemptionIds` to `place_order`, which validates each one
+  server-side (ownership, not already used, not expired — raises
+  `invalid_redemption_code`/`redemption_already_used`/
+  `redemption_expired`) before summing their discount into the order
+  total and stamping `applied_order_id` on success — same
+  never-trust-the-client posture as every other discount `place_order`
+  computes. A customer's full status list — Available/Used/Expired,
+  redeemed date, expiry date, tap-to-copy code — lives at
+  `/loyalty/redemptions` (`components/customer/my-redemptions-view.tsx`,
+  linked from the Loyalty page).
+  **Expiry is dynamic, not stored**: `get_redemption_expiry()` computes
+  `redeemed_at + 1 year`, extended to `now() + 1 year` on every call
+  where the customer's total paid spend since redeeming exceeds
+  1,000,000 VND — recomputed fresh each time (checkout, the status
+  list, `place_order`'s validation), not a cron-updated column, since
+  "still active" can flip at any moment as new orders complete.
+  `find_redemption_by_code()`/`fulfill_redemption()` (staff lookup,
+  below) were updated in the same pass (migration `0041`) to treat
+  `applied_order_id` as equally final as `fulfilled_at`, so staff can't
+  double-honor a code a customer already spent online.
+  **Known verification gap**: the full round trip (redeem → select at
+  checkout → place order → confirm marked used) has not been
+  live-verified end-to-end — the test customer account's points
+  balance was too low and topping it up would mean fabricating loyalty
+  ledger data in production, which wasn't done. See `daily.md`.
 - Profile's name/phone are real (`lib/supabase/profile-data.ts`,
   `profiles_update_own` RLS), inline pencil-edit writes through directly
   (no RPC needed). Email is the real logged-in Auth email, deliberately
@@ -390,9 +424,13 @@ you need to find your way around; check the dated docs for full detail.
   reward/customer/points, "Mark Fulfilled" once. `find_redemption_by_code()`
   (security invoker, RLS-gated) / `fulfill_redemption()` (security
   definer, narrowly scoped to `fulfilled_at` only, own internal
-  staff-role check since it bypasses RLS) — migration `0038`. Closes a
-  real gap: redeeming previously deducted points with nothing shown to
-  claim and no staff-side way to verify a code at all.
+  staff-role check since it bypasses RLS) — migration `0038`. This is
+  now the secondary/backup redemption path — self-service checkout
+  application (migration `0040`, see "Loyalty rates are real..." above)
+  is primary. Both RPCs treat `reward_redemptions.applied_order_id` as
+  equally final as `fulfilled_at` (migration `0041`) so a code already
+  spent online shows "Used at checkout" here instead of being
+  honorable a second time in person.
 - Kitchen Display — `components/staff/{kitchen-board,kitchen-top-bar,
   kitchen-sidebar,kitchen-stats-footer}.tsx`, orchestrated by
   `kitchen-display.tsx`. Board maps the real 6-state `order_status`
@@ -597,7 +635,7 @@ you need to find your way around; check the dated docs for full detail.
 
 ## Database (`supabase/migrations/`)
 
-39 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+41 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -630,6 +668,8 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0037` | Missing FK indexes on menu tables (performance) |
 | `0038` | `reward_redemptions.fulfilled_at` + `find_redemption_by_code()`/`fulfill_redemption()` (staff redemption lookup) |
 | `0039` | `customer_addresses` table + `set_default_address()` (real Address Book) |
+| `0040` | `rewards.discount_value_vnd` + `reward_redemptions.applied_order_id` + `get_redemption_expiry()`/`get_my_redemptions()` + `place_order` gains `redemptionIds` (self-service reward-redemption checkout) |
+| `0041` | `find_redemption_by_code()`/`fulfill_redemption()` also treat `applied_order_id` as "used" (staff/checkout consistency) |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
