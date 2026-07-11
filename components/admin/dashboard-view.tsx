@@ -68,7 +68,7 @@ export function DashboardView({ locale }: { locale: string }) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           href="/admin/shift"
-          className="rounded-xl border bg-card p-5 shadow-sm transition-colors hover:border-primary/40 hover:shadow-md"
+          className="nb-border-sm nb-shadow-sm nb-press-sm rounded-xl bg-card p-5"
         >
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
             <Banknote className="h-5 w-5" />
@@ -78,7 +78,7 @@ export function DashboardView({ locale }: { locale: string }) {
             {isStatsLoading ? t("loadingStats") : formatVND(stats.todayRevenue)}
           </h3>
         </Link>
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/15 text-secondary">
             <ShoppingBag className="h-5 w-5" />
           </div>
@@ -87,7 +87,7 @@ export function DashboardView({ locale }: { locale: string }) {
             {isStatsLoading ? t("loadingStats") : stats.ordersToday}
           </h3>
         </div>
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-accent/30 text-accent-foreground">
             <Gift className="h-5 w-5" />
           </div>
@@ -96,7 +96,7 @@ export function DashboardView({ locale }: { locale: string }) {
             {isStatsLoading ? t("loadingStats") : stats.loyaltyIssuedToday}
           </h3>
         </div>
-        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm rounded-xl border-destructive bg-destructive/5 p-5">
           <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
             <TriangleAlert className="h-5 w-5" />
           </div>
@@ -106,7 +106,7 @@ export function DashboardView({ locale }: { locale: string }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border bg-card p-5 shadow-sm lg:col-span-2">
+        <div className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5 lg:col-span-2">
           <div className="mb-4 flex items-center justify-between">
             <h4 className="font-bold text-card-foreground">{t("revenuePerformance")}</h4>
             <span className="rounded-lg bg-muted px-3 py-1 text-xs font-bold text-muted-foreground">
@@ -132,7 +132,7 @@ export function DashboardView({ locale }: { locale: string }) {
           </div>
         </div>
 
-        <div className="rounded-xl border bg-card p-5 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
           <h4 className="mb-4 font-bold text-card-foreground">{t("bestSellers")}</h4>
           <div className="space-y-3">
             {stats.bestSellers.map((item, index) => (
@@ -162,7 +162,7 @@ export function DashboardView({ locale }: { locale: string }) {
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card p-5 shadow-sm">
+      <div className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h4 className="flex items-center gap-2 font-bold text-card-foreground">
             <TriangleAlert className="h-4 w-4 text-destructive" />
@@ -233,7 +233,7 @@ export function DashboardView({ locale }: { locale: string }) {
         </div>
       </div>
 
-      <div className="rounded-xl border bg-card p-5 shadow-sm">
+      <div className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
         <div className="mb-4 flex items-center justify-between">
           <h4 className="font-bold text-card-foreground">{t("tableStatus")}</h4>
           {needsCleaningAttention > 0 && (
