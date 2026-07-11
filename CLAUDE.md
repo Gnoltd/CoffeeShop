@@ -9,7 +9,7 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (41
+role-gated), full customer/staff/admin UI, live Supabase DB (42
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
 Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
 Now/Pay Later) payment with method-chosen-at-serving-time (including
@@ -21,8 +21,10 @@ History, real Google sign-in, real Profile Settings (password change +
 Google account linking), an admin-editable per-item Sizes editor, a
 real forgot-password/reset-via-email flow, real Loyalty tier progress,
 a real Rewards catalog/redemption (with a staff-facing redemption
-lookup to close the loop), a real customer Address Book, and a real
-POS size/extras picker all work end-to-end. Deployed at
+lookup to close the loop), a real customer Address Book, a real POS
+size/extras picker, and real Admin Settings (shop info, tax rate, and
+loyalty enable/rates — genuinely persisted and driving POS/checkout,
+not `useState` mock) all work end-to-end. Deployed at
 **https://phadincoffee.vercel.app**, auto-deploys on push to `main`. See
 `daily.md` for what's currently open — it's kept short and recap-free by
 design, so check it before this file for "what's left."
@@ -488,6 +490,34 @@ you need to find your way around; check the dated docs for full detail.
   Realtime on `orders`/`order_items`/`loyalty_transactions`. A 5-sheet
   `.xlsx` export button (`xlsx`/SheetJS) sits alongside it. The Revenue
   card links to `/admin/shift` (see "Shift closing" below).
+- Admin Settings (`/admin/settings`, made real 2026-07-11): shop
+  info (name/address/phone/hours) + tax rate, and loyalty
+  enabled/earn-rate/redeem-rate, now actually persist to
+  `shop_settings`/`loyalty_settings` via `lib/supabase/settings-data.ts`
+  (migration `0042`) — `settings-view.tsx` was previously 100%
+  `useState`-only mock (a stale doc-comment literally said the tables
+  didn't exist yet, even though they'd existed since migration `0002`).
+  Worst part of the gap: POS's tax line used a hardcoded
+  `TAX_RATE = 0.08` that was never even sent to `place_order` — the
+  server recomputed the total from scratch with **no tax at all**, so
+  the number staff saw on screen was pure client-side decoration, never
+  actually charged or recorded. Tax is now real end-to-end for **both**
+  POS and online checkout (`orders.tax_amount`, computed by
+  `place_order` from `shop_settings.tax_rate` on the post-discount
+  subtotal — server-authoritative, matches how every other discount is
+  never trusted from the client), shown in POS's order panel, checkout's
+  summary, and the customer's own order tracking/history detail. The
+  "Enable Program" loyalty toggle now actually gates both point earning
+  (`handle_order_paid`) and point redemption (`place_order` raises
+  `loyalty_program_disabled`) instead of doing nothing; checkout hides
+  its whole Loyalty Points section when disabled.
+  `shop_settings.tax_rate` is stored as a decimal fraction
+  (`numeric(5,4)`, e.g. `0.08`) but the Admin UI/`ShopSettings` type
+  both work in whole percent (e.g. `8`) — conversion happens in
+  `settings-data.ts`, not spread across call sites. **Left at `0` on
+  purpose** — no real tax rate was ever specified, so nothing was
+  invented; the admin needs to set the real rate once via the now-working
+  Settings page.
 
 ### Orders + Realtime (core, all real)
 - `place_order` RPC (`security definer`) — the only place order money
@@ -632,7 +662,7 @@ you need to find your way around; check the dated docs for full detail.
 
 ## Database (`supabase/migrations/`)
 
-41 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+42 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -667,6 +697,7 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0039` | `customer_addresses` table + `set_default_address()` (real Address Book) |
 | `0040` | `rewards.discount_value_vnd` + `reward_redemptions.applied_order_id` + `get_redemption_expiry()`/`get_my_redemptions()` + `place_order` gains `redemptionIds` (self-service reward-redemption checkout) |
 | `0041` | `find_redemption_by_code()`/`fulfill_redemption()` also treat `applied_order_id` as "used" (staff/checkout consistency) |
+| `0042` | `loyalty_settings.enabled` + `orders.tax_amount` + `place_order`/`handle_order_paid`/`get_order_for_tracking` gain real tax + loyalty-enabled enforcement (Admin Settings made real) |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email

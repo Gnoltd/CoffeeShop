@@ -18,7 +18,14 @@
    this file's entry) has no recorded evidence of having run. Same two
    stalled automated attempts as item 1 above. Plan:
    `docs/superpowers/plans/2026-07-10-shift-closing.md`.
-3. **Forgot password — real-email round trip unconfirmed.** Shipped and
+3. **Set the real tax rate.** Admin Settings now genuinely persists
+   (migration `0042`, 2026-07-11) and POS/checkout both apply
+   `shop_settings.tax_rate` for real — but it's deliberately left at
+   `0` since no real rate was ever specified (previously a hardcoded,
+   never-actually-charged `8%` in POS only). Set the real rate via
+   `/admin/settings` whenever convenient — also a good moment to fill
+   in shop name/address/phone/hours, which were never persisted either.
+4. **Forgot password — real-email round trip unconfirmed.** Shipped and
    live-verified end-to-end except for the actual emailed link: request
    flow (email entry → "check your email" screen, works regardless of
    whether the address is registered), navigation between views, and
