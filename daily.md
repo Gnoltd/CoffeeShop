@@ -1,7 +1,7 @@
 # Open / not started
 
-1. **"Neubrutalist Modern" full-app redesign — Phases 1 & 2 shipped to
-   `main`, live verification not yet done.**
+1. **"Neubrutalist Modern" full-app redesign — Phases 1, 2 & 3 shipped
+   to `main`, live verification not yet done.**
    Design spec: `docs/superpowers/specs/2026-07-12-elevated-warm-redesign-design.md`
    (title says "Elevated Warm" but the actual locked style is
    Neubrutalist Modern — see the spec's revision note). Covers every
@@ -31,24 +31,40 @@
    change. All six stayed separate routes exactly as today
    (`/cart`, `/checkout`, `/orders/[orderId]`, `/orders`, `/profile`,
    `/loyalty`), per the spec's own "No route/IA changes" constraint.
+   **Phase 3** (`docs/superpowers/plans/2026-07-12-neubrutalist-redesign-phase3-pos-kds.md`,
+   pushed `b9af9aa`): re-skinned `StaffNav`, POS, and all five KDS
+   components (top bar, board, tables column, pending-payment banner,
+   stats footer) at the denser Staff/Admin scale (`nb-border-sm`/
+   `nb-shadow-sm` throughout, not the Customer-scale `nb-border`/
+   `nb-shadow`). KDS's functional status colors (column header hues,
+   table-status backgrounds/pills) were deliberately left alone — those
+   are a status palette, not brand tokens.
+   **Correction made during Phase 3 planning**: the spec's note about
+   "a POS/KDS/Admin app-switcher in the staff top bar (new, not
+   previously specced)" was wrong — `components/staff/staff-nav.tsx`
+   already existed and already did exactly that (POS/Kitchen Display/
+   Rewards/Dashboard links with active-state highlighting); only its
+   visual re-skin was actually new work.
    `tsc --noEmit` and the full test suite (140 tests) passed after every
-   task in both phases. **Not yet confirmed**: the live Vercel deploy
-   hasn't been eye-verified for either phase (colors/dark-mode/mobile —
-   deliberately deferred by explicit user request, to be done later).
-   Phase 3 (POS, KDS) is next per the spec's rollout order; Phase 4
-   (Admin, all 8 views) follows.
+   task in all three phases. **Not yet confirmed**: the live Vercel
+   deploy hasn't been eye-verified for any phase (colors/dark-mode/
+   mobile — deliberately deferred by explicit user request, to be done
+   later).
+   Phase 4 (Admin, all 8 views: Dashboard + Menu Mgmt/Inventory/Tables/
+   Food Cost/Shift/Staff/Settings) is next and last per the spec's
+   rollout order.
    Real requirements surfaced during design that implementation must
-   not skip on Phases 3-4: an explicit `color` on every `<button>`
-   (found black-text-in-dark-mode bugs from browser button-color
-   non-inheritance — already caught twice now, once on Menu's category
-   pills during mockup review and structurally guarded against since by
-   using the shared shadcn `Button`/`Badge` components which always set
-   explicit text-color classes), 44×44pt touch targets on
-   customer-facing controls via hit-slop (not visual resize), a
-   POS/KDS/Admin app-switcher in the staff top bar (new, not previously
-   specced), and Shift's report gaining a real Cash/Card/VNPay
-   breakdown (UI-only — `get_shift_report()` already returns this data
-   per CLAUDE.md, just needs wiring into the current + history views).
+   not skip on Phase 4: an explicit `color` on every `<button>` (found
+   black-text-in-dark-mode bugs from browser button-color
+   non-inheritance during mockup review — hasn't recurred in the real
+   codebase since every button here uses the shared shadcn `Button`
+   component, which always sets explicit text-color classes), 44×44pt
+   touch targets on customer-facing controls via hit-slop (not visual
+   resize — n/a to Admin, which is staff-only), and Shift's report
+   gaining a real Cash/Card/VNPay breakdown (UI-only —
+   `get_shift_report()` already returns this data per CLAUDE.md, just
+   needs wiring into the current + history views — this is genuinely
+   new work, unlike the app-switcher).
 
 2. **Live-verify the Admin Dashboard by hand** — KPIs are real
    (`get_dashboard_stats()`, migration `0026`), but a full manual
