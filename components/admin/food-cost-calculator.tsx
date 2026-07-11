@@ -97,9 +97,9 @@ export function FoodCostCalculator() {
 
   return (
     <div className="mx-auto w-full max-w-5xl p-4 sm:p-6 lg:p-8">
-      <Card>
+      <Card className="nb-border nb-shadow">
         <CardHeader>
-          <CardTitle className="text-xl sm:text-2xl">{t("title")}</CardTitle>
+          <CardTitle className="text-xl sm:text-2xl font-extrabold">{t("title")}</CardTitle>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -128,7 +128,7 @@ export function FoodCostCalculator() {
           )}
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button onClick={handleCalculate} className="h-11 min-w-11 flex-1 sm:flex-none sm:px-8">
+            <Button variant="neubrutal" onClick={handleCalculate} className="h-11 min-w-11 flex-1 sm:flex-none sm:px-8">
               {t("calculate")}
             </Button>
             <Button
@@ -141,9 +141,9 @@ export function FoodCostCalculator() {
           </div>
 
           {result && (
-            <Card className="border-primary/30 bg-primary/5">
+            <Card className="nb-border-sm nb-shadow-sm bg-chip">
               <CardHeader>
-                <CardTitle className="text-lg">{t("resultsTitle")}</CardTitle>
+                <CardTitle className="text-lg font-extrabold">{t("resultsTitle")}</CardTitle>
               </CardHeader>
               <CardContent>
                 <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
