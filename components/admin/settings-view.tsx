@@ -179,9 +179,9 @@ export function SettingsView() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card className="nb-border nb-shadow">
         <CardHeader>
-          <CardTitle className="flex items-center justify-between text-lg">
+          <CardTitle className="flex items-center justify-between text-lg font-extrabold">
             <span className="flex items-center gap-2">
               <Gift className="h-5 w-5 text-primary" />
               {t("loyaltySettings")}
@@ -193,8 +193,8 @@ export function SettingsView() {
               aria-label={t("loyaltyEnabled")}
               onClick={() => updateLoyalty("enabled", !loyaltyDraft.enabled)}
               className={cn(
-                "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-                loyaltyDraft.enabled ? "bg-primary" : "bg-muted-foreground/30"
+                "nb-border-sm relative h-6 w-11 shrink-0 rounded-full transition-colors",
+                loyaltyDraft.enabled ? "bg-primary" : "bg-chip"
               )}
             >
               <span
@@ -235,10 +235,10 @@ export function SettingsView() {
       </Card>
 
       <div className="flex items-center gap-3">
-        <Button variant="outline" onClick={handleCancel} disabled={isSaving} className="h-11 px-6">
+        <Button variant="neubrutal" className="h-11 bg-card px-6 text-foreground" onClick={handleCancel} disabled={isSaving}>
           {t("cancel")}
         </Button>
-        <Button onClick={handleSave} disabled={isSaving} className="h-11 px-6">
+        <Button variant="neubrutal" onClick={handleSave} disabled={isSaving} className="h-11 px-6">
           {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("saveChanges")}
         </Button>
         {justSaved && (
