@@ -49,9 +49,9 @@ function CartRow({
       dragConstraints={{ left: -96, right: 0 }}
       dragElastic={{ left: 0.15, right: 0 }}
       onDragEnd={handleDragEnd}
-      className="flex gap-3 rounded-xl border bg-card p-3 shadow-sm"
+      className="nb-border nb-shadow flex gap-3 rounded-xl bg-card p-3"
     >
-      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-muted">
+      <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-lg bg-chip">
         <ShoppingBasket className="h-6 w-6 text-muted-foreground" />
       </div>
       <div className="flex flex-1 flex-col justify-between">
@@ -76,7 +76,7 @@ function CartRow({
         </div>
         <div className="mt-2 flex items-center justify-between">
           <div className="flex flex-col">
-            <span className="font-bold text-primary">
+            <span className="font-extrabold text-price">
               {formatVND(item.unitPrice * item.quantity)}
             </span>
             {item.quantity > 1 && (
@@ -152,8 +152,8 @@ export function CartView() {
           </StaggerList>
 
           {promoCode ? (
-            <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
-              <span className="flex items-center gap-2 text-sm font-medium text-accent-foreground">
+            <div className="nb-border-sm flex items-center justify-between gap-3 rounded-xl bg-chip px-4 py-3 mt-6">
+              <span className="flex items-center gap-2 text-sm font-bold text-foreground">
                 <Ticket className="h-4 w-4" />
                 {t("promoApplied")}: <strong>{promoCode}</strong>
               </span>
@@ -162,14 +162,14 @@ export function CartView() {
                 onClick={clearPromoCode}
                 aria-label={t("removePromo")}
                 title={t("removePromo")}
-                className="text-accent-foreground/70 hover:text-destructive"
+                className="text-muted-foreground hover:text-destructive"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
           ) : (
-            <div className="mt-6 flex flex-col gap-2 rounded-xl border border-dashed p-4">
-              <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <div className="nb-border-sm mt-6 flex flex-col gap-2 rounded-xl bg-card p-4">
+              <span className="flex items-center gap-2 text-sm font-bold text-muted-foreground">
                 <Ticket className="h-4 w-4" />
                 {t("promoLabel")}
               </span>
@@ -181,9 +181,9 @@ export function CartView() {
                     setPromoError(false)
                   }}
                   placeholder={t("promoPlaceholder")}
-                  className="h-10 flex-1"
+                  className="nb-border-sm h-10 flex-1 rounded-lg"
                 />
-                <Button variant="outline" className="h-10" onClick={handleApplyPromo} disabled={!promoInput.trim()}>
+                <Button variant="neubrutal" className="h-10" onClick={handleApplyPromo} disabled={!promoInput.trim()}>
                   {t("apply")}
                 </Button>
               </div>
@@ -194,26 +194,27 @@ export function CartView() {
 
         {/* Right Column: Sticky Summary & Checkout CTA */}
         <div className="w-full md:w-80 md:flex-[2] md:sticky md:top-20 md:self-start">
-          <section className="space-y-3 rounded-2xl bg-muted p-5">
+          <section className="nb-border nb-shadow space-y-3 rounded-2xl bg-chip p-5">
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{t("subtotal")}</span>
-              <AnimatedCounter value={subtotal} format={formatVND} className="font-medium" />
+              <AnimatedCounter value={subtotal} format={formatVND} className="font-bold" />
             </div>
             {promoDiscount > 0 && (
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">{t("discount")}</span>
-                <span className="font-medium text-green-600">-{formatVND(promoDiscount)}</span>
+                <span className="font-bold text-success">-{formatVND(promoDiscount)}</span>
               </div>
             )}
-            <div className="h-px bg-border" />
+            <div className="h-0.5 bg-ink/20" />
             <div className="flex items-center justify-between">
-              <span className="text-lg font-bold text-card-foreground">{t("total")}</span>
-              <AnimatedCounter value={total} format={formatVND} className="text-lg font-bold text-primary" />
+              <span className="text-lg font-extrabold text-card-foreground">{t("total")}</span>
+              <AnimatedCounter value={total} format={formatVND} className="text-lg font-extrabold text-price" />
             </div>
           </section>
 
           <Button
-            className="mt-6 h-12 w-full gap-2 rounded-xl text-base"
+            variant="neubrutal"
+            className="mt-6 h-12 w-full gap-2 text-base"
             render={<Link href="/checkout" />}
             nativeButton={false}
           >
