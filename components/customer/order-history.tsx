@@ -88,14 +88,14 @@ export function OrderHistory() {
               <StaggerItem key={order.id}>
                 <Link
                   href={`/orders/${order.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:shadow-md"
+                  className="nb-border nb-shadow nb-press flex items-center justify-between gap-3 rounded-xl bg-card p-4"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-bold text-card-foreground">#{formatOrderId(order.id)}</span>
+                      <span className="font-extrabold text-card-foreground">#{formatOrderId(order.id)}</span>
                       <span
                         className={cn(
-                          "shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold",
+                          "nb-border-sm shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold",
                           STATUS_STYLES[order.status]
                         )}
                       >
@@ -108,7 +108,7 @@ export function OrderHistory() {
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="font-bold text-primary">{formatVND(order.total)}</span>
+                    <span className="font-extrabold text-price">{formatVND(order.total)}</span>
                     <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </Link>
