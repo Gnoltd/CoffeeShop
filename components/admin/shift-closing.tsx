@@ -98,12 +98,12 @@ export function ShiftClosing() {
     <div className="mx-auto flex max-w-4xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
-        <div className="flex gap-1 rounded-xl border bg-muted/40 p-1">
+        <div className="nb-border-sm nb-shadow-sm flex gap-1 rounded-xl bg-card p-1">
           <button
             type="button"
             onClick={() => setTab("current")}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${
-              tab === "current" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-extrabold ${
+              tab === "current" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
             }`}
           >
             <Wallet className="h-4 w-4" />
@@ -115,8 +115,8 @@ export function ShiftClosing() {
               setTab("history")
               setSelectedShift(null)
             }}
-            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium ${
-              tab === "history" ? "bg-card text-card-foreground shadow-sm" : "text-muted-foreground"
+            className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-extrabold ${
+              tab === "history" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
             }`}
           >
             <History className="h-4 w-4" />
@@ -141,8 +141,8 @@ export function ShiftClosing() {
               )}
 
               {!active ? (
-                <section className="rounded-xl border bg-card p-5 shadow-sm">
-                  <h3 className="mb-1 flex items-center gap-2 font-bold text-card-foreground">
+                <section className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
+                  <h3 className="mb-1 flex items-center gap-2 font-extrabold text-card-foreground">
                     <Wallet className="h-5 w-5 text-primary" />
                     {t("noShiftTitle")}
                   </h3>
@@ -155,9 +155,9 @@ export function ShiftClosing() {
                       min="0"
                       value={startingCashInput}
                       onChange={(e) => setStartingCashInput(e.target.value)}
-                      className="h-11 w-full max-w-xs rounded-xl border bg-card px-4 text-card-foreground"
+                      className="nb-border-sm h-11 w-full max-w-xs rounded-xl bg-card px-4 text-card-foreground"
                     />
-                    <Button className="h-11" disabled={isSubmitting || startingCashInput === ""} onClick={handleOpen}>
+                    <Button variant="neubrutal" className="h-11" disabled={isSubmitting || startingCashInput === ""} onClick={handleOpen}>
                       {t("openShiftButton")}
                     </Button>
                   </div>
@@ -166,8 +166,8 @@ export function ShiftClosing() {
                 <>
                   <ShiftReportDetail report={active} locale={locale} />
 
-                  <section className="rounded-xl border bg-card p-5 shadow-sm">
-                    <h3 className="mb-3 font-bold text-card-foreground">{t("closeShiftTitle")}</h3>
+                  <section className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
+                    <h3 className="mb-3 font-extrabold text-card-foreground">{t("closeShiftTitle")}</h3>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
                       <div className="flex-1">
                         <label className="mb-1 block text-xs font-medium text-muted-foreground">
@@ -178,7 +178,7 @@ export function ShiftClosing() {
                           min="0"
                           value={countedCashInput}
                           onChange={(e) => setCountedCashInput(e.target.value)}
-                          className="h-11 w-full rounded-xl border bg-card px-4 text-card-foreground"
+                          className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground"
                         />
                       </div>
                       <div className="flex-1">
@@ -188,10 +188,10 @@ export function ShiftClosing() {
                         <input
                           value={notesInput}
                           onChange={(e) => setNotesInput(e.target.value)}
-                          className="h-11 w-full rounded-xl border bg-card px-4 text-card-foreground"
+                          className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground"
                         />
                       </div>
-                      <Button className="h-11" disabled={isSubmitting || countedCashInput === ""} onClick={handleClose}>
+                      <Button variant="neubrutal" className="h-11" disabled={isSubmitting || countedCashInput === ""} onClick={handleClose}>
                         {t("closeShiftButton")}
                       </Button>
                     </div>
@@ -226,13 +226,13 @@ export function ShiftClosing() {
           ) : history.length === 0 ? (
             <p className="py-16 text-center text-sm text-muted-foreground">{t("historyEmpty")}</p>
           ) : (
-            <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+            <section className="nb-border-sm nb-shadow-sm overflow-hidden rounded-xl bg-card">
               {history.map((shift) => (
                 <button
                   key={shift.id}
                   type="button"
                   onClick={() => handleSelectShift(shift.id)}
-                  className="flex w-full items-center justify-between border-b p-4 text-left transition-colors last:border-0 hover:bg-muted/40"
+                  className="flex w-full items-center justify-between border-b-2 border-ink/15 p-4 text-left last:border-0"
                 >
                   <div>
                     <p className="font-bold text-card-foreground">
