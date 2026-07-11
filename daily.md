@@ -1,7 +1,7 @@
 # Open / not started
 
-1. **"Neubrutalist Modern" full-app redesign — Phase 1 shipped to `main`,
-   live verification not yet done.**
+1. **"Neubrutalist Modern" full-app redesign — Phases 1 & 2 shipped to
+   `main`, live verification not yet done.**
    Design spec: `docs/superpowers/specs/2026-07-12-elevated-warm-redesign-design.md`
    (title says "Elevated Warm" but the actual locked style is
    Neubrutalist Modern — see the spec's revision note). Covers every
@@ -10,30 +10,45 @@
    Food Cost/Shift/Staff/Settings). Validated via 8 full interactive
    HTML mockups (Artifacts, ephemeral to that conversation — not in the
    repo) with live pixel-level iteration, not static wireframes.
-   **Phase 1** (`docs/superpowers/plans/2026-07-12-neubrutalist-redesign-phase1-foundation-landing-menu.md`)
-   is code-complete and pushed (`934e72c`): design tokens + working dark
-   mode (`hooks/useTheme.tsx`, `ThemeToggle`, no-flash init script —
+   **Phase 1** (`docs/superpowers/plans/2026-07-12-neubrutalist-redesign-phase1-foundation-landing-menu.md`,
+   pushed `934e72c`): design tokens + working dark mode
+   (`hooks/useTheme.tsx`, `ThemeToggle`, no-flash init script —
    `globals.css` already had a dormant `.dark` class from the shadcn
    scaffold, never wired to a toggle until now), an additive `neubrutal`
-   variant on shared `Button`/`Badge`, and Landing + Menu re-skinned
+   variant on shared `Button`/`Badge`, Landing + Menu re-skinned
    (including fixing the quick-add button's touch target from 32px to a
-   real 44px hit area). `tsc --noEmit` and the full test suite (140
-   tests) passed after every task. **Not yet confirmed**: the live
-   Vercel deploy hasn't been eye-verified (colors/dark-mode/mobile —
+   real 44px hit area).
+   **Phase 2** (`docs/superpowers/plans/2026-07-12-neubrutalist-redesign-phase2-cart-orders-profile-loyalty.md`,
+   pushed `099133b`): re-skinned Cart, Checkout, Order Tracking, Order
+   History, Profile, Loyalty. Fixed `components/motion/step-progress.tsx`
+   (shared by Order Tracking) so a completed step shows a green
+   checkmark instead of its own icon re-colored — the behavior approved
+   in the mockups that the component didn't actually have.
+   **Correction made during Phase 2 planning**: the mockups showed
+   Cart+Checkout, Orders-Tracking+History, and Profile+Loyalty as
+   tab-switcher pairs — that was purely a review convenience for
+   comparing two screens in one HTML file, not a real navigation
+   change. All six stayed separate routes exactly as today
+   (`/cart`, `/checkout`, `/orders/[orderId]`, `/orders`, `/profile`,
+   `/loyalty`), per the spec's own "No route/IA changes" constraint.
+   `tsc --noEmit` and the full test suite (140 tests) passed after every
+   task in both phases. **Not yet confirmed**: the live Vercel deploy
+   hasn't been eye-verified for either phase (colors/dark-mode/mobile —
    deliberately deferred by explicit user request, to be done later).
-   Phase 2 (Cart/Checkout, Orders, Profile/Loyalty) is next per the
-   spec's rollout order; Phase 3 (POS/KDS) and Phase 4 (Admin) follow.
+   Phase 3 (POS, KDS) is next per the spec's rollout order; Phase 4
+   (Admin, all 8 views) follows.
    Real requirements surfaced during design that implementation must
-   not skip on later phases: an explicit `color` on every `<button>`
+   not skip on Phases 3-4: an explicit `color` on every `<button>`
    (found black-text-in-dark-mode bugs from browser button-color
-   non-inheritance — already fixed once on Menu's category pills during
-   mockup review, watch for the same class of bug elsewhere), 44×44pt
-   touch targets on customer-facing controls via hit-slop (not visual
-   resize), a POS/KDS/Admin app-switcher in the staff top bar (new, not
-   previously specced), and Shift's report gaining a real Cash/Card/
-   VNPay breakdown (UI-only — `get_shift_report()` already returns this
-   data per CLAUDE.md, just needs wiring into the current + history
-   views).
+   non-inheritance — already caught twice now, once on Menu's category
+   pills during mockup review and structurally guarded against since by
+   using the shared shadcn `Button`/`Badge` components which always set
+   explicit text-color classes), 44×44pt touch targets on
+   customer-facing controls via hit-slop (not visual resize), a
+   POS/KDS/Admin app-switcher in the staff top bar (new, not previously
+   specced), and Shift's report gaining a real Cash/Card/VNPay
+   breakdown (UI-only — `get_shift_report()` already returns this data
+   per CLAUDE.md, just needs wiring into the current + history views).
 
 2. **Live-verify the Admin Dashboard by hand** — KPIs are real
    (`get_dashboard_stats()`, migration `0026`), but a full manual
