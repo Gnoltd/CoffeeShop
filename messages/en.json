@@ -403,6 +403,7 @@
     "empty": "No orders.",
     "stationLabel": "Barista Station 1",
     "systemOnline": "System Online",
+    "systemOffline": "Reconnecting…",
     "terminalName": "Terminal #01",
     "terminalSubtitle": "Main Hall Station",
     "liveOrders": "Live Orders",

@@ -12,12 +12,12 @@ import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { payExistingOrder, changeOrderPaymentMethod, type RealPaymentMethod } from "@/lib/supabase/orders-data"
+import { getShopSettings } from "@/lib/supabase/settings-data"
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
 import { StepProgress } from "@/components/motion/step-progress"
 import { PressFeedback } from "@/components/motion/press-feedback"
 import { ReviewForm } from "@/components/customer/review-form"
 
-const MOCK_SHOP_PHONE = "+84281234567"
 const GUEST_POLL_INTERVAL_MS = 10000
 
 const STEPS = [
@@ -61,11 +61,19 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
   const [cashConfirmed, setCashConfirmed] = useState(false)
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [openReviewIndex, setOpenReviewIndex] = useState<number | null>(null)
+  const [shopPhone, setShopPhone] = useState("")
   const searchParams = useSearchParams()
 
   useEffect(() => {
     const failed = searchParams.get("paymentFailed") === "1" || searchParams.get("stripeCanceled") === "1"
     if (failed) setPaymentNotice(true)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    getShopSettings(supabase)
+      .then((settings) => setShopPhone(settings.phone))
+      .catch(() => setShopPhone(""))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -353,15 +361,17 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
         </div>
       </section>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 p-4 backdrop-blur-md">
-        <a
-          href={`tel:${MOCK_SHOP_PHONE}`}
-          className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-primary-foreground shadow-lg transition-transform active:scale-95"
-        >
-          <Phone className="h-5 w-5" />
-          {t("contactShop")}
-        </a>
-      </div>
+      {shopPhone && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 p-4 backdrop-blur-md">
+          <a
+            href={`tel:${shopPhone}`}
+            className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-primary-foreground shadow-lg transition-transform active:scale-95"
+          >
+            <Phone className="h-5 w-5" />
+            {t("contactShop")}
+          </a>
+        </div>
+      )}
     </div>
   )
 }

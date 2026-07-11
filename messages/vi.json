@@ -403,6 +403,7 @@
     "empty": "Không có đơn hàng.",
     "stationLabel": "Trạm Pha Chế 1",
     "systemOnline": "Hệ Thống Hoạt Động",
+    "systemOffline": "Đang kết nối lại…",
     "terminalName": "Trạm #01",
     "terminalSubtitle": "Khu Vực Chính",
     "liveOrders": "Đơn Hàng Trực Tiếp",

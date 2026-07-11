@@ -34,6 +34,7 @@ type KitchenOrdersContextValue = {
   orders: KdsOrderRow[]
   pendingPaymentOrders: KdsOrderRow[]
   isLoading: boolean
+  isRealtimeConnected: boolean
   advance: (orderId: string) => Promise<void>
   serveTable: (orderIds: string[]) => Promise<void>
   confirmCashPayment: (orderId: string) => Promise<void>
@@ -50,6 +51,7 @@ export function KitchenOrdersProvider({ children }: { children: ReactNode }) {
   const [orders, setOrders] = useState<KdsOrderRow[]>([])
   const [pendingPaymentOrders, setPendingPaymentOrders] = useState<KdsOrderRow[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isRealtimeConnected, setIsRealtimeConnected] = useState(false)
   const [completedCount, setCompletedCount] = useState(0)
   const [completedDurations, setCompletedDurations] = useState<number[]>([])
 
@@ -75,6 +77,8 @@ export function KitchenOrdersProvider({ children }: { children: ReactNode }) {
         if (!cancelled) refetch()
       })
       .subscribe((status) => {
+        if (cancelled) return
+        setIsRealtimeConnected(status === "SUBSCRIBED")
         if (status !== "SUBSCRIBED" && status !== "CLOSED") {
           console.warn(`Kitchen orders realtime subscription status: ${status}`)
         }
@@ -137,6 +141,7 @@ export function KitchenOrdersProvider({ children }: { children: ReactNode }) {
         orders,
         pendingPaymentOrders,
         isLoading,
+        isRealtimeConnected,
         advance,
         serveTable,
         confirmCashPayment,

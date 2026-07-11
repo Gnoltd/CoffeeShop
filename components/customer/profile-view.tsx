@@ -18,7 +18,7 @@ import {
   LayoutDashboard,
 } from "lucide-react"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
-import { formatNumber } from "@/lib/format"
+import { formatNumber, formatOrderId } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { getLoyaltyBalance } from "@/lib/supabase/loyalty-data"
 import { getProfile, updateProfile } from "@/lib/supabase/profile-data"
@@ -126,7 +126,11 @@ export function ProfileView({ role = null }: { role?: string | null }) {
         </div>
         <div className="text-center">
           <h2 className="text-xl font-bold text-card-foreground">{profile.name}</h2>
-          <p className="text-sm text-muted-foreground">{t("memberIdLabel")}: #PDC-8829</p>
+          {userId && (
+            <p className="text-sm text-muted-foreground">
+              {t("memberIdLabel")}: #PDC-{formatOrderId(userId)}
+            </p>
+          )}
         </div>
       </section>
 
