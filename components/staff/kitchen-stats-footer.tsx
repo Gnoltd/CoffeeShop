@@ -42,7 +42,7 @@ export function KitchenStatsFooter({ orders, now }: { orders: KdsOrder[]; now: n
   })
 
   return (
-    <footer className="flex shrink-0 flex-col gap-2 rounded-xl border bg-muted px-4 py-3 md:h-12 md:flex-row md:items-center md:gap-8 md:px-6 md:py-0">
+    <footer className="nb-border-sm flex shrink-0 flex-col gap-2 rounded-xl bg-muted px-4 py-3 md:h-12 md:flex-row md:items-center md:gap-8 md:px-6 md:py-0">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-muted-foreground">{t("currentLoad")}:</span>
