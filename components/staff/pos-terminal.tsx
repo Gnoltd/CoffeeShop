@@ -12,6 +12,7 @@ import { useTables } from "@/hooks/useTables"
 import { useKitchenOrders } from "@/hooks/useKitchenOrders"
 import { KitchenPendingPayment } from "@/components/staff/kitchen-pending-payment"
 import { PosItemPicker, type PosPickerSelection } from "@/components/staff/pos-item-picker"
+import { getShopSettings } from "@/lib/supabase/settings-data"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -19,8 +20,6 @@ const ICONS: Record<MenuIcon, typeof Coffee> = {
   cookie: Cookie,
   milk: Milk,
 }
-
-const TAX_RATE = 0.08
 
 type OrderLine = {
   lineId: string
@@ -59,6 +58,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
   const [chargeError, setChargeError] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<"menu" | "order">("menu")
   const [pickerItem, setPickerItem] = useState<MenuItem | null>(null)
+  const [taxRatePercent, setTaxRatePercent] = useState(0)
   const orderItemCount = order.reduce((n, line) => n + line.quantity, 0)
 
   const selectedTable = tables.find((tbl) => tbl.id === selectedTableId) ?? tables[0]
@@ -68,6 +68,13 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
       setSelectedTableId(tables[0].id)
     }
   }, [tables, selectedTableId])
+
+  useEffect(() => {
+    getShopSettings(supabase)
+      .then((settings) => setTaxRatePercent(settings.taxRatePercent))
+      .catch(() => setTaxRatePercent(0))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const name = (item: MenuItem) => (locale === "vi" ? item.nameVi : item.nameEn)
   const categoryLabel = (c: MenuCategory) => (locale === "vi" ? c.nameVi : c.nameEn)
@@ -127,7 +134,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
   }
 
   const subtotal = order.reduce((sum, line) => sum + line.unitPrice * line.quantity, 0)
-  const tax = Math.round(subtotal * TAX_RATE)
+  const tax = Math.round(subtotal * (taxRatePercent / 100))
   const total = subtotal + tax
 
   async function handleCharge() {
@@ -241,6 +248,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
           setPaymentMethod={setPaymentMethod}
           subtotal={subtotal}
           tax={tax}
+          taxRatePercent={taxRatePercent}
           total={total}
           chargeError={chargeError}
           isCharging={isCharging}
@@ -282,6 +290,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
               setPaymentMethod={setPaymentMethod}
               subtotal={subtotal}
               tax={tax}
+              taxRatePercent={taxRatePercent}
               total={total}
               chargeError={chargeError}
               isCharging={isCharging}
@@ -316,6 +325,7 @@ type OrderPanelProps = {
   setPaymentMethod: (method: PaymentMethod) => void
   subtotal: number
   tax: number
+  taxRatePercent: number
   total: number
   chargeError: string | null
   isCharging: boolean
@@ -336,6 +346,7 @@ function OrderPanel({
   setPaymentMethod,
   subtotal,
   tax,
+  taxRatePercent,
   total,
   chargeError,
   isCharging,
@@ -500,7 +511,7 @@ function OrderPanel({
             <span className="font-bold text-card-foreground">{formatVND(subtotal)}</span>
           </div>
           <div className="flex justify-between">
-            <span>{t("tax")}</span>
+            <span>{t("tax", { rate: taxRatePercent })}</span>
             <span className="font-bold text-card-foreground">{formatVND(tax)}</span>
           </div>
         </div>

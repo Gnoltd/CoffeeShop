@@ -11,6 +11,7 @@ import { formatVND } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { cancelPendingOrder } from "@/lib/supabase/orders-data"
 import { getMyRedemptions, type MyRedemption } from "@/lib/supabase/rewards-data"
+import { getShopSettings, getLoyaltySettings } from "@/lib/supabase/settings-data"
 import { useCart } from "@/hooks/useCart"
 import { useTables } from "@/hooks/useTables"
 import { QrScannerOverlay } from "@/components/customer/qr-scanner-overlay"
@@ -42,6 +43,8 @@ export function CheckoutView() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [pointsBalance, setPointsBalance] = useState(0)
   const [redeemValuePerPoint, setRedeemValuePerPoint] = useState(0)
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(true)
+  const [taxRatePercent, setTaxRatePercent] = useState(0)
   const [usableRedemptions, setUsableRedemptions] = useState<MyRedemption[]>([])
   const [selectedRedemptionIds, setSelectedRedemptionIds] = useState<string[]>([])
   const [isPlacing, setIsPlacing] = useState(false)
@@ -66,9 +69,11 @@ export function CheckoutView() {
         .then((all) => setUsableRedemptions(all.filter((r) => !r.isUsed && !r.isExpired)))
         .catch(() => setUsableRedemptions([]))
     })
-    supabase.from("loyalty_settings").select("redeem_value_vnd_per_point").eq("id", 1).single().then(({ data }) => {
-      if (data) setRedeemValuePerPoint(data.redeem_value_vnd_per_point)
+    getLoyaltySettings(supabase).then((settings) => {
+      setRedeemValuePerPoint(settings.redeemValueVndPerPoint)
+      setLoyaltyEnabled(settings.enabled)
     })
+    getShopSettings(supabase).then((settings) => setTaxRatePercent(settings.taxRatePercent))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -96,7 +101,9 @@ export function CheckoutView() {
     .filter((r) => selectedRedemptionIds.includes(r.id))
     .reduce((sum, r) => sum + r.discountValueVnd, 0)
   const discount = promoDiscount + loyaltyDiscount + redemptionDiscount
-  const total = Math.max(subtotal - discount, 0)
+  const taxableAmount = Math.max(subtotal - discount, 0)
+  const tax = Math.round(taxableAmount * (taxRatePercent / 100))
+  const total = taxableAmount + tax
 
   function toggleRedemption(id: string) {
     setSelectedRedemptionIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
@@ -257,8 +264,15 @@ export function CheckoutView() {
             <span className="font-bold text-green-600">-{formatVND(redemptionDiscount)}</span>
           </div>
         )}
+        {tax > 0 && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">{t("taxLabel", { rate: taxRatePercent })}</span>
+            <span className="font-bold text-card-foreground">{formatVND(tax)}</span>
+          </div>
+        )}
       </section>
 
+      {loyaltyEnabled && (
       <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-card-foreground">{t("loyaltyPoints")}</h2>
@@ -297,6 +311,7 @@ export function CheckoutView() {
           </p>
         )}
       </section>
+      )}
 
       {isLoggedIn && usableRedemptions.length > 0 && (
         <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">

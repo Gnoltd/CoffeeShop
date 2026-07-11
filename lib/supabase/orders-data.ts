@@ -15,6 +15,7 @@ export type OrderForTracking = {
   items: OrderForTrackingItem[]
   subtotal: number
   discount: number
+  taxAmount: number
   total: number
   status: RealOrderStatus
   paymentStatus: string
@@ -60,6 +61,7 @@ type TrackingJson = {
   paymentMethod: RealPaymentMethod | null
   subtotal: number
   discount: number
+  taxAmount: number
   total: number
   items: TrackingJsonItem[]
 }
@@ -73,6 +75,7 @@ function mapTrackingJson(json: TrackingJson): OrderForTracking {
     items: json.items.map((item) => ({ ...item, note: item.note ?? undefined })),
     subtotal: json.subtotal,
     discount: json.discount,
+    taxAmount: json.taxAmount ?? 0,
     total: json.total,
     status: json.status,
     paymentStatus: json.paymentStatus,
@@ -119,6 +122,7 @@ type OrderRow = {
   status: RealOrderStatus
   subtotal: number
   discount_amount: number
+  tax_amount: number
   total: number
   table_id: string | null
   payment_status: string
@@ -128,7 +132,7 @@ type OrderRow = {
 }
 
 const ORDER_SELECT = `
-  id, created_at, order_type, status, subtotal, discount_amount, total,
+  id, created_at, order_type, status, subtotal, discount_amount, tax_amount, total,
   table_id, payment_status, payment_method,
   tables ( table_number ),
   order_items ( menu_item_id, quantity, unit_price, note, menu_items ( name_vi, name_en ) )
@@ -150,6 +154,7 @@ function mapOrderRow(row: OrderRow): OrderForTracking {
     })),
     subtotal: row.subtotal,
     discount: row.discount_amount,
+    taxAmount: row.tax_amount,
     total: row.total,
     status: row.status,
     paymentStatus: row.payment_status,
@@ -348,7 +353,7 @@ type OrderHistoryDetailRow = OrderRow & {
 }
 
 const ORDER_HISTORY_DETAIL_SELECT = `
-  id, created_at, order_type, status, subtotal, discount_amount, total,
+  id, created_at, order_type, status, subtotal, discount_amount, tax_amount, total,
   payment_method, payment_status,
   tables ( table_number ),
   profiles ( full_name ),

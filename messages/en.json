@@ -227,6 +227,7 @@
     "discountApplied": "(-{amount} Loyalty)",
     "myRewardsTitle": "My Rewards",
     "rewardsDiscountLabel": "Rewards",
+    "taxLabel": "Tax ({rate}%)",
     "redemptionInvalidError": "One of your selected rewards is no longer valid — please review and try again.",
     "paymentMethodComingSoon": "Coming soon — not available yet",
     "loyaltyGuestTooltip": "Log in to earn and redeem loyalty points",
@@ -275,6 +276,7 @@
     "itemCount": "{count, plural, one {# item} other {# items}}",
     "subtotal": "Subtotal",
     "discount": "Discount",
+    "taxLabel": "Tax",
     "total": "Total",
     "contactShop": "Contact Shop",
     "notFoundTitle": "Order Not Found",
@@ -369,7 +371,7 @@
     "payCash": "Cash",
     "payCard": "Card",
     "subtotal": "Subtotal",
-    "tax": "Tax (8%)",
+    "tax": "Tax ({rate}%)",
     "charge": "Charge",
     "paymentMethodComingSoon": "Coming soon — not available yet",
     "chargeError": "Failed to charge order. Try again.",
@@ -777,7 +779,10 @@
     "redeemRate": "Redeem Rate (VND / 1 point)",
     "saveChanges": "Save Changes",
     "cancel": "Cancel",
-    "savedMessage": "Changes saved."
+    "savedMessage": "Changes saved.",
+    "loading": "Loading…",
+    "loadError": "Couldn't load settings — please try again.",
+    "saveError": "Couldn't save settings — please try again."
   },
   "FoodCost": {
     "title": "Food Cost Percentage Calculator",

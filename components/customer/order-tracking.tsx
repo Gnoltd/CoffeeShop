@@ -340,6 +340,12 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
             <span>{t("discount")}</span>
             <span className="text-destructive">-{formatVND(order.discount)}</span>
           </div>
+          {order.taxAmount > 0 && (
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{t("taxLabel")}</span>
+              <span>{formatVND(order.taxAmount)}</span>
+            </div>
+          )}
           <div className="mt-2 flex items-center justify-between border-t pt-2">
             <span className="font-bold text-card-foreground">{t("total")}</span>
             <span className="text-xl font-black text-primary">{formatVND(order.total)}</span>

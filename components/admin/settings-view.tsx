@@ -1,66 +1,122 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useTranslations } from "next-intl"
-import { Store, Gift, Check } from "lucide-react"
+import { Store, Gift, Check, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { createClient } from "@/lib/supabase/client"
+import {
+  getShopSettings,
+  updateShopSettings,
+  getLoyaltySettings,
+  updateLoyaltySettings,
+  type ShopSettings,
+  type LoyaltySettings,
+} from "@/lib/supabase/settings-data"
 
-type SettingsState = {
-  shopName: string
-  address: string
-  phone: string
-  openingHours: string
-  taxRate: string
-  loyaltyEnabled: boolean
-  earnRate: string
-  redeemRate: string
+type ShopDraft = { shopName: string; address: string; phone: string; openingHours: string; taxRate: string }
+type LoyaltyDraft = { enabled: boolean; earnRate: string; redeemRate: string }
+
+const EMPTY_SHOP: ShopDraft = { shopName: "", address: "", phone: "", openingHours: "", taxRate: "0" }
+const EMPTY_LOYALTY: LoyaltyDraft = { enabled: true, earnRate: "0", redeemRate: "0" }
+
+function toShopDraft(s: ShopSettings): ShopDraft {
+  return {
+    shopName: s.shopName,
+    address: s.address,
+    phone: s.phone,
+    openingHours: s.openingHours,
+    taxRate: String(s.taxRatePercent),
+  }
 }
 
-/**
- * No `shop_settings`/`loyalty_settings` tables yet — this form only holds
- * local state and never persists. Defaults match the rates agreed for the
- * real schema: 10,000 VND spent = 1 point, 100 points = 10,000 VND off.
- */
-const DEFAULT_SETTINGS: SettingsState = {
-  shopName: "PhaDinCoffee",
-  address: "123 Lê Lợi, Bến Thành, Quận 1, TP. HCM",
-  phone: "028 3823 4567",
-  openingHours: "07:00 - 22:00",
-  taxRate: "8",
-  loyaltyEnabled: true,
-  earnRate: "10000",
-  redeemRate: "100",
+function toLoyaltyDraft(s: LoyaltySettings): LoyaltyDraft {
+  return { enabled: s.enabled, earnRate: String(s.earnRateVndPerPoint), redeemRate: String(s.redeemValueVndPerPoint) }
 }
 
 export function SettingsView() {
   const t = useTranslations("AdminSettings")
+  const [supabase] = useState(() => createClient())
 
-  const [savedSettings, setSavedSettings] = useState(DEFAULT_SETTINGS)
-  const [draft, setDraft] = useState(DEFAULT_SETTINGS)
+  const [savedShop, setSavedShop] = useState<ShopDraft>(EMPTY_SHOP)
+  const [shopDraft, setShopDraft] = useState<ShopDraft>(EMPTY_SHOP)
+  const [savedLoyalty, setSavedLoyalty] = useState<LoyaltyDraft>(EMPTY_LOYALTY)
+  const [loyaltyDraft, setLoyaltyDraft] = useState<LoyaltyDraft>(EMPTY_LOYALTY)
+
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [justSaved, setJustSaved] = useState(false)
 
-  function update<K extends keyof SettingsState>(key: K, value: SettingsState[K]) {
-    setDraft((prev) => ({ ...prev, [key]: value }))
+  useEffect(() => {
+    Promise.all([getShopSettings(supabase), getLoyaltySettings(supabase)])
+      .then(([shop, loyalty]) => {
+        setSavedShop(toShopDraft(shop))
+        setShopDraft(toShopDraft(shop))
+        setSavedLoyalty(toLoyaltyDraft(loyalty))
+        setLoyaltyDraft(toLoyaltyDraft(loyalty))
+      })
+      .catch(() => setError(t("loadError")))
+      .finally(() => setIsLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  function updateShop<K extends keyof ShopDraft>(key: K, value: ShopDraft[K]) {
+    setShopDraft((prev) => ({ ...prev, [key]: value }))
   }
 
-  function handleSave() {
-    // No backend to persist to yet — just commits the local draft as "saved".
-    setSavedSettings(draft)
-    setJustSaved(true)
-    setTimeout(() => setJustSaved(false), 2000)
+  function updateLoyalty<K extends keyof LoyaltyDraft>(key: K, value: LoyaltyDraft[K]) {
+    setLoyaltyDraft((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function handleSave() {
+    setError(null)
+    setIsSaving(true)
+    try {
+      await Promise.all([
+        updateShopSettings(supabase, {
+          shopName: shopDraft.shopName,
+          address: shopDraft.address,
+          phone: shopDraft.phone,
+          openingHours: shopDraft.openingHours,
+          taxRatePercent: Number(shopDraft.taxRate) || 0,
+        }),
+        updateLoyaltySettings(supabase, {
+          enabled: loyaltyDraft.enabled,
+          earnRateVndPerPoint: Number(loyaltyDraft.earnRate) || 0,
+          redeemValueVndPerPoint: Number(loyaltyDraft.redeemRate) || 0,
+        }),
+      ])
+      setSavedShop(shopDraft)
+      setSavedLoyalty(loyaltyDraft)
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 2000)
+    } catch {
+      setError(t("saveError"))
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   function handleCancel() {
-    setDraft(savedSettings)
+    setShopDraft(savedShop)
+    setLoyaltyDraft(savedLoyalty)
+    setError(null)
+  }
+
+  if (isLoading) {
+    return <p className="py-16 text-center text-muted-foreground">{t("loading")}</p>
   }
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <h2 className="text-2xl font-bold text-card-foreground">{t("shopInfo")}</h2>
+
+      {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
       <Card>
         <CardHeader>
@@ -74,8 +130,8 @@ export function SettingsView() {
             <Label htmlFor="shop-name">{t("shopName")}</Label>
             <Input
               id="shop-name"
-              value={draft.shopName}
-              onChange={(e) => update("shopName", e.target.value)}
+              value={shopDraft.shopName}
+              onChange={(e) => updateShop("shopName", e.target.value)}
               className="h-10"
             />
           </div>
@@ -83,8 +139,8 @@ export function SettingsView() {
             <Label htmlFor="address">{t("address")}</Label>
             <Input
               id="address"
-              value={draft.address}
-              onChange={(e) => update("address", e.target.value)}
+              value={shopDraft.address}
+              onChange={(e) => updateShop("address", e.target.value)}
               className="h-10"
             />
           </div>
@@ -93,8 +149,8 @@ export function SettingsView() {
               <Label htmlFor="phone">{t("phone")}</Label>
               <Input
                 id="phone"
-                value={draft.phone}
-                onChange={(e) => update("phone", e.target.value)}
+                value={shopDraft.phone}
+                onChange={(e) => updateShop("phone", e.target.value)}
                 className="h-10"
               />
             </div>
@@ -102,8 +158,8 @@ export function SettingsView() {
               <Label htmlFor="hours">{t("openingHours")}</Label>
               <Input
                 id="hours"
-                value={draft.openingHours}
-                onChange={(e) => update("openingHours", e.target.value)}
+                value={shopDraft.openingHours}
+                onChange={(e) => updateShop("openingHours", e.target.value)}
                 className="h-10"
               />
             </div>
@@ -114,8 +170,9 @@ export function SettingsView() {
               id="tax-rate"
               type="number"
               min="0"
-              value={draft.taxRate}
-              onChange={(e) => update("taxRate", e.target.value)}
+              step="0.01"
+              value={shopDraft.taxRate}
+              onChange={(e) => updateShop("taxRate", e.target.value)}
               className="h-10 max-w-[140px]"
             />
           </div>
@@ -132,33 +189,33 @@ export function SettingsView() {
             <button
               type="button"
               role="switch"
-              aria-checked={draft.loyaltyEnabled}
+              aria-checked={loyaltyDraft.enabled}
               aria-label={t("loyaltyEnabled")}
-              onClick={() => update("loyaltyEnabled", !draft.loyaltyEnabled)}
+              onClick={() => updateLoyalty("enabled", !loyaltyDraft.enabled)}
               className={cn(
                 "relative h-6 w-11 shrink-0 rounded-full transition-colors",
-                draft.loyaltyEnabled ? "bg-primary" : "bg-muted-foreground/30"
+                loyaltyDraft.enabled ? "bg-primary" : "bg-muted-foreground/30"
               )}
             >
               <span
                 className={cn(
                   "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                  draft.loyaltyEnabled ? "translate-x-5" : "translate-x-0"
+                  loyaltyDraft.enabled ? "translate-x-5" : "translate-x-0"
                 )}
               />
             </button>
           </CardTitle>
         </CardHeader>
-        <CardContent className={cn("space-y-4 transition-opacity", !draft.loyaltyEnabled && "opacity-50")}>
+        <CardContent className={cn("space-y-4 transition-opacity", !loyaltyDraft.enabled && "opacity-50")}>
           <div className="space-y-2">
             <Label htmlFor="earn-rate">{t("earnRate")}</Label>
             <Input
               id="earn-rate"
               type="number"
               min="0"
-              disabled={!draft.loyaltyEnabled}
-              value={draft.earnRate}
-              onChange={(e) => update("earnRate", e.target.value)}
+              disabled={!loyaltyDraft.enabled}
+              value={loyaltyDraft.earnRate}
+              onChange={(e) => updateLoyalty("earnRate", e.target.value)}
               className="h-10"
             />
           </div>
@@ -168,9 +225,9 @@ export function SettingsView() {
               id="redeem-rate"
               type="number"
               min="0"
-              disabled={!draft.loyaltyEnabled}
-              value={draft.redeemRate}
-              onChange={(e) => update("redeemRate", e.target.value)}
+              disabled={!loyaltyDraft.enabled}
+              value={loyaltyDraft.redeemRate}
+              onChange={(e) => updateLoyalty("redeemRate", e.target.value)}
               className="h-10"
             />
           </div>
@@ -178,11 +235,11 @@ export function SettingsView() {
       </Card>
 
       <div className="flex items-center gap-3">
-        <Button variant="outline" onClick={handleCancel} className="h-11 px-6">
+        <Button variant="outline" onClick={handleCancel} disabled={isSaving} className="h-11 px-6">
           {t("cancel")}
         </Button>
-        <Button onClick={handleSave} className="h-11 px-6">
-          {t("saveChanges")}
+        <Button onClick={handleSave} disabled={isSaving} className="h-11 px-6">
+          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : t("saveChanges")}
         </Button>
         {justSaved && (
           <span className="flex items-center gap-1.5 text-sm font-medium text-green-600">

@@ -28,7 +28,8 @@ describe("getOrderForTracking", () => {
       paymentMethod: "cash",
       subtotal: 50000,
       discount: 0,
-      total: 50000,
+      taxAmount: 4000,
+      total: 54000,
       items: [{ menuItemId: "item-9", nameVi: "Phin Sữa Đá", nameEn: "Iced Milk Coffee", quantity: 1, unitPrice: 50000, note: null }],
     }
     const rpcSpy = vi.fn(() => Promise.resolve({ data: result, error: null }))
@@ -41,6 +42,7 @@ describe("getOrderForTracking", () => {
     expect(order?.table).toBe("3")
     expect(order?.status).toBe("preparing")
     expect(order?.items[0].menuItemId).toBe("item-9")
+    expect(order?.taxAmount).toBe(4000)
   })
 
   it("returns null when the RPC returns null (not found or not permitted)", async () => {

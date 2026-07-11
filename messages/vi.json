@@ -227,6 +227,7 @@
     "discountApplied": "(-{amount} Tích Điểm)",
     "myRewardsTitle": "Ưu Đãi Của Tôi",
     "rewardsDiscountLabel": "Ưu Đãi",
+    "taxLabel": "Thuế ({rate}%)",
     "redemptionInvalidError": "Một trong các ưu đãi bạn chọn không còn hiệu lực — vui lòng kiểm tra lại và thử lại.",
     "paymentMethodComingSoon": "Sắp có — chưa khả dụng",
     "loyaltyGuestTooltip": "Đăng nhập để tích và đổi điểm thưởng",
@@ -275,6 +276,7 @@
     "itemCount": "{count} món",
     "subtotal": "Tạm Tính",
     "discount": "Khuyến Mãi",
+    "taxLabel": "Thuế",
     "total": "Tổng Cộng",
     "contactShop": "Liên Hệ Cửa Hàng",
     "notFoundTitle": "Không Tìm Thấy Đơn Hàng",
@@ -369,7 +371,7 @@
     "payCash": "Tiền Mặt",
     "payCard": "Thẻ",
     "subtotal": "Tạm Tính",
-    "tax": "Thuế (8%)",
+    "tax": "Thuế ({rate}%)",
     "charge": "Thanh Toán",
     "paymentMethodComingSoon": "Sắp có — chưa khả dụng",
     "chargeError": "Thanh toán thất bại. Vui lòng thử lại.",
@@ -777,7 +779,10 @@
     "redeemRate": "Tỷ Lệ Quy Đổi (VNĐ / 1 điểm)",
     "saveChanges": "Lưu Thay Đổi",
     "cancel": "Hủy Bỏ",
-    "savedMessage": "Đã lưu thay đổi."
+    "savedMessage": "Đã lưu thay đổi.",
+    "loading": "Đang tải…",
+    "loadError": "Không thể tải cài đặt — vui lòng thử lại.",
+    "saveError": "Không thể lưu cài đặt — vui lòng thử lại."
   },
   "FoodCost": {
     "title": "Tính Tỷ Lệ Chi Phí Thực Phẩm",
