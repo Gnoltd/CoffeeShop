@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export type ProgressStep = {
@@ -23,23 +24,26 @@ export function StepProgress({ steps, currentStep }: { steps: ProgressStep[]; cu
       />
       {steps.map((step, index) => {
         const Icon = step.icon
-        const isDone = index <= currentStep
+        const isDone = index < currentStep
+        const isCurrent = index === currentStep
         return (
           <div key={step.key} className="z-10 flex w-1/4 flex-col items-center gap-2">
             <motion.div
-              animate={{ scale: isDone ? 1 : 0.92 }}
+              animate={{ scale: isCurrent ? 1 : 0.92 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-full shadow-sm",
-                isDone ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                "nb-border-sm flex h-10 w-10 items-center justify-center rounded-full",
+                isDone && "bg-success text-primary-foreground",
+                isCurrent && "bg-primary text-primary-foreground",
+                !isDone && !isCurrent && "bg-chip text-muted-foreground"
               )}
             >
-              <Icon className="h-4 w-4" />
+              {isDone ? <Check className="h-4 w-4" /> : <Icon className="h-4 w-4" />}
             </motion.div>
             <p
               className={cn(
-                "text-center text-[10px] font-bold leading-tight",
-                isDone ? "text-primary" : "text-muted-foreground"
+                "text-center text-[10px] font-extrabold leading-tight",
+                isDone || isCurrent ? "text-foreground" : "text-muted-foreground"
               )}
             >
               {step.label}
