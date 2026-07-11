@@ -51,7 +51,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
-        <Button className="h-10 gap-2" onClick={() => setFormMode({ type: "add" })}>
+        <Button variant="neubrutal" className="h-10 gap-2" onClick={() => setFormMode({ type: "add" })}>
           <Plus className="h-4 w-4" />
           {t("addIngredient")}
         </Button>
@@ -60,7 +60,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
       {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("loadError")}</p>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Boxes className="h-5 w-5" />
           </div>
@@ -69,7 +69,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
             <p className="text-xl font-bold text-card-foreground">{ingredients.length}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-destructive">
             <TriangleAlert className="h-5 w-5" />
           </div>
@@ -78,7 +78,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
             <p className="text-xl font-bold text-card-foreground">{lowStockCount}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary/15 text-secondary">
             <History className="h-5 w-5" />
           </div>
@@ -96,7 +96,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
           type="button"
           onClick={() => setTab("ingredients")}
           className={cn(
-            "border-b-2 px-4 py-2 text-sm font-bold transition-colors",
+            "border-b-4 px-4 py-2 text-sm font-extrabold",
             tab === "ingredients" ? "border-primary text-primary" : "border-transparent text-muted-foreground"
           )}
         >
@@ -106,7 +106,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
           type="button"
           onClick={() => setTab("logs")}
           className={cn(
-            "border-b-2 px-4 py-2 text-sm font-bold transition-colors",
+            "border-b-4 px-4 py-2 text-sm font-extrabold",
             tab === "logs" ? "border-primary text-primary" : "border-transparent text-muted-foreground"
           )}
         >
@@ -115,7 +115,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
       </div>
 
       {tab === "ingredients" ? (
-        <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm overflow-x-auto rounded-xl bg-card">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b text-left text-muted-foreground">
@@ -166,12 +166,12 @@ export function InventoryManagement({ locale }: { locale: string }) {
                     <td className="px-4 py-3">
                       <span
                         className={cn(
-                          "rounded-full border px-2.5 py-1 text-xs font-bold",
+                          "nb-border-sm rounded-full px-2.5 py-1 text-xs font-extrabold",
                           isOut
-                            ? "border-destructive/40 bg-destructive text-destructive-foreground"
+                            ? "bg-destructive text-destructive-foreground"
                             : isLow
-                              ? "border-destructive/20 bg-destructive/10 text-destructive"
-                              : "border-green-200 bg-green-100 text-green-700"
+                              ? "bg-destructive/10 text-destructive"
+                              : "bg-green-100 text-green-700"
                         )}
                       >
                         {isOut ? t("outOfStock") : isLow ? t("lowStock") : t("inStock")}
@@ -188,7 +188,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
                         >
                           <Pencil className="h-4 w-4" />
                         </button>
-                        <Button size="sm" variant="outline" className="h-8" onClick={() => setEditingId(ingredient.id)}>
+                        <Button size="sm" variant="neubrutal" className="h-8" onClick={() => setEditingId(ingredient.id)}>
                           {t("adjustStock")}
                         </Button>
                       </div>
@@ -201,7 +201,7 @@ export function InventoryManagement({ locale }: { locale: string }) {
           </table>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm overflow-x-auto rounded-xl bg-card">
           {logs.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">{t("logsEmpty")}</p>
           ) : (
