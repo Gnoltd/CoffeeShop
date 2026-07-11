@@ -38,14 +38,14 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
 
       <div className="mx-auto w-full max-w-2xl md:max-w-6xl md:px-8">
         <section className="px-4 pt-6 md:px-0">
-          <div className="relative overflow-hidden rounded-xl border bg-muted p-5 shadow-sm md:p-8">
+          <div className="nb-border nb-shadow relative overflow-hidden rounded-xl bg-card p-5 md:p-8">
             <div className="mb-2 flex items-center gap-2 text-primary">
               <Sparkles className="h-4 w-4" />
-              <span className="text-xs font-bold uppercase tracking-wider">{t("promoLabel")}</span>
+              <span className="text-xs font-extrabold uppercase tracking-wider">{t("promoLabel")}</span>
             </div>
-            <h3 className="mb-1 font-bold text-card-foreground md:text-xl">{t("promoTitle")}</h3>
+            <h3 className="mb-1 font-extrabold text-card-foreground md:text-xl">{t("promoTitle")}</h3>
             <p className="mb-3 text-sm text-muted-foreground md:text-base md:max-w-2xl">{t("promoDescription")}</p>
-            <span className="inline-block rounded-full bg-primary px-4 py-1.5 text-sm font-bold text-primary-foreground">
+            <span className="nb-border-sm nb-shadow-sm inline-block rounded-full bg-primary px-4 py-1.5 text-sm font-extrabold text-primary-foreground">
               {t("promoBadge")}
             </span>
           </div>
@@ -69,13 +69,13 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
                 <Link
                   key={item.id}
                   href="/menu"
-                  className="flex w-36 shrink-0 flex-col gap-2 rounded-xl md:w-auto md:shrink group"
+                  className="nb-border nb-shadow nb-press flex w-36 shrink-0 flex-col gap-2 rounded-xl bg-card p-2 md:w-auto md:shrink"
                 >
-                  <div className="flex h-32 items-center justify-center rounded-xl bg-muted text-muted-foreground transition-all group-hover:scale-[1.03] group-hover:shadow-md md:h-40">
+                  <div className="flex h-32 items-center justify-center rounded-lg bg-chip text-muted-foreground md:h-40">
                     <Icon className="h-10 w-10 md:h-12 md:w-12" />
                   </div>
-                  <h4 className="text-sm font-semibold leading-tight text-card-foreground group-hover:text-primary transition-colors">{name}</h4>
-                  <span className="font-bold text-primary">{formatVND(item.basePrice)}</span>
+                  <h4 className="text-sm font-bold leading-tight text-card-foreground">{name}</h4>
+                  <span className="font-extrabold text-price">{formatVND(item.basePrice)}</span>
                 </Link>
               )
             })}
@@ -90,7 +90,7 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
               <Link
                 key={category.id}
                 href="/menu"
-                className="flex shrink-0 items-center gap-1 rounded-full border bg-card px-4 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-primary"
+                className="nb-border-sm nb-shadow-sm nb-press-sm flex shrink-0 items-center gap-1 rounded-full bg-card px-4 py-2 text-sm font-extrabold text-foreground"
               >
                 {label}
                 <ArrowRight className="h-3.5 w-3.5" />
