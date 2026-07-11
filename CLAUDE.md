@@ -9,7 +9,7 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (42
+role-gated), full customer/staff/admin UI, live Supabase DB (43
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
 Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
 Now/Pay Later) payment with method-chosen-at-serving-time (including
@@ -301,6 +301,13 @@ you need to find your way around; check the dated docs for full detail.
 - `lib/get-current-role.ts` (`getCurrentRole(supabase)`) resolves role
   server-side for the "Go to [X]" shortcut shown to logged-in
   staff/admin browsing the customer side.
+- Loyalty page's "Double Points Wednesday" banner is real (migration
+  `0043`, 2026-07-11) — `handle_order_paid` doubles earned points when
+  an order is marked paid on a Wednesday, evaluated in
+  `Asia/Ho_Chi_Minh` (not the database's UTC, which would put the
+  boundary at the wrong local hour). Was previously static marketing
+  copy with zero day-of-week logic anywhere — a false claim made every
+  day of the week, including Wednesdays.
 - Loyalty rates are real (`loyalty_settings`: 10,000 VND = 1 point, 100
   pts = 10,000 VND off). Rewards catalog/redemption is real (migration
   `0035`): `rewards` table (4 seeded rewards, bilingual `name_*`/
@@ -372,6 +379,10 @@ you need to find your way around; check the dated docs for full detail.
   account has 2+ linked identities, mirroring Supabase's own
   server-side rule for the same thing — this is what actually prevents
   anyone locking themselves out, not custom logic.
+- Profile's "Member ID" is a real per-user value (`#PDC-` +
+  `formatOrderId(userId)`, the same truncated-UUID convention used for
+  order/redemption codes elsewhere) — was a hardcoded `#PDC-8829`
+  shown identically to every customer regardless of who was logged in.
 - Profile's "Addresses" row is real (`/profile/addresses`, added
   2026-07-11, gated via `AUTH_REQUIRED_EXACT_PATHS` like Settings):
   `customer_addresses` table (migration `0039`), full CRUD +
@@ -439,7 +450,11 @@ you need to find your way around; check the dated docs for full detail.
 - `hooks/useKitchenOrders.tsx` — shared Context for POS+KDS; `advance()`
   is the single choke point for status changes; deliberately not
   persisted to localStorage (matches pre-existing reset-on-reload
-  behavior).
+  behavior). Exposes real `isRealtimeConnected` (from the Realtime
+  channel's own `.subscribe()` status, added 2026-07-11) — KDS's top
+  bar "System Online" indicator now reflects the actual connection
+  instead of a static always-green dot that stayed green even if
+  Realtime silently dropped.
 - Staff Order History (`/staff/orders/history[/[orderId]]`) —
   staff-wide order lookup, distinct from the customer's own history.
   `get_order_history()` RPC (migration `0019`) does search/filter/
@@ -532,6 +547,11 @@ you need to find your way around; check the dated docs for full detail.
   bulk-guest-visibility RLS leak) — polls `get_order_for_tracking`
   every 10s instead, labeled in the UI as polling. Logged-in
   customers/staff get true Realtime.
+- Order Tracking's "Contact Shop" button calls the real
+  `shop_settings.phone` (`getShopSettings`, added 2026-07-11) and
+  hides itself entirely when no phone is configured — was a hardcoded
+  fake number (`+84281234567`) dialed for every order regardless of
+  which shop's data was actually configured.
 
 ### Table status — occupancy + cleaning (all real, shipped 2026-07-08)
 - `tables.status` (migration `0021`) is a 3-state enum — `available |
@@ -662,7 +682,7 @@ you need to find your way around; check the dated docs for full detail.
 
 ## Database (`supabase/migrations/`)
 
-42 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+43 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -698,6 +718,7 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0040` | `rewards.discount_value_vnd` + `reward_redemptions.applied_order_id` + `get_redemption_expiry()`/`get_my_redemptions()` + `place_order` gains `redemptionIds` (self-service reward-redemption checkout) |
 | `0041` | `find_redemption_by_code()`/`fulfill_redemption()` also treat `applied_order_id` as "used" (staff/checkout consistency) |
 | `0042` | `loyalty_settings.enabled` + `orders.tax_amount` + `place_order`/`handle_order_paid`/`get_order_for_tracking` gain real tax + loyalty-enabled enforcement (Admin Settings made real) |
+| `0043` | `handle_order_paid` doubles points when paid on a Wednesday (Asia/Ho_Chi_Minh) — makes the Loyalty page's "Double Points Wednesday" banner real |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
