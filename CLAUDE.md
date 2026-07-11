@@ -9,7 +9,7 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (35
+role-gated), full customer/staff/admin UI, live Supabase DB (36
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
 Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
 Now/Pay Later) payment with method-chosen-at-serving-time (including
@@ -516,12 +516,25 @@ you need to find your way around; check the dated docs for full detail.
 - `lib/supabase/shift-data.ts` query module; reachable from Admin
   Dashboard's Revenue KPI card and the Admin sidebar. Manager/admin
   only (same gate as the rest of `/admin/*`).
+- **Shift History** (real, added 2026-07-11): `/admin/shift` has a
+  Current/History tab switch. `get_shift_history()` RPC (migration
+  `0036`) lists every past closed shift (open/close time, counted cash,
+  difference, total revenue across all methods) — `getShiftHistory`.
+  Selecting one calls the already-existing `get_shift_report(p_shift_id)`
+  (query layer's `getShiftReport` gained an optional `shiftId` param) to
+  show that shift's full detail. `components/admin/shift-report-detail.tsx`
+  is the shared renderer (opened/closed time, KPI stats, per-method
+  breakdown, transaction list) used for the live shift, the
+  just-closed summary, and any historical shift — previously the
+  just-closed summary only showed cash stats with no method breakdown
+  and nothing at all persisted once you navigated away, since only the
+  currently-open shift was ever fetchable.
 - Plan: `docs/superpowers/plans/2026-07-10-shift-closing.md`; design:
   `docs/superpowers/specs/2026-07-10-shift-closing-design.md`.
 
 ## Database (`supabase/migrations/`)
 
-35 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+36 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -550,6 +563,7 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0033` | `menu_item_sizes.sort_order` (admin Sizes editor display order) |
 | `0034` | `loyalty_tiers` table + `get_my_loyalty_tier_progress()` (real Loyalty tier progress) |
 | `0035` | `rewards`/`reward_redemptions` tables + `redeem_reward()` (real Rewards catalog/redemption) |
+| `0036` | `get_shift_history()` (Shift History — list + view past closed shifts) |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
