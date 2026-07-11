@@ -11,6 +11,7 @@ import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
 import { useTables } from "@/hooks/useTables"
 import { useKitchenOrders } from "@/hooks/useKitchenOrders"
 import { KitchenPendingPayment } from "@/components/staff/kitchen-pending-payment"
+import { PosItemPicker, type PosPickerSelection } from "@/components/staff/pos-item-picker"
 
 const ICONS: Record<MenuIcon, typeof Coffee> = {
   coffee: Coffee,
@@ -22,11 +23,20 @@ const ICONS: Record<MenuIcon, typeof Coffee> = {
 const TAX_RATE = 0.08
 
 type OrderLine = {
+  lineId: string
   menuItemId: string
   nameVi: string
   nameEn: string
+  sizeId: string | null
+  sizeName: string | null
+  modifierIds: string[]
+  modifierNames: string[]
   unitPrice: number
   quantity: number
+}
+
+function lineMergeKey(menuItemId: string, sizeId: string | null, modifierIds: string[]): string {
+  return `${menuItemId}|${sizeId ?? ""}|${[...modifierIds].sort().join(",")}`
 }
 
 type OrderType = "dine-in" | "takeaway"
@@ -48,6 +58,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
   const [isCharging, setIsCharging] = useState(false)
   const [chargeError, setChargeError] = useState<string | null>(null)
   const [mobileView, setMobileView] = useState<"menu" | "order">("menu")
+  const [pickerItem, setPickerItem] = useState<MenuItem | null>(null)
   const orderItemCount = order.reduce((n, line) => n + line.quantity, 0)
 
   const selectedTable = tables.find((tbl) => tbl.id === selectedTableId) ?? tables[0]
@@ -71,26 +82,47 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
     })
   }, [items, selectedCategory, searchQuery])
 
-  function addToOrder(item: MenuItem) {
+  function addLine(item: MenuItem, selection: PosPickerSelection) {
+    const key = lineMergeKey(item.id, selection.sizeId, selection.modifierIds)
     setOrder((prev) => {
-      const existing = prev.find((line) => line.menuItemId === item.id)
+      const existing = prev.find(
+        (line) => lineMergeKey(line.menuItemId, line.sizeId, line.modifierIds) === key
+      )
       if (existing) {
-        return prev.map((line) =>
-          line.menuItemId === item.id ? { ...line, quantity: line.quantity + 1 } : line
-        )
+        return prev.map((line) => (line.lineId === existing.lineId ? { ...line, quantity: line.quantity + 1 } : line))
       }
       return [
         ...prev,
-        { menuItemId: item.id, nameVi: item.nameVi, nameEn: item.nameEn, unitPrice: item.basePrice, quantity: 1 },
+        {
+          lineId: crypto.randomUUID(),
+          menuItemId: item.id,
+          nameVi: item.nameVi,
+          nameEn: item.nameEn,
+          sizeId: selection.sizeId,
+          sizeName: selection.sizeName,
+          modifierIds: selection.modifierIds,
+          modifierNames: selection.modifierNames,
+          unitPrice: selection.unitPrice,
+          quantity: 1,
+        },
       ]
     })
   }
 
-  function updateQuantity(menuItemId: string, quantity: number) {
+  function addToOrder(item: MenuItem) {
+    const needsPicker = (item.hasSizeOptions && item.sizes.length > 0) || item.modifierGroups.length > 0
+    if (needsPicker) {
+      setPickerItem(item)
+      return
+    }
+    addLine(item, { sizeId: null, sizeName: null, modifierIds: [], modifierNames: [], unitPrice: item.basePrice })
+  }
+
+  function updateQuantity(lineId: string, quantity: number) {
     setOrder((prev) =>
       quantity <= 0
-        ? prev.filter((line) => line.menuItemId !== menuItemId)
-        : prev.map((line) => (line.menuItemId === menuItemId ? { ...line, quantity } : line))
+        ? prev.filter((line) => line.lineId !== lineId)
+        : prev.map((line) => (line.lineId === lineId ? { ...line, quantity } : line))
     )
   }
 
@@ -114,8 +146,8 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
           paymentCollected: true,
           items: order.map((line) => ({
             menuItemId: line.menuItemId,
-            sizeId: null,
-            modifierIds: [],
+            sizeId: line.sizeId,
+            modifierIds: line.modifierIds,
             quantity: line.quantity,
             note: null,
           })),
@@ -259,13 +291,21 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
           </motion.div>
         )}
       </AnimatePresence>
+
+      {pickerItem && (
+        <PosItemPicker
+          item={pickerItem}
+          onAdd={(selection) => addLine(pickerItem, selection)}
+          onClose={() => setPickerItem(null)}
+        />
+      )}
     </div>
   )
 }
 
 type OrderPanelProps = {
   order: OrderLine[]
-  updateQuantity: (menuItemId: string, quantity: number) => void
+  updateQuantity: (lineId: string, quantity: number) => void
   clearOrder: () => void
   orderType: OrderType
   setOrderType: (type: OrderType) => void
@@ -339,17 +379,24 @@ function OrderPanel({
         ) : (
           <div className="flex flex-col gap-4">
             {order.map((line) => (
-              <div key={line.menuItemId} className="flex flex-col gap-2">
+              <div key={line.lineId} className="flex flex-col gap-2">
                 <div className="flex items-start justify-between">
-                  <h4 className="font-bold text-card-foreground">
-                    {locale === "vi" ? line.nameVi : line.nameEn}
-                  </h4>
+                  <div>
+                    <h4 className="font-bold text-card-foreground">
+                      {locale === "vi" ? line.nameVi : line.nameEn}
+                    </h4>
+                    {(line.sizeName || line.modifierNames.length > 0) && (
+                      <p className="text-xs text-muted-foreground">
+                        {[line.sizeName, ...line.modifierNames].filter(Boolean).join(" · ")}
+                      </p>
+                    )}
+                  </div>
                   <p className="font-bold text-primary">{formatVND(line.unitPrice * line.quantity)}</p>
                 </div>
                 <div className="flex items-center gap-2 self-start rounded-lg bg-card p-1">
                   <button
                     type="button"
-                    onClick={() => updateQuantity(line.menuItemId, line.quantity - 1)}
+                    onClick={() => updateQuantity(line.lineId, line.quantity - 1)}
                     className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-muted"
                   >
                     <Minus className="h-4 w-4" />
@@ -357,7 +404,7 @@ function OrderPanel({
                   <span className="w-8 text-center font-bold">{line.quantity}</span>
                   <button
                     type="button"
-                    onClick={() => updateQuantity(line.menuItemId, line.quantity + 1)}
+                    onClick={() => updateQuantity(line.lineId, line.quantity + 1)}
                     className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-secondary-foreground transition-colors"
                   >
                     <Plus className="h-4 w-4" />
