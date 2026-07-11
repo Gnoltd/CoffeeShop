@@ -323,6 +323,8 @@
     "notEnoughPoints": "Không đủ điểm",
     "emptyCatalog": "Hiện chưa có ưu đãi nào.",
     "redeemSuccess": "Đổi ưu đãi thành công! Vui lòng cho nhân viên xem.",
+    "redemptionCodeLabel": "Mã đổi thưởng của bạn",
+    "redemptionCodeHint": "Cho nhân viên xem mã này để nhận ưu đãi.",
     "errorInsufficientPoints": "Bạn không đủ điểm để đổi ưu đãi này.",
     "errorRewardInactive": "Ưu đãi này không còn khả dụng.",
     "errorRewardNotFound": "Không tìm thấy ưu đãi này.",

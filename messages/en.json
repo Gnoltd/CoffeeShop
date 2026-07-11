@@ -323,6 +323,8 @@
     "notEnoughPoints": "Not enough points",
     "emptyCatalog": "No rewards available right now.",
     "redeemSuccess": "Reward redeemed! Show this to our staff.",
+    "redemptionCodeLabel": "Your redemption code",
+    "redemptionCodeHint": "Show this code to a staff member to collect your reward.",
     "errorInsufficientPoints": "You don't have enough points for this reward.",
     "errorRewardInactive": "This reward is no longer available.",
     "errorRewardNotFound": "This reward could not be found.",

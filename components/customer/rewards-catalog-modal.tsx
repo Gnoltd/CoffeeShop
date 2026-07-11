@@ -5,7 +5,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { X, Gift, Loader2, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { formatNumber } from "@/lib/format"
+import { formatNumber, formatOrderId } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { getRewardsCatalog, redeemReward, type Reward } from "@/lib/supabase/rewards-data"
 import { BottomSheet } from "@/components/motion/bottom-sheet"
@@ -38,6 +38,7 @@ export function RewardsCatalogModal({
   const [redeemingId, setRedeemingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [successName, setSuccessName] = useState<string | null>(null)
+  const [redemptionCode, setRedemptionCode] = useState<string | null>(null)
 
   useEffect(() => {
     getRewardsCatalog(supabase).then(setRewards).catch(() => setRewards([]))
@@ -55,7 +56,8 @@ export function RewardsCatalogModal({
     setError(null)
     setRedeemingId(reward.id)
     try {
-      await redeemReward(supabase, reward.id)
+      const redemptionId = await redeemReward(supabase, reward.id)
+      setRedemptionCode(formatOrderId(redemptionId))
       setSuccessName(locale === "vi" ? reward.nameVi : reward.nameEn)
       onRedeemed()
     } catch (e) {
@@ -89,6 +91,13 @@ export function RewardsCatalogModal({
           </div>
           <p className="font-bold text-card-foreground">{successName}</p>
           <p className="text-sm text-muted-foreground">{t("redeemSuccess")}</p>
+          {redemptionCode && (
+            <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 px-6 py-3">
+              <p className="text-xs text-muted-foreground">{t("redemptionCodeLabel")}</p>
+              <p className="text-2xl font-black tracking-widest text-primary">{redemptionCode}</p>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">{t("redemptionCodeHint")}</p>
           <Button onClick={onClose} className="mt-2 h-11 rounded-xl px-6 font-bold">
             {tMenu("close")}
           </Button>
