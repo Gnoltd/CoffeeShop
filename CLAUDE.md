@@ -9,18 +9,20 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (36
+role-gated), full customer/staff/admin UI, live Supabase DB (39
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
 Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
 Now/Pay Later) payment with method-chosen-at-serving-time (including
 a served-but-unpaid order's method being changeable/undoable), all
 three payment methods (Cash/Stripe/VNPay), real customer reviews, real
 admin menu-image upload, real Profile persistence, real Admin
-Dashboard KPIs, shift closing (cash reconciliation), real Google
-sign-in, real Profile Settings (password change + Google account
-linking), an admin-editable per-item Sizes editor, a real
-forgot-password/reset-via-email flow, real Loyalty tier progress, and
-a real Rewards catalog/redemption all work end-to-end. Deployed at
+Dashboard KPIs, shift closing (cash reconciliation) with real Shift
+History, real Google sign-in, real Profile Settings (password change +
+Google account linking), an admin-editable per-item Sizes editor, a
+real forgot-password/reset-via-email flow, real Loyalty tier progress,
+a real Rewards catalog/redemption (with a staff-facing redemption
+lookup to close the loop), a real customer Address Book, and a real
+POS size/extras picker all work end-to-end. Deployed at
 **https://phadincoffee.vercel.app**, auto-deploys on push to `main`. See
 `daily.md` for what's currently open — it's kept short and recap-free by
 design, so check it before this file for "what's left."
@@ -75,12 +77,15 @@ Original mockup source: `design/stitch-exports/`.
 
 Relative to the locale prefix, under `app/[locale]/`:
 - `(marketing)` — `/`
-- `(auth)` — `/login`, `/signup`
+- `(auth)` — `/login`, `/signup`, `/callback` (Google OAuth), `/reset-password`
+  (route group, contributes no URL segment — bare paths)
 - `(customer)` — `/menu`, `/menu/[itemId]`, `/cart`, `/checkout`,
-  `/orders`, `/orders/[orderId]`, `/table/[qrToken]`, `/profile`, `/loyalty`
+  `/orders`, `/orders/[orderId]`, `/table/[qrToken]`, `/profile`,
+  `/profile/settings`, `/profile/addresses`, `/loyalty`
 - `staff` — `/staff/pos`, `/staff/orders`, `/staff/orders/history`,
-  `/staff/orders/history/[orderId]` (real URL segments, not route
-  groups — a route group would collide with `(customer)`'s bare paths)
+  `/staff/orders/history/[orderId]`, `/staff/rewards` (real URL
+  segments, not route groups — a route group would collide with
+  `(customer)`'s bare paths)
 - `admin` — `/admin/dashboard`, `/menu`, `/inventory`, `/tables`,
   `/food-cost`, `/shift`, `/staff` (admin-only), `/settings` (admin-only)
 
@@ -182,6 +187,30 @@ Reusable facts that apply anywhere in the codebase, not tied to one feature.
   (`https://phadincoffee.vercel.app`), not `npm run dev` — this
   project's explicit convention. Local `build`/`tsc`/`test` are fine for
   fast feedback but not the source of truth for "does it actually work."
+- **Public, non-personalized data fetches can (and, for anything on a
+  hot path, should) be cached** despite the root layout's
+  `force-dynamic` — that flag disables Next's page-level caching for
+  locale correctness, but doesn't prevent caching an individual data
+  fetch. `lib/supabase/menu-data-cached.ts`'s `getPublicMenuData()`
+  wraps `getCategories`/`getMenuItems` in `unstable_cache` (20s TTL,
+  its own unauthenticated client since the content is RLS-`true`/public
+  either way) — measured fix for `/menu` and `/` running the full
+  nested-join query from scratch on every single request (~600-800ms
+  of the ~1.1-1.3s TTFB). This is a deliberate exception to the DI'd
+  query-layer convention (no `SupabaseClient` param) — only justified
+  because the data is identical for every visitor; don't reach for this
+  pattern for anything user-specific.
+- **`get_advisors(type: "performance")` is worth running after adding
+  any new table**, not just after something feels slow — it caught 4
+  unindexed foreign keys on exactly the tables `getMenuItems`' nested
+  select joins (migration `0037`) and flagged duplicate permissive RLS
+  SELECT policies on the same tables (a `_admin_all FOR ALL` policy
+  redundantly re-evaluated on every SELECT already covered by a
+  separate `_select_all: true`/`_select_staff` policy) — the latter
+  wasn't fixed (Postgres can't scope a single `FOR ALL` policy to
+  exclude SELECT; fixing it cleanly needs splitting into 3 separate
+  INSERT/UPDATE/DELETE policies, lower value than the index fix, noted
+  here rather than done).
 
 ## Feature areas
 
@@ -282,7 +311,12 @@ you need to find your way around; check the dated docs for full detail.
   `lib/supabase/rewards-data.ts` (`getRewardsCatalog`/`redeemReward`);
   the Loyalty page's "Redeem Rewards" card opens
   `components/customer/rewards-catalog-modal.tsx` (a `BottomSheet`),
-  which re-fetches balance + transactions on a successful redemption.
+  which re-fetches balance + transactions on a successful redemption
+  and shows the customer a real redemption code (`redeem_reward`'s
+  returned id, `formatOrderId`-truncated) to claim it with staff — was
+  a real gap until 2026-07-11 (points were deducted with nothing shown
+  to claim); see "Staff Reward Redemption lookup" below for the
+  staff-facing half of this loop.
 - Profile's name/phone are real (`lib/supabase/profile-data.ts`,
   `profiles_update_own` RLS), inline pencil-edit writes through directly
   (no RPC needed). Email is the real logged-in Auth email, deliberately
@@ -305,6 +339,14 @@ you need to find your way around; check the dated docs for full detail.
   account has 2+ linked identities, mirroring Supabase's own
   server-side rule for the same thing — this is what actually prevents
   anyone locking themselves out, not custom logic.
+- Profile's "Addresses" row is real (`/profile/addresses`, added
+  2026-07-11, gated via `AUTH_REQUIRED_EXACT_PATHS` like Settings):
+  `customer_addresses` table (migration `0039`), full CRUD +
+  `set_default_address()` RPC (unsets all then sets one, guaranteeing
+  at most one default). `lib/supabase/address-data.ts`,
+  `components/customer/address-book-view.tsx`. Personal reference only
+  — this app has no delivery `order_type` (`pickup | dine_in` only), so
+  it's not wired into checkout.
 
 ### Reviews (real, all end-to-end)
 - `menu_item_reviews` table + three `security definer` RPCs:
@@ -326,10 +368,31 @@ you need to find your way around; check the dated docs for full detail.
 - Admin/manager can post one public reply per review from a panel in
   the Menu Management item editor (`menu-item-reviews-panel.tsx`).
 
-### Staff pages (`/staff/pos`, `/staff/orders`, `/staff/orders/history`)
-- POS (`components/staff/pos-terminal.tsx`) — **known gap**: no
-  size/modifier picker, adds items at base price only. Local ticket
-  state, not `useCart` (a separate staff-side transaction).
+### Staff pages (`/staff/pos`, `/staff/orders`, `/staff/orders/history`, `/staff/rewards`)
+- POS (`components/staff/pos-terminal.tsx`) — real size/extras picker
+  (added 2026-07-11): `components/staff/pos-item-picker.tsx` mirrors
+  the customer-side `QuickAddPopup`'s exact selection logic (default
+  size, required-group defaults, price calc, extras-grouped-as-one-list
+  layout) but reports back via an `onAdd` callback into POS's own local
+  `OrderLine[]` state instead of `useCart` (a separate staff-side
+  transaction, unchanged). Tapping an item with no size options and no
+  modifier groups still adds directly at base price; otherwise the
+  picker opens. Order lines are keyed by a generated `lineId` (not
+  `menuItemId`) since the same item can now appear as multiple distinct
+  lines with different size/extras — merging on re-add is keyed on
+  `menuItemId + sizeId + sorted(modifierIds)`. `handleCharge` now sends
+  each line's real `sizeId`/`modifierIds` to `place-order` instead of
+  hardcoded `null`/`[]`.
+- Staff Reward Redemption lookup (`/staff/rewards`, added 2026-07-11):
+  `components/staff/reward-lookup.tsx` — search a customer's
+  redemption code (the same 8-char code `rewards-catalog-modal.tsx`
+  shows the customer after redeeming, `formatOrderId`-style), see the
+  reward/customer/points, "Mark Fulfilled" once. `find_redemption_by_code()`
+  (security invoker, RLS-gated) / `fulfill_redemption()` (security
+  definer, narrowly scoped to `fulfilled_at` only, own internal
+  staff-role check since it bypasses RLS) — migration `0038`. Closes a
+  real gap: redeeming previously deducted points with nothing shown to
+  claim and no staff-side way to verify a code at all.
 - Kitchen Display — `components/staff/{kitchen-board,kitchen-top-bar,
   kitchen-sidebar,kitchen-stats-footer}.tsx`, orchestrated by
   `kitchen-display.tsx`. Board maps the real 6-state `order_status`
@@ -534,7 +597,7 @@ you need to find your way around; check the dated docs for full detail.
 
 ## Database (`supabase/migrations/`)
 
-36 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+39 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -564,6 +627,9 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0034` | `loyalty_tiers` table + `get_my_loyalty_tier_progress()` (real Loyalty tier progress) |
 | `0035` | `rewards`/`reward_redemptions` tables + `redeem_reward()` (real Rewards catalog/redemption) |
 | `0036` | `get_shift_history()` (Shift History — list + view past closed shifts) |
+| `0037` | Missing FK indexes on menu tables (performance) |
+| `0038` | `reward_redemptions.fulfilled_at` + `find_redemption_by_code()`/`fulfill_redemption()` (staff redemption lookup) |
+| `0039` | `customer_addresses` table + `set_default_address()` (real Address Book) |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
@@ -606,17 +672,21 @@ real-time" sub-projects (Inventory, Tables, Orders, Staff accounts),
 all three payment methods (Cash, Stripe, VNPay), table occupancy/
 cleaning, deferred payment + service lifecycle, payment method
 correction, real reviews, real menu-image upload, real Profile
-persistence, the admin Sizes editor, and the Admin/KDS/POS nav-link
-gaps are shipped and verified live. Google sign-in and Profile Settings
+persistence, the admin Sizes editor, Shift History, the real Address
+Book, the POS size/extras picker, and the Admin/KDS/POS nav-link gaps
+are shipped and verified live. Google sign-in and Profile Settings
 (password change + Google account linking) are shipped and
 live-verified end-to-end. Forgot password is shipped and verified live
 except for the actual emailed-link round trip (shared email-sender
-rate-limit risk, same as signup confirmation). Real Admin Dashboard
-KPIs and shift closing (above) are shipped but still need a hand
-live-verification pass — see `daily.md`'s Open list. Loyalty tier
-progress (migration `0034`) and rewards catalog/redemption (migration
-`0035`) are now both real, all shipped and live-verified end-to-end.
-No known-mock surfaces remain — check `daily.md` for current status.
+rate-limit risk, same as signup confirmation). Loyalty tier progress
+(migration `0034`) and rewards catalog/redemption + its staff-facing
+redemption lookup (migrations `0035`, `0038`) are both real, shipped
+and live-verified end-to-end. Real Admin Dashboard KPIs and shift
+closing's open/report/close flow are shipped but still need a hand
+live-verification pass — an automated attempt at this specific check
+has stalled twice without landing a result, see `daily.md`'s Open
+list. No known-mock surfaces remain — check `daily.md` for current
+status.
 When adding anything new:
 shared brand tokens, `useTranslations`/`getTranslations` with both
 message files updated together, Base UI's `render` prop for polymorphic

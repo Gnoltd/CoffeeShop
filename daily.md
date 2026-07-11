@@ -7,14 +7,26 @@
    bars/weekday labels, Best Sellers reflecting real orders, a
    Realtime update after placing a new paid order, and the Excel
    export (all 5 sheets, correct Vietnamese text, real numeric cells
-   for revenue/quantity columns — not text).
+   for revenue/quantity columns — not text). Two automated attempts at
+   this check (cloud routine, 2026-07-10/11) both stalled without
+   landing a result — try a manual pass instead of another automated
+   retry.
 2. **Shift closing feature — live verification not confirmed done.**
    Code for Tasks 1-4 is committed and pushed (`shifts` table +
    `orders.paid_at` + RPCs, query layer, i18n, `/admin/shift` page +
    nav entries), but Task 5 (live-verify the open/report/close flow +
-   this file's entry) has no recorded evidence of having run. Plan:
+   this file's entry) has no recorded evidence of having run. Same two
+   stalled automated attempts as item 1 above. Plan:
    `docs/superpowers/plans/2026-07-10-shift-closing.md`.
-3. **Forgot password — real-email round trip unconfirmed.** Shipped and
+3. **Reward redemption code → staff lookup round trip not fully tested
+   end-to-end.** Each half verified independently live: a customer
+   redeeming shows a real code (`rewards-catalog-modal.tsx`), and staff
+   can search/fulfill at `/staff/rewards` (tested with a non-matching
+   code). Never verified with one real matching code all the way
+   through: redeem as a customer → copy the shown code → search it as
+   staff → confirm the right reward/customer/points appear → mark
+   fulfilled → confirm it can't be fulfilled twice.
+4. **Forgot password — real-email round trip unconfirmed.** Shipped and
    live-verified end-to-end except for the actual emailed link: request
    flow (email entry → "check your email" screen, works regardless of
    whether the address is registered), navigation between views, and
