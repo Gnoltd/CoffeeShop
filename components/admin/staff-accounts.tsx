@@ -10,9 +10,9 @@ import { getStaffMembers, updateStaffMember, createStaffAccount, type StaffMembe
 import { StaffMemberForm } from "@/components/admin/staff-member-form"
 
 const ROLE_STYLES: Record<StaffRole, string> = {
-  admin: "border-primary/20 bg-primary/10 text-primary",
-  manager: "border-secondary/20 bg-secondary/10 text-secondary",
-  staff: "border-accent/40 bg-accent/20 text-accent-foreground",
+  admin: "bg-primary/10 text-primary",
+  manager: "bg-secondary/10 text-secondary",
+  staff: "bg-accent/20 text-accent-foreground",
 }
 
 const PAGE_SIZE = 5
@@ -122,7 +122,7 @@ export function StaffAccounts() {
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
-        <Button className="h-10 gap-2" onClick={() => setFormMode({ type: "add" })}>
+        <Button variant="neubrutal" className="h-10 gap-2" onClick={() => setFormMode({ type: "add" })}>
           <Plus className="h-4 w-4" />
           {t("addStaff")}
         </Button>
@@ -131,7 +131,7 @@ export function StaffAccounts() {
       {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
       {createdPassword && (
-        <div className="flex items-center justify-between gap-3 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3">
+        <div className="nb-border-sm flex items-center justify-between gap-3 rounded-lg bg-chip px-4 py-3">
           <div>
             <p className="text-sm font-bold text-card-foreground">{t("passwordCreatedTitle")}</p>
             <p className="font-mono text-sm text-primary">{createdPassword}</p>
@@ -157,7 +157,7 @@ export function StaffAccounts() {
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Users className="h-5 w-5" />
           </div>
@@ -166,7 +166,7 @@ export function StaffAccounts() {
             <p className="text-xl font-bold text-card-foreground">{staff.length}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
             <UserCheck className="h-5 w-5" />
           </div>
@@ -175,7 +175,7 @@ export function StaffAccounts() {
             <p className="text-xl font-bold text-card-foreground">{activeCount}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
             <UserX className="h-5 w-5" />
           </div>
@@ -186,7 +186,7 @@ export function StaffAccounts() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+      <div className="nb-border-sm nb-shadow-sm overflow-x-auto rounded-xl bg-card">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
@@ -223,7 +223,7 @@ export function StaffAccounts() {
                   <td className="px-4 py-3">
                     <span
                       className={cn(
-                        "rounded-full border px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide",
+                        "nb-border-sm rounded-full px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide",
                         ROLE_STYLES[member.role]
                       )}
                     >
@@ -282,7 +282,7 @@ export function StaffAccounts() {
               type="button"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="rounded-lg border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+              className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-1 text-xs font-extrabold text-muted-foreground disabled:pointer-events-none disabled:opacity-40"
             >
               {t("previous")}
             </button>
@@ -292,10 +292,10 @@ export function StaffAccounts() {
                 type="button"
                 onClick={() => setCurrentPage(page)}
                 className={cn(
-                  "rounded-lg border px-3 py-1 text-xs font-medium transition-colors",
+                  "nb-border-sm nb-press-sm rounded-lg px-3 py-1 text-xs font-extrabold",
                   page === currentPage
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground"
                 )}
               >
                 {page}
@@ -305,7 +305,7 @@ export function StaffAccounts() {
               type="button"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="rounded-lg border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+              className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-1 text-xs font-extrabold text-muted-foreground disabled:pointer-events-none disabled:opacity-40"
             >
               {t("next")}
             </button>
