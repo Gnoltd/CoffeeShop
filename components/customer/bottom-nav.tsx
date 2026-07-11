@@ -41,6 +41,7 @@ export function BottomNav() {
     <AnimatedTabBar
       items={items}
       activeHref={pathname}
+      className="md:hidden"
       renderLink={(item, _isActive, content) => (
         <Link key={item.href} href={item.href}>
           {content}

@@ -86,7 +86,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4 sm:px-6">
+    <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4 sm:px-6 md:max-w-6xl md:px-8">
       <div className="relative mb-4">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
@@ -113,33 +113,33 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
         <p className="py-12 text-center text-sm text-muted-foreground">{t("emptyResults")}</p>
       )}
 
-      <StaggerList staggerKey={selectedCategory + searchQuery} className="flex flex-col gap-3">
+      <StaggerList staggerKey={selectedCategory + searchQuery} className="flex flex-col gap-3 md:grid md:grid-cols-3 lg:grid-cols-4 md:gap-6">
         {visibleItems.map((item) => (
-          <StaggerItem key={item.id}>
+          <StaggerItem key={item.id} className="h-full">
             <button
               type="button"
               onClick={() => openItem(item)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-xl border bg-card p-2 text-left shadow-sm transition-shadow hover:shadow-md",
+                "flex w-full items-center gap-3 rounded-xl border bg-card p-2 text-left shadow-sm transition-shadow hover:shadow-md md:h-full md:flex-col md:items-stretch md:p-0 md:overflow-hidden",
                 !item.isAvailable && "opacity-70"
               )}
             >
               <ItemImage
                 item={item}
-                className={cn("h-28 w-28 shrink-0 rounded-lg", !item.isAvailable && "grayscale")}
+                className={cn("h-28 w-28 shrink-0 rounded-lg md:h-48 md:w-full md:rounded-none", !item.isAvailable && "grayscale")}
               />
-              <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="flex min-w-0 flex-1 flex-col gap-1 md:p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <span className="line-clamp-1 font-semibold text-card-foreground">{name(item)}</span>
+                  <span className="line-clamp-1 font-semibold text-card-foreground md:text-base">{name(item)}</span>
                   {item.isPopular && (
                     <Badge className="shrink-0 bg-primary text-primary-foreground hover:bg-primary">
                       {t("popular")}
                     </Badge>
                   )}
                 </div>
-                <p className="line-clamp-1 text-xs text-muted-foreground">{description(item)}</p>
+                <p className="line-clamp-1 text-xs text-muted-foreground md:line-clamp-2 md:text-sm md:h-10">{description(item)}</p>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="font-bold text-primary">{formatVND(item.basePrice)}</span>
+                  <span className="font-bold text-primary md:text-base">{formatVND(item.basePrice)}</span>
                   {item.isAvailable ? (
                     <motion.span
                       role="button"
@@ -168,7 +168,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
       {itemCount > 0 && (
         <Link
           href="/cart"
-          className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center justify-between rounded-2xl bg-secondary px-5 py-4 text-secondary-foreground shadow-xl transition-colors hover:opacity-95"
+          className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center justify-between rounded-2xl bg-secondary px-5 py-4 text-secondary-foreground shadow-xl transition-colors hover:opacity-95 md:bottom-6 md:max-w-lg md:px-6"
         >
           <span className="font-semibold">
             {t("viewCart")} · {t("itemCount", { count: itemCount })}

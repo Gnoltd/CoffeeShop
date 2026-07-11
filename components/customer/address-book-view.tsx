@@ -104,7 +104,7 @@ export function AddressBookView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4">
+    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-5xl md:px-8">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-card-foreground">{t("title")}</h2>
         {editingId === null && (
@@ -167,7 +167,7 @@ export function AddressBookView() {
       ) : addresses.length === 0 && editingId === null ? (
         <p className="py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {addresses.map((addr) => (
             <div key={addr.id} className="rounded-2xl border bg-card p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">

@@ -139,81 +139,89 @@ export function CartView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 sm:px-6">
-      <StaggerList className="flex flex-col gap-3">
-        {items.map((item) => (
-          <StaggerItem key={item.cartItemId}>
-            <CartRow item={item} locale={locale} t={t} onRemove={removeItem} onUpdateQuantity={updateQuantity} />
-          </StaggerItem>
-        ))}
-      </StaggerList>
+    <div className="mx-auto w-full max-w-2xl px-4 py-4 sm:px-6 md:max-w-5xl md:px-8">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+        {/* Left Column: Cart items and Promo code */}
+        <div className="flex-1 min-w-0 md:flex-[3]">
+          <StaggerList className="flex flex-col gap-3">
+            {items.map((item) => (
+              <StaggerItem key={item.cartItemId}>
+                <CartRow item={item} locale={locale} t={t} onRemove={removeItem} onUpdateQuantity={updateQuantity} />
+              </StaggerItem>
+            ))}
+          </StaggerList>
 
-      {promoCode ? (
-        <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
-          <span className="flex items-center gap-2 text-sm font-medium text-accent-foreground">
-            <Ticket className="h-4 w-4" />
-            {t("promoApplied")}: <strong>{promoCode}</strong>
-          </span>
-          <button
-            type="button"
-            onClick={clearPromoCode}
-            aria-label={t("removePromo")}
-            title={t("removePromo")}
-            className="text-accent-foreground/70 hover:text-destructive"
+          {promoCode ? (
+            <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-accent/40 bg-accent/10 px-4 py-3">
+              <span className="flex items-center gap-2 text-sm font-medium text-accent-foreground">
+                <Ticket className="h-4 w-4" />
+                {t("promoApplied")}: <strong>{promoCode}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={clearPromoCode}
+                aria-label={t("removePromo")}
+                title={t("removePromo")}
+                className="text-accent-foreground/70 hover:text-destructive"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="mt-6 flex flex-col gap-2 rounded-xl border border-dashed p-4">
+              <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Ticket className="h-4 w-4" />
+                {t("promoLabel")}
+              </span>
+              <div className="flex gap-2">
+                <Input
+                  value={promoInput}
+                  onChange={(e) => {
+                    setPromoInput(e.target.value)
+                    setPromoError(false)
+                  }}
+                  placeholder={t("promoPlaceholder")}
+                  className="h-10 flex-1"
+                />
+                <Button variant="outline" className="h-10" onClick={handleApplyPromo} disabled={!promoInput.trim()}>
+                  {t("apply")}
+                </Button>
+              </div>
+              {promoError && <p className="text-xs text-destructive">{t("invalidPromo")}</p>}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Sticky Summary & Checkout CTA */}
+        <div className="w-full md:w-80 md:flex-[2] md:sticky md:top-20 md:self-start">
+          <section className="space-y-3 rounded-2xl bg-muted p-5">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">{t("subtotal")}</span>
+              <AnimatedCounter value={subtotal} format={formatVND} className="font-medium" />
+            </div>
+            {promoDiscount > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">{t("discount")}</span>
+                <span className="font-medium text-green-600">-{formatVND(promoDiscount)}</span>
+              </div>
+            )}
+            <div className="h-px bg-border" />
+            <div className="flex items-center justify-between">
+              <span className="text-lg font-bold text-card-foreground">{t("total")}</span>
+              <AnimatedCounter value={total} format={formatVND} className="text-lg font-bold text-primary" />
+            </div>
+          </section>
+
+          <Button
+            className="mt-6 h-12 w-full gap-2 rounded-xl text-base"
+            render={<Link href="/checkout" />}
+            nativeButton={false}
           >
-            <X className="h-4 w-4" />
-          </button>
+            {t("proceedToCheckout")}
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
-      ) : (
-        <div className="mt-6 flex flex-col gap-2 rounded-xl border border-dashed p-4">
-          <span className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Ticket className="h-4 w-4" />
-            {t("promoLabel")}
-          </span>
-          <div className="flex gap-2">
-            <Input
-              value={promoInput}
-              onChange={(e) => {
-                setPromoInput(e.target.value)
-                setPromoError(false)
-              }}
-              placeholder={t("promoPlaceholder")}
-              className="h-10 flex-1"
-            />
-            <Button variant="outline" className="h-10" onClick={handleApplyPromo} disabled={!promoInput.trim()}>
-              {t("apply")}
-            </Button>
-          </div>
-          {promoError && <p className="text-xs text-destructive">{t("invalidPromo")}</p>}
-        </div>
-      )}
-
-      <section className="mt-6 space-y-3 rounded-2xl bg-muted p-5">
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">{t("subtotal")}</span>
-          <AnimatedCounter value={subtotal} format={formatVND} className="font-medium" />
-        </div>
-        {promoDiscount > 0 && (
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">{t("discount")}</span>
-            <span className="font-medium text-green-600">-{formatVND(promoDiscount)}</span>
-          </div>
-        )}
-        <div className="h-px bg-border" />
-        <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-card-foreground">{t("total")}</span>
-          <AnimatedCounter value={total} format={formatVND} className="text-lg font-bold text-primary" />
-        </div>
-      </section>
-
-      <Button
-        className="mt-6 h-12 w-full gap-2 rounded-xl text-base"
-        render={<Link href="/checkout" />}
-        nativeButton={false}
-      >
-        {t("proceedToCheckout")}
-        <ArrowRight className="h-4 w-4" />
-      </Button>
+      </div>
     </div>
   )
 }

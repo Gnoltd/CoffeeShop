@@ -65,7 +65,7 @@ export function OrderHistory() {
   const filtered = sorted.filter((order) => matchesFilter(order.status, filter))
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4">
+    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-5xl md:px-8">
       <SegmentedControl
         layoutId="order-history-filter-pill"
         className="mb-4"
@@ -79,7 +79,7 @@ export function OrderHistory() {
       ) : filtered.length === 0 ? (
         <p className="py-16 text-center text-muted-foreground">{t("empty")}</p>
       ) : (
-        <StaggerList staggerKey={filter} className="flex flex-col gap-3">
+        <StaggerList staggerKey={filter} className="flex flex-col gap-3 md:grid md:grid-cols-2 md:gap-4">
           {filtered.map((order) => {
             const itemsLabel = order.items
               .map((item) => (locale === "vi" ? item.nameVi : item.nameEn))
@@ -88,7 +88,7 @@ export function OrderHistory() {
               <StaggerItem key={order.id}>
                 <Link
                   href={`/orders/${order.id}`}
-                  className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-primary/40"
+                  className="flex items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:border-primary/40 hover:shadow-md"
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">

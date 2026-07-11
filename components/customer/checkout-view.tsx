@@ -172,236 +172,266 @@ export function CheckoutView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4 sm:px-6">
-      <section className="mb-6 space-y-2">
-        <h2 className="font-bold text-card-foreground">{t("orderType")}</h2>
-        <SegmentedControl
-          layoutId="checkout-order-type-pill"
-          value={orderType}
-          onChange={(next) => (next === "dine-in" ? activeTable && setOrderType(next) : setOrderType(next))}
-          options={[
-            { value: "pickup" as const, label: t("pickup") },
-            {
-              value: "dine-in" as const,
-              label: t("dineIn"),
-              disabled: !activeTable,
-              title: !activeTable ? t("dineInRequiresScan") : undefined,
-            },
-          ]}
-        />
-        {orderType === "dine-in" && activeTable && (
-          <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/20 px-3 py-1.5 text-sm text-accent-foreground">
-            <TableIcon className="h-4 w-4" />
-            {t("table")}: <strong>{tableNumber}</strong>
-          </div>
-        )}
-        {!activeTable && (
-          <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-muted-foreground/40 p-3">
-            <p className="text-xs text-muted-foreground">{t("dineInRequiresScan")}</p>
-            <Button size="sm" variant="outline" className="h-9 shrink-0 gap-1.5" onClick={() => setIsScannerOpen(true)}>
-              <QrCode className="h-3.5 w-3.5" />
-              {t("scanTableQr")}
-            </Button>
-          </div>
-        )}
-      </section>
-
-      {orderType === "pickup" && (
-        <section className="mb-6 space-y-2">
-          <label htmlFor="pickup-time" className="block font-bold text-card-foreground">
-            {t("pickupTime")}
-          </label>
-          <select
-            id="pickup-time"
-            value={pickupTime}
-            onChange={(e) => setPickupTime(e.target.value)}
-            className="h-14 w-full rounded-xl border border-input bg-card px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-          >
-            <option value="asap">{t("asap")}</option>
-            <option value="15">{t("in15")}</option>
-            <option value="30">{t("in30")}</option>
-            <option value="schedule">{t("schedule")}</option>
-          </select>
-        </section>
-      )}
-
-      <section className="mb-6 space-y-3 rounded-xl border bg-muted p-4">
-        <h2 className="font-bold text-card-foreground">{t("summary")}</h2>
-        <div className="space-y-3">
-          {items.map((item) => {
-            const name = locale === "vi" ? item.nameVi : item.nameEn
-            return (
-              <div key={item.cartItemId} className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-card-foreground">{name}</p>
-                  <p className="text-xs text-muted-foreground">x{item.quantity}</p>
-                  {item.note && (
-                    <p className="text-xs italic text-muted-foreground">
-                      {t("noteLabel")}: {item.note}
-                    </p>
-                  )}
-                </div>
-                <span className="text-sm font-bold text-card-foreground">
-                  {formatVND(item.unitPrice * item.quantity)}
-                </span>
+    <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4 sm:px-6 md:max-w-5xl md:px-8 md:pb-8">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
+        {/* Left Column: Order configurations */}
+        <div className="flex-1 min-w-0 md:flex-[3]">
+          <section className="mb-6 space-y-2">
+            <h2 className="font-bold text-card-foreground">{t("orderType")}</h2>
+            <SegmentedControl
+              layoutId="checkout-order-type-pill"
+              value={orderType}
+              onChange={(next) => (next === "dine-in" ? activeTable && setOrderType(next) : setOrderType(next))}
+              options={[
+                { value: "pickup" as const, label: t("pickup") },
+                {
+                  value: "dine-in" as const,
+                  label: t("dineIn"),
+                  disabled: !activeTable,
+                  title: !activeTable ? t("dineInRequiresScan") : undefined,
+                },
+              ]}
+            />
+            {orderType === "dine-in" && activeTable && (
+              <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/20 px-3 py-1.5 text-sm text-accent-foreground">
+                <TableIcon className="h-4 w-4" />
+                {t("table")}: <strong>{tableNumber}</strong>
               </div>
-            )
-          })}
-        </div>
-        <div className="flex items-center justify-between border-t pt-3">
-          <span className="text-sm text-muted-foreground">{t("subtotal")}</span>
-          <span className="font-bold text-card-foreground">{formatVND(subtotal)}</span>
-        </div>
-        {promoDiscount > 0 && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t("discount")}</span>
-            <span className="font-bold text-green-600">-{formatVND(promoDiscount)}</span>
-          </div>
-        )}
-        {redemptionDiscount > 0 && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t("rewardsDiscountLabel")}</span>
-            <span className="font-bold text-green-600">-{formatVND(redemptionDiscount)}</span>
-          </div>
-        )}
-        {tax > 0 && (
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">{t("taxLabel", { rate: taxRatePercent })}</span>
-            <span className="font-bold text-card-foreground">{formatVND(tax)}</span>
-          </div>
-        )}
-      </section>
+            )}
+            {!activeTable && (
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-muted-foreground/40 p-3">
+                <p className="text-xs text-muted-foreground">{t("dineInRequiresScan")}</p>
+                <Button size="sm" variant="outline" className="h-9 shrink-0 gap-1.5" onClick={() => setIsScannerOpen(true)}>
+                  <QrCode className="h-3.5 w-3.5" />
+                  {t("scanTableQr")}
+                </Button>
+              </div>
+            )}
+          </section>
 
-      {loyaltyEnabled && (
-      <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-bold text-card-foreground">{t("loyaltyPoints")}</h2>
-          <Sparkles className="h-6 w-6 text-accent-foreground/70" />
-        </div>
-        {isLoggedIn ? (
-          <>
-            <p className="text-sm text-muted-foreground">{t("pointsBalance", { points: pointsBalance })}</p>
-            <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
-              <span className="text-sm font-medium text-card-foreground">
-                {t("redeemLabel", { points: REDEEM_CHUNK_POINTS, amount: formatVND(REDEEM_CHUNK_POINTS * redeemValuePerPoint) })}
-              </span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={redeemLoyalty}
-                disabled={!canRedeem}
-                onClick={() => setRedeemLoyalty((prev) => !prev)}
-                className={cn(
-                  "relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40",
-                  redeemLoyalty ? "bg-primary" : "bg-muted-foreground/30"
-                )}
+          {orderType === "pickup" && (
+            <section className="mb-6 space-y-2">
+              <label htmlFor="pickup-time" className="block font-bold text-card-foreground">
+                {t("pickupTime")}
+              </label>
+              <select
+                id="pickup-time"
+                value={pickupTime}
+                onChange={(e) => setPickupTime(e.target.value)}
+                className="h-14 w-full rounded-xl border border-input bg-card px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
               >
-                <span
-                  className={cn(
-                    "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                    redeemLoyalty ? "translate-x-5" : "translate-x-0"
-                  )}
-                />
-              </button>
-            </div>
-          </>
-        ) : (
-          <p className="text-sm text-muted-foreground" title={t("loyaltyGuestTooltip")}>
-            {t("loyaltyGuestTooltip")}
-          </p>
-        )}
-      </section>
-      )}
+                <option value="asap">{t("asap")}</option>
+                <option value="15">{t("in15")}</option>
+                <option value="30">{t("in30")}</option>
+                <option value="schedule">{t("schedule")}</option>
+              </select>
+            </section>
+          )}
 
-      {isLoggedIn && usableRedemptions.length > 0 && (
-        <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-bold text-card-foreground">{t("myRewardsTitle")}</h2>
-            <Gift className="h-6 w-6 text-accent-foreground/70" />
-          </div>
-          <div className="flex flex-col gap-2">
-            {usableRedemptions.map((r) => {
-              const selected = selectedRedemptionIds.includes(r.id)
-              const name = locale === "vi" ? r.rewardNameVi : r.rewardNameEn
-              return (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => toggleRedemption(r.id)}
-                  className={cn(
-                    "flex items-center justify-between gap-3 rounded-lg border-2 bg-card p-3 text-left transition-colors",
-                    selected ? "border-primary bg-primary/5" : "border-transparent"
-                  )}
-                >
-                  <span className="flex items-center gap-2">
-                    <span
+          {loyaltyEnabled && (
+            <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-card-foreground">{t("loyaltyPoints")}</h2>
+                <Sparkles className="h-6 w-6 text-accent-foreground/70" />
+              </div>
+              {isLoggedIn ? (
+                <>
+                  <p className="text-sm text-muted-foreground">{t("pointsBalance", { points: pointsBalance })}</p>
+                  <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
+                    <span className="text-sm font-medium text-card-foreground">
+                      {t("redeemLabel", { points: REDEEM_CHUNK_POINTS, amount: formatVND(REDEEM_CHUNK_POINTS * redeemValuePerPoint) })}
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={redeemLoyalty}
+                      disabled={!canRedeem}
+                      onClick={() => setRedeemLoyalty((prev) => !prev)}
                       className={cn(
-                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-                        selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                        "relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-40",
+                        redeemLoyalty ? "bg-primary" : "bg-muted-foreground/30"
                       )}
                     >
-                      {selected && <Check className="h-3 w-3" />}
+                      <span
+                        className={cn(
+                          "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                          redeemLoyalty ? "translate-x-5" : "translate-x-0"
+                        )}
+                      />
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground" title={t("loyaltyGuestTooltip")}>
+                  {t("loyaltyGuestTooltip")}
+                </p>
+              )}
+            </section>
+          )}
+
+          {isLoggedIn && usableRedemptions.length > 0 && (
+            <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
+              <div className="flex items-center justify-between">
+                <h2 className="font-bold text-card-foreground">{t("myRewardsTitle")}</h2>
+                <Gift className="h-6 w-6 text-accent-foreground/70" />
+              </div>
+              <div className="flex flex-col gap-2">
+                {usableRedemptions.map((r) => {
+                  const selected = selectedRedemptionIds.includes(r.id)
+                  const name = locale === "vi" ? r.rewardNameVi : r.rewardNameEn
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => toggleRedemption(r.id)}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded-lg border-2 bg-card p-3 text-left transition-colors",
+                        selected ? "border-primary bg-primary/5" : "border-transparent"
+                      )}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={cn(
+                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+                            selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                          )}
+                        >
+                          {selected && <Check className="h-3 w-3" />}
+                        </span>
+                        <span className="text-sm font-medium text-card-foreground">{name}</span>
+                      </span>
+                      <span className="text-sm font-bold text-primary">-{formatVND(r.discountValueVnd)}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          <section className="mb-6 space-y-2">
+            <h2 className="font-bold text-card-foreground">{t("payTiming")}</h2>
+            <SegmentedControl
+              layoutId="checkout-pay-timing-pill"
+              value={payAt}
+              onChange={setPayAt}
+              options={[
+                { value: "now" as const, label: t("payNow") },
+                { value: "later" as const, label: t("payLater") },
+              ]}
+            />
+            {payAt === "later" && <p className="text-sm text-muted-foreground">{t("payLaterNote")}</p>}
+          </section>
+
+          {payAt === "now" && (
+            <section className="mb-6 space-y-2">
+              <h2 className="font-bold text-card-foreground">{t("paymentMethod")}</h2>
+              <div className="grid grid-cols-3 gap-2">
+                {PAYMENT_OPTIONS.map(({ id, icon: Icon, labelKey, enabled }) => (
+                  <PressFeedback
+                    key={id}
+                    type="button"
+                    disabled={!enabled}
+                    title={enabled ? undefined : t("paymentMethodComingSoon")}
+                    onClick={() => setPaymentMethod(id)}
+                    className={cn(
+                      "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
+                      paymentMethod === id
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-transparent bg-muted text-muted-foreground",
+                      !enabled && "opacity-50"
+                    )}
+                  >
+                    <Icon className="h-7 w-7" />
+                    <span className="text-xs font-bold">{t(labelKey)}</span>
+                  </PressFeedback>
+                ))}
+              </div>
+            </section>
+          )}
+        </div>
+
+        {/* Right Column: Sticky Summary & Checkout Action */}
+        <div className="w-full md:w-80 md:flex-[2] md:sticky md:top-20 md:self-start">
+          <section className="mb-6 space-y-3 rounded-xl border bg-muted p-4">
+            <h2 className="font-bold text-card-foreground">{t("summary")}</h2>
+            <div className="space-y-3 max-h-[40vh] overflow-y-auto">
+              {items.map((item) => {
+                const name = locale === "vi" ? item.nameVi : item.nameEn
+                return (
+                  <div key={item.cartItemId} className="flex items-start justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-card-foreground">{name}</p>
+                      <p className="text-xs text-muted-foreground">x{item.quantity}</p>
+                      {item.note && (
+                        <p className="text-xs italic text-muted-foreground">
+                          {t("noteLabel")}: {item.note}
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold text-card-foreground">
+                      {formatVND(item.unitPrice * item.quantity)}
                     </span>
-                    <span className="text-sm font-medium text-card-foreground">{name}</span>
-                  </span>
-                  <span className="text-sm font-bold text-primary">-{formatVND(r.discountValueVnd)}</span>
-                </button>
-              )
-            })}
+                  </div>
+                )
+              })}
+            </div>
+            <div className="flex items-center justify-between border-t pt-3">
+              <span className="text-sm text-muted-foreground">{t("subtotal")}</span>
+              <span className="font-bold text-card-foreground">{formatVND(subtotal)}</span>
+            </div>
+            {promoDiscount > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("discount")}</span>
+                <span className="font-bold text-green-600">-{formatVND(promoDiscount)}</span>
+              </div>
+            )}
+            {redemptionDiscount > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("rewardsDiscountLabel")}</span>
+                <span className="font-bold text-green-600">-{formatVND(redemptionDiscount)}</span>
+              </div>
+            )}
+            {tax > 0 && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">{t("taxLabel", { rate: taxRatePercent })}</span>
+                <span className="font-bold text-card-foreground">{formatVND(tax)}</span>
+              </div>
+            )}
+          </section>
+
+          {canceledNotice && (
+            <p className="mb-4 rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
+              {t("paymentCanceledNotice")}
+            </p>
+          )}
+          {error && (
+            <p className="mb-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
+          )}
+
+          {/* Desktop Place Order Card */}
+          <div className="hidden md:flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">{t("total")}</span>
+              <span className="text-2xl font-bold text-primary">{formatVND(total)}</span>
+              {discount > 0 && (redeemLoyalty || redemptionDiscount > 0) && (
+                <span className="text-[11px] text-accent-foreground/80 mt-1">
+                  {t("discountApplied", { amount: formatVND(discount) })}
+                </span>
+              )}
+            </div>
+            <Button
+              onClick={handlePlaceOrder}
+              disabled={(payAt === "now" && !paymentMethod) || (orderType === "dine-in" && !activeTable) || isPlacing}
+              className="h-12 w-full rounded-xl text-base font-bold"
+            >
+              {t("placeOrder")}
+            </Button>
           </div>
-        </section>
-      )}
+        </div>
+      </div>
 
-      <section className="mb-6 space-y-2">
-        <h2 className="font-bold text-card-foreground">{t("payTiming")}</h2>
-        <SegmentedControl
-          layoutId="checkout-pay-timing-pill"
-          value={payAt}
-          onChange={setPayAt}
-          options={[
-            { value: "now" as const, label: t("payNow") },
-            { value: "later" as const, label: t("payLater") },
-          ]}
-        />
-        {payAt === "later" && <p className="text-sm text-muted-foreground">{t("payLaterNote")}</p>}
-      </section>
-
-      {payAt === "now" && (
-        <section className="mb-6 space-y-2">
-          <h2 className="font-bold text-card-foreground">{t("paymentMethod")}</h2>
-          <div className="grid grid-cols-3 gap-2">
-            {PAYMENT_OPTIONS.map(({ id, icon: Icon, labelKey, enabled }) => (
-              <PressFeedback
-                key={id}
-                type="button"
-                disabled={!enabled}
-                title={enabled ? undefined : t("paymentMethodComingSoon")}
-                onClick={() => setPaymentMethod(id)}
-                className={cn(
-                  "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
-                  paymentMethod === id
-                    ? "border-primary bg-primary/5 text-primary"
-                    : "border-transparent bg-muted text-muted-foreground",
-                  !enabled && "opacity-50"
-                )}
-              >
-                <Icon className="h-7 w-7" />
-                <span className="text-xs font-bold">{t(labelKey)}</span>
-              </PressFeedback>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {canceledNotice && (
-        <p className="mx-auto mb-2 max-w-2xl rounded-lg bg-muted px-3 py-2 text-sm text-muted-foreground">
-          {t("paymentCanceledNotice")}
-        </p>
-      )}
-      {error && (
-        <p className="mx-auto mb-2 max-w-2xl rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>
-      )}
-      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t bg-card px-6 py-4 shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.1)]">
+      {/* Fixed bottom bar: mobile only */}
+      <div className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t bg-card px-6 py-4 shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.1)] md:hidden">
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground">{t("total")}</span>
           <span className="text-xl font-bold text-primary">{formatVND(total)}</span>

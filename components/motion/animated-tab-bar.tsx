@@ -14,13 +14,15 @@ export function AnimatedTabBar({
   items,
   activeHref,
   renderLink,
+  className,
 }: {
   items: TabItem[]
   activeHref: string
   renderLink: (item: TabItem, isActive: boolean, content: React.ReactNode) => React.ReactNode
+  className?: string
 }) {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 flex items-center justify-around rounded-t-xl bg-card px-2 py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]">
+    <nav className={cn("fixed inset-x-0 bottom-0 z-50 flex items-center justify-around rounded-t-xl bg-card px-2 py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]", className)}>
       {items.map((item) => {
         const isActive = item.href === activeHref
         const Icon = item.icon

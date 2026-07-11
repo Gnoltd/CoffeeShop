@@ -101,205 +101,229 @@ export function ProductDetail({ item }: { item: MenuItem }) {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl pb-28">
-      <div className="flex h-64 w-full items-center justify-center bg-muted text-muted-foreground sm:h-80">
-        {item.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={item.imageUrl} alt={name} className="h-full w-full object-cover" />
-        ) : (
-          <Icon className="h-20 w-20" />
-        )}
-      </div>
-
-      <div className="px-4 pt-4 sm:px-6">
-        <div className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-bold text-card-foreground">{name}</h1>
-          <span className="whitespace-nowrap text-xl font-bold text-primary">{formatVND(price)}</span>
-        </div>
-
-        {reviewCount > 0 && (
-          <div className="mt-2 flex items-center gap-2">
-            <StarRating rating={avgRating} />
-            <span className="text-sm text-muted-foreground">
-              {avgRating.toFixed(1)} · {tProduct("reviewCount", { count: reviewCount })}
-            </span>
-          </div>
-        )}
-
-        <p className="mt-3 text-sm text-muted-foreground">{description}</p>
-
-        {item.hasSizeOptions && item.sizes.length > 0 && (
-          <section className="mt-6 flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("size")}
-            </span>
-            <SegmentedControl
-              variant="tabs"
-              layoutId="product-size-pill"
-              value={selectedSizeId ?? ""}
-              onChange={setSelectedSizeId}
-              options={item.sizes.map((size) => ({ value: size.id, label: size.name }))}
-            />
-          </section>
-        )}
-
-        {extraGroups.length > 0 && (
-          <section className="mt-6 flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {tProduct("extrasLabel")}
-            </span>
-            <div className="flex flex-col gap-2">
-              {extraGroups.map((group) => {
-                const option = group.options[0]
-                const selected = selectedModifiers[group.id] === option.id
-                return (
-                  <PressFeedback
-                    key={group.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedModifiers((prev) => {
-                        if (prev[group.id] === option.id) {
-                          const next = { ...prev }
-                          delete next[group.id]
-                          return next
-                        }
-                        return { ...prev, [group.id]: option.id }
-                      })
-                    }
-                    className={cn(
-                      "flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm transition-colors",
-                      selected
-                        ? "border-primary bg-primary/10 font-semibold text-card-foreground"
-                        : "border-border text-card-foreground"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Check className={cn("h-4 w-4 shrink-0", selected ? "text-primary" : "text-transparent")} />
-                      <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
-                    </div>
-                    <span className={selected ? "text-primary" : "text-muted-foreground"}>
-                      {option.priceDelta > 0 ? `+${formatVND(option.priceDelta)}` : tProduct("freeLabel")}
-                    </span>
-                  </PressFeedback>
-                )
-              })}
-            </div>
-          </section>
-        )}
-
-        {otherGroups.map((group) => (
-          <section key={group.id} className="mt-6 flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {locale === "vi" ? group.nameVi : group.nameEn}
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              {group.options.map((option) => {
-                const selected = selectedModifiers[group.id] === option.id
-                return (
-                  <PressFeedback
-                    key={option.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedModifiers((prev) => {
-                        if (!group.required && prev[group.id] === option.id) {
-                          const next = { ...prev }
-                          delete next[group.id]
-                          return next
-                        }
-                        return { ...prev, [group.id]: option.id }
-                      })
-                    }
-                    className={cn(
-                      "flex flex-col items-start gap-0.5 rounded-lg border-2 px-3 py-2 text-sm transition-colors",
-                      selected
-                        ? "border-primary bg-primary/10 font-semibold text-card-foreground"
-                        : "border-border text-card-foreground"
-                    )}
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
-                      {selected && <Check className="h-4 w-4 text-primary" />}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {option.priceDelta > 0 ? `+${formatVND(option.priceDelta)}` : tProduct("freeLabel")}
-                    </span>
-                  </PressFeedback>
-                )
-              })}
-            </div>
-          </section>
-        ))}
-
-        <section className="mt-6 flex flex-col gap-2">
-          <label
-            htmlFor="product-note"
-            className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
-          >
-            {t("noteLabel")}
-          </label>
-          <textarea
-            id="product-note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t("notePlaceholder")}
-            rows={2}
-            className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-card-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-          />
-        </section>
-
-        <section className="mt-8 border-t pt-6">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-card-foreground">{tProduct("reviewsTitle")}</h2>
-            {reviewCount > 0 && (
-              <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold text-primary">{avgRating.toFixed(1)}</span>
-                <StarRating rating={avgRating} size="lg" />
-              </div>
+    <div className="mx-auto w-full max-w-2xl pb-28 md:max-w-5xl md:px-8 md:pb-8 pt-4">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10">
+        {/* Left Column: Hero image (sticky) */}
+        <div className="w-full md:w-[40%] md:sticky md:top-20 md:self-start">
+          <div className="flex h-64 w-full items-center justify-center bg-muted text-muted-foreground sm:h-80 md:h-[400px] md:rounded-2xl md:overflow-hidden md:border shadow-sm">
+            {item.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={item.imageUrl} alt={name} className="h-full w-full object-cover" />
+            ) : (
+              <Icon className="h-20 w-20" />
             )}
           </div>
-          {reviewCount === 0 ? (
-            <p className="text-sm text-muted-foreground">{tProduct("noReviewsYet")}</p>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {reviews.map((review) => (
-                <div key={review.id} className="rounded-xl border bg-card p-3 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
-                      {(review.reviewerName ?? tProduct("anonymousReviewer")).charAt(0)}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="font-semibold text-card-foreground">
-                          {review.reviewerName ?? tProduct("anonymousReviewer")}
-                        </span>
-                        <span className="shrink-0 text-xs text-muted-foreground">
-                          {tProduct("daysAgo", {
-                            days: Math.max(0, Math.floor((Date.now() - review.createdAt) / 86400000)),
-                          })}
-                        </span>
-                      </div>
-                      <StarRating rating={review.rating} />
-                    </div>
-                  </div>
-                  <p className="mt-2 text-sm text-card-foreground">{review.comment}</p>
-                  {review.staffReply && (
-                    <div className="ml-12 mt-2 rounded-lg bg-muted p-2">
-                      <p className="text-xs font-semibold text-secondary">{tProduct("shopReplyLabel")}</p>
-                      <p className="text-sm text-card-foreground">{review.staffReply}</p>
-                    </div>
-                  )}
-                </div>
-              ))}
+        </div>
+
+        {/* Right Column: Details & Selections */}
+        <div className="flex-1 px-4 md:px-0">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl font-bold text-card-foreground md:text-3xl">{name}</h1>
+            <span className="whitespace-nowrap text-xl font-bold text-primary md:text-2xl">{formatVND(price)}</span>
+          </div>
+
+          {reviewCount > 0 && (
+            <div className="mt-2 flex items-center gap-2">
+              <StarRating rating={avgRating} />
+              <span className="text-sm text-muted-foreground">
+                {avgRating.toFixed(1)} · {tProduct("reviewCount", { count: reviewCount })}
+              </span>
             </div>
           )}
-        </section>
+
+          <p className="mt-3 text-sm text-muted-foreground md:text-base">{description}</p>
+
+          {item.hasSizeOptions && item.sizes.length > 0 && (
+            <section className="mt-6 flex flex-col gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("size")}
+              </span>
+              <SegmentedControl
+                variant="tabs"
+                layoutId="product-size-pill"
+                value={selectedSizeId ?? ""}
+                onChange={setSelectedSizeId}
+                options={item.sizes.map((size) => ({ value: size.id, label: size.name }))}
+              />
+            </section>
+          )}
+
+          {extraGroups.length > 0 && (
+            <section className="mt-6 flex flex-col gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {tProduct("extrasLabel")}
+              </span>
+              <div className="flex flex-col gap-2">
+                {extraGroups.map((group) => {
+                  const option = group.options[0]
+                  const selected = selectedModifiers[group.id] === option.id
+                  return (
+                    <PressFeedback
+                      key={group.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedModifiers((prev) => {
+                          if (prev[group.id] === option.id) {
+                            const next = { ...prev }
+                            delete next[group.id]
+                            return next
+                          }
+                          return { ...prev, [group.id]: option.id }
+                        })
+                      }
+                      className={cn(
+                        "flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm transition-colors",
+                        selected
+                          ? "border-primary bg-primary/10 font-semibold text-card-foreground"
+                          : "border-border text-card-foreground"
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Check className={cn("h-4 w-4 shrink-0", selected ? "text-primary" : "text-transparent")} />
+                        <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
+                      </div>
+                      <span className={selected ? "text-primary" : "text-muted-foreground"}>
+                        {option.priceDelta > 0 ? `+${formatVND(option.priceDelta)}` : tProduct("freeLabel")}
+                      </span>
+                    </PressFeedback>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {otherGroups.map((group) => (
+            <section key={group.id} className="mt-6 flex flex-col gap-2">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {locale === "vi" ? group.nameVi : group.nameEn}
+              </span>
+              <div className="grid grid-cols-2 gap-2">
+                {group.options.map((option) => {
+                  const selected = selectedModifiers[group.id] === option.id
+                  return (
+                    <PressFeedback
+                      key={option.id}
+                      type="button"
+                      onClick={() =>
+                        setSelectedModifiers((prev) => {
+                          if (!group.required && prev[group.id] === option.id) {
+                            const next = { ...prev }
+                            delete next[group.id]
+                            return next
+                          }
+                          return { ...prev, [group.id]: option.id }
+                        })
+                      }
+                      className={cn(
+                        "flex flex-col items-start gap-0.5 rounded-lg border-2 px-3 py-2 text-sm transition-colors",
+                        selected
+                          ? "border-primary bg-primary/10 font-semibold text-card-foreground"
+                          : "border-border text-card-foreground"
+                      )}
+                    >
+                      <div className="flex w-full items-center justify-between">
+                        <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
+                        {selected && <Check className="h-4 w-4 text-primary" />}
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {option.priceDelta > 0 ? `+${formatVND(option.priceDelta)}` : tProduct("freeLabel")}
+                      </span>
+                    </PressFeedback>
+                  )
+                })}
+              </div>
+            </section>
+          ))}
+
+          <section className="mt-6 flex flex-col gap-2">
+            <label
+              htmlFor="product-note"
+              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              {t("noteLabel")}
+            </label>
+            <textarea
+              id="product-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={t("notePlaceholder")}
+              rows={2}
+              className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-card-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </section>
+
+          {/* Desktop inline Add to Cart CTA */}
+          <div className="hidden md:flex items-center justify-between mt-8 p-4 border bg-muted/30 rounded-2xl">
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground">{t("total")}</span>
+              <span className="text-2xl font-bold text-primary">{formatVND(price)}</span>
+            </div>
+            <motion.div whileTap={item.isAvailable ? TAP_SCALE : undefined} transition={TAP_TRANSITION}>
+              <Button
+                onClick={handleAddToCart}
+                disabled={!item.isAvailable}
+                className="h-12 gap-2 rounded-xl px-8 text-base font-bold"
+              >
+                {tProduct("addToCart")}
+              </Button>
+            </motion.div>
+          </div>
+
+          <section className="mt-8 border-t pt-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-card-foreground">{tProduct("reviewsTitle")}</h2>
+              {reviewCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl font-bold text-primary">{avgRating.toFixed(1)}</span>
+                  <StarRating rating={avgRating} size="lg" />
+                </div>
+              )}
+            </div>
+            {reviewCount === 0 ? (
+              <p className="text-sm text-muted-foreground">{tProduct("noReviewsYet")}</p>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {reviews.map((review) => (
+                  <div key={review.id} className="rounded-xl border bg-card p-3 shadow-sm">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
+                        {(review.reviewerName ?? tProduct("anonymousReviewer")).charAt(0)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="font-semibold text-card-foreground">
+                            {review.reviewerName ?? tProduct("anonymousReviewer")}
+                          </span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {tProduct("daysAgo", {
+                              days: Math.max(0, Math.floor((Date.now() - review.createdAt) / 86400000)),
+                            })}
+                          </span>
+                        </div>
+                        <StarRating rating={review.rating} />
+                      </div>
+                    </div>
+                    <p className="mt-2 text-sm text-card-foreground">{review.comment}</p>
+                    {review.staffReply && (
+                      <div className="ml-12 mt-2 rounded-lg bg-muted p-2">
+                        <p className="text-xs font-semibold text-secondary">{tProduct("shopReplyLabel")}</p>
+                        <p className="text-sm text-card-foreground">{review.staffReply}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
 
+      {/* Fixed bottom bar for Mobile */}
       <motion.div
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t bg-card px-6 py-4 shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.1)]"
+        className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t bg-card px-6 py-4 shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.1)] md:hidden"
       >
         <span className="text-xl font-bold text-primary">{formatVND(price)}</span>
         <motion.div whileTap={item.isAvailable ? TAP_SCALE : undefined} transition={TAP_TRANSITION}>

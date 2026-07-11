@@ -37,7 +37,7 @@ export function MyRedemptionsView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4">
+    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-5xl md:px-8">
       <h2 className="mb-1 text-lg font-semibold text-card-foreground">{t("title")}</h2>
       <p className="mb-4 text-sm text-muted-foreground">{t("subtitle")}</p>
 
@@ -48,7 +48,7 @@ export function MyRedemptionsView() {
       ) : redemptions.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {redemptions.map((r) => {
             const status = statusMeta(r)
             const canUse = !r.isUsed && !r.isExpired

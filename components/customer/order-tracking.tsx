@@ -189,180 +189,202 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
   const paymentMethod = order.paymentMethod
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-4 sm:px-6">
-      <section className="relative overflow-hidden rounded-xl border bg-muted p-6 text-center shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-widest text-secondary">{t("orderId")}</p>
-        <h2 className="mb-4 text-3xl font-bold text-primary">#{formatOrderId(order.id)}</h2>
-        <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-primary/15">
-          <CookingPot className="h-12 w-12 text-primary" />
-        </div>
-        <h3 className="mb-1 text-xl font-semibold text-card-foreground">{t(STATUS_LABEL_KEY[order.status])}</h3>
-        {order.status === "preparing" && (
-          <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <Clock className="h-4 w-4 text-primary" />
-            {t("etaLabel")}
-          </p>
-        )}
-        {isGuestPolling && <p className="mt-2 text-[11px] text-muted-foreground">{t("guestPollingNote")}</p>}
-      </section>
-
-      <section className="mt-8 px-2">
-        <StepProgress
-          currentStep={currentStep}
-          steps={STEPS.map((step) => ({ key: step.key, label: t(step.key), icon: step.icon }))}
-        />
-      </section>
-
-      {order.status === "served" && order.paymentStatus === "pending" && (
-        <section className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
-          {paymentNotice && <p className="mb-3 text-sm text-destructive">{t("paymentRetryNotice")}</p>}
-          {paymentMethod === null && !cashConfirmed ? (
-            <>
-              <p className="mb-3 text-sm font-medium text-card-foreground">{t("choosePaymentMethodPrompt")}</p>
-              <div className="grid grid-cols-3 gap-2">
-                <PressFeedback
-                  type="button"
-                  disabled={isPaying}
-                  onClick={() => handlePayNow("cash")}
-                  className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
-                >
-                  <Banknote className="h-7 w-7" />
-                  <span className="text-xs font-bold">{t("payMethodCash")}</span>
-                </PressFeedback>
-                <PressFeedback
-                  type="button"
-                  disabled={isPaying}
-                  onClick={() => handlePayNow("stripe")}
-                  className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
-                >
-                  <CreditCard className="h-7 w-7" />
-                  <span className="text-xs font-bold">{t("payMethodCard")}</span>
-                </PressFeedback>
-                <PressFeedback
-                  type="button"
-                  disabled={isPaying}
-                  onClick={() => handlePayNow("vnpay")}
-                  className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
-                >
-                  <QrCode className="h-7 w-7" />
-                  <span className="text-xs font-bold">{t("payMethodVNPay")}</span>
-                </PressFeedback>
-              </div>
-            </>
-          ) : paymentMethod === "cash" || cashConfirmed ? (
-            <>
-              <p className="text-sm text-muted-foreground">{t("cashAwaitingStaffNote")}</p>
-              <button
-                type="button"
-                disabled={isPaying}
-                onClick={handleChangeMethod}
-                className="mt-3 text-sm font-bold text-primary underline-offset-2 hover:underline disabled:opacity-50"
-              >
-                {t("changePaymentMethod")}
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="mb-3 text-sm font-medium text-card-foreground">{t("payNowPrompt")}</p>
-              <Button className="h-11 w-full rounded-xl" disabled={isPaying} onClick={() => paymentMethod && handlePayNow(paymentMethod)}>
-                {isPaying ? t("payNowLoading") : t("payNowButton")}
-              </Button>
-              <button
-                type="button"
-                disabled={isPaying}
-                onClick={handleChangeMethod}
-                className="mt-3 text-sm font-bold text-primary underline-offset-2 hover:underline disabled:opacity-50"
-              >
-                {t("chooseDifferentMethod")}
-              </button>
-            </>
-          )}
-        </section>
-      )}
-
-      <section className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-secondary/20 text-secondary">
-            {order.orderType === "dine-in" ? <TableIcon className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-card-foreground">
-              {order.orderType === "dine-in" ? t("tableLabel", { table: order.table ?? table ?? "" }) : t("pickupBadge")}
-            </h4>
-            {order.orderType === "dine-in" && (
-              <p className="text-xs text-muted-foreground">{t("dineInBadge")}</p>
+    <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-4 sm:px-6 md:max-w-5xl md:px-8 md:pb-8">
+      <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10">
+        {/* Left Column: Progress status */}
+        <div className="flex-1 min-w-0 md:flex-[3]">
+          <section className="relative overflow-hidden rounded-xl border bg-muted p-6 text-center shadow-sm">
+            <p className="text-xs font-semibold uppercase tracking-widest text-secondary">{t("orderId")}</p>
+            <h2 className="mb-4 text-3xl font-bold text-primary">#{formatOrderId(order.id)}</h2>
+            <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-primary/15">
+              <CookingPot className="h-12 w-12 text-primary" />
+            </div>
+            <h3 className="mb-1 text-xl font-semibold text-card-foreground">{t(STATUS_LABEL_KEY[order.status])}</h3>
+            {order.status === "preparing" && (
+              <p className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4 text-primary" />
+                {t("etaLabel")}
+              </p>
             )}
-          </div>
-        </div>
-        <div className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/30 text-accent-foreground">
-            <Store className="h-5 w-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-card-foreground">{t("branchName")}</h4>
-          </div>
-        </div>
-      </section>
+            {isGuestPolling && <p className="mt-2 text-[11px] text-muted-foreground">{t("guestPollingNote")}</p>}
+          </section>
 
-      <section className="mt-8 space-y-3">
-        <div className="flex items-center justify-between border-b pb-2">
-          <h3 className="text-lg font-semibold text-card-foreground">{t("orderDetails")}</h3>
-          <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-secondary">
-            {t("itemCount", { count: order.items.length })}
-          </span>
-        </div>
-        <div className="space-y-2">
-          {order.items.map((item, index) => (
-            <div key={index} className="rounded-xl p-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h5 className="font-bold text-card-foreground">
-                    {item.quantity}x {locale === "vi" ? item.nameVi : item.nameEn}
-                  </h5>
-                  {item.note && <p className="text-xs italic text-accent-foreground">+ {item.note}</p>}
-                </div>
-                <span className="text-sm font-bold text-primary">{formatVND(item.unitPrice * item.quantity)}</span>
-              </div>
-              {isLoggedIn && order.status === "completed" && (
-                openReviewIndex === index ? (
-                  <ReviewForm itemId={item.menuItemId} onDone={() => setOpenReviewIndex(null)} />
-                ) : (
+          <section className="mt-8 px-2">
+            <StepProgress
+              currentStep={currentStep}
+              steps={STEPS.map((step) => ({ key: step.key, label: t(step.key), icon: step.icon }))}
+            />
+          </section>
+
+          {order.status === "served" && order.paymentStatus === "pending" && (
+            <section className="mt-6 rounded-xl border border-primary/30 bg-primary/5 p-4 text-center">
+              {paymentNotice && <p className="mb-3 text-sm text-destructive">{t("paymentRetryNotice")}</p>}
+              {paymentMethod === null && !cashConfirmed ? (
+                <>
+                  <p className="mb-3 text-sm font-medium text-card-foreground">{t("choosePaymentMethodPrompt")}</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <PressFeedback
+                      type="button"
+                      disabled={isPaying}
+                      onClick={() => handlePayNow("cash")}
+                      className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                    >
+                      <Banknote className="h-7 w-7" />
+                      <span className="text-xs font-bold">{t("payMethodCash")}</span>
+                    </PressFeedback>
+                    <PressFeedback
+                      type="button"
+                      disabled={isPaying}
+                      onClick={() => handlePayNow("stripe")}
+                      className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                    >
+                      <CreditCard className="h-7 w-7" />
+                      <span className="text-xs font-bold">{t("payMethodCard")}</span>
+                    </PressFeedback>
+                    <PressFeedback
+                      type="button"
+                      disabled={isPaying}
+                      onClick={() => handlePayNow("vnpay")}
+                      className="flex flex-col items-center gap-2 rounded-xl border-2 border-transparent bg-muted p-4 text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+                    >
+                      <QrCode className="h-7 w-7" />
+                      <span className="text-xs font-bold">{t("payMethodVNPay")}</span>
+                    </PressFeedback>
+                  </div>
+                </>
+              ) : paymentMethod === "cash" || cashConfirmed ? (
+                <>
+                  <p className="text-sm text-muted-foreground">{t("cashAwaitingStaffNote")}</p>
                   <button
                     type="button"
-                    onClick={() => setOpenReviewIndex(index)}
-                    className="mt-1 text-xs font-semibold text-secondary hover:underline"
+                    disabled={isPaying}
+                    onClick={handleChangeMethod}
+                    className="mt-3 text-sm font-bold text-primary underline-offset-2 hover:underline disabled:opacity-50"
                   >
-                    {t("rateReviewButton")}
+                    {t("changePaymentMethod")}
                   </button>
-                )
+                </>
+              ) : (
+                <>
+                  <p className="mb-3 text-sm font-medium text-card-foreground">{t("payNowPrompt")}</p>
+                  <Button className="h-11 w-full rounded-xl" disabled={isPaying} onClick={() => paymentMethod && handlePayNow(paymentMethod)}>
+                    {isPaying ? t("payNowLoading") : t("payNowButton")}
+                  </Button>
+                  <button
+                    type="button"
+                    disabled={isPaying}
+                    onClick={handleChangeMethod}
+                    className="mt-3 text-sm font-bold text-primary underline-offset-2 hover:underline disabled:opacity-50"
+                  >
+                    {t("chooseDifferentMethod")}
+                  </button>
+                </>
               )}
+            </section>
+          )}
+
+          <section className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-secondary/20 text-secondary">
+                {order.orderType === "dine-in" ? <TableIcon className="h-5 w-5" /> : <ShoppingBag className="h-5 w-5" />}
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-card-foreground">
+                  {order.orderType === "dine-in" ? t("tableLabel", { table: order.table ?? table ?? "" }) : t("pickupBadge")}
+                </h4>
+                {order.orderType === "dine-in" && (
+                  <p className="text-xs text-muted-foreground">{t("dineInBadge")}</p>
+                )}
+              </div>
             </div>
-          ))}
+            <div className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-sm">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/30 text-accent-foreground">
+                <Store className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-card-foreground">{t("branchName")}</h4>
+              </div>
+            </div>
+          </section>
         </div>
-        <div className="space-y-2 rounded-xl bg-muted p-4">
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>{t("subtotal")}</span>
-            <span>{formatVND(order.subtotal)}</span>
-          </div>
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>{t("discount")}</span>
-            <span className="text-destructive">-{formatVND(order.discount)}</span>
-          </div>
-          {order.taxAmount > 0 && (
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>{t("taxLabel")}</span>
-              <span>{formatVND(order.taxAmount)}</span>
+
+        {/* Right Column: Order Details & Totals */}
+        <div className="w-full md:w-80 md:flex-[2] md:sticky md:top-20 md:self-start">
+          <section className="space-y-3">
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="text-lg font-semibold text-card-foreground">{t("orderDetails")}</h3>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-secondary">
+                {t("itemCount", { count: order.items.length })}
+              </span>
+            </div>
+            <div className="space-y-2 max-h-[40vh] overflow-y-auto">
+              {order.items.map((item, index) => (
+                <div key={index} className="rounded-xl border bg-card p-3 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h5 className="font-bold text-card-foreground text-sm">
+                        {item.quantity}x {locale === "vi" ? item.nameVi : item.nameEn}
+                      </h5>
+                      {item.note && <p className="text-xs italic text-accent-foreground">+ {item.note}</p>}
+                    </div>
+                    <span className="text-sm font-bold text-primary shrink-0">{formatVND(item.unitPrice * item.quantity)}</span>
+                  </div>
+                  {isLoggedIn && order.status === "completed" && (
+                    openReviewIndex === index ? (
+                      <ReviewForm itemId={item.menuItemId} onDone={() => setOpenReviewIndex(null)} />
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setOpenReviewIndex(index)}
+                        className="mt-1 text-xs font-semibold text-secondary hover:underline"
+                      >
+                        {t("rateReviewButton")}
+                      </button>
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="space-y-2 rounded-xl bg-muted p-4">
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>{t("subtotal")}</span>
+                <span>{formatVND(order.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>{t("discount")}</span>
+                <span className="text-destructive">-{formatVND(order.discount)}</span>
+              </div>
+              {order.taxAmount > 0 && (
+                <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>{t("taxLabel")}</span>
+                  <span>{formatVND(order.taxAmount)}</span>
+                </div>
+              )}
+              <div className="mt-2 flex items-center justify-between border-t pt-2">
+                <span className="font-bold text-card-foreground">{t("total")}</span>
+                <span className="text-xl font-black text-primary">{formatVND(order.total)}</span>
+              </div>
+            </div>
+          </section>
+
+          {/* Desktop inline Contact Shop */}
+          {shopPhone && (
+            <div className="hidden md:block mt-6">
+              <a
+                href={`tel:${shopPhone}`}
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-primary-foreground shadow-md hover:bg-primary/95 transition-colors"
+              >
+                <Phone className="h-5 w-5" />
+                {t("contactShop")}
+              </a>
             </div>
           )}
-          <div className="mt-2 flex items-center justify-between border-t pt-2">
-            <span className="font-bold text-card-foreground">{t("total")}</span>
-            <span className="text-xl font-black text-primary">{formatVND(order.total)}</span>
-          </div>
         </div>
-      </section>
+      </div>
 
+      {/* Mobile fixed bottom Contact bar */}
       {shopPhone && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 p-4 backdrop-blur-md">
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 p-4 backdrop-blur-md md:hidden">
           <a
             href={`tel:${shopPhone}`}
             className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-primary-foreground shadow-lg transition-transform active:scale-95"
