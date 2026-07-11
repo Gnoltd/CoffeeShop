@@ -22,7 +22,7 @@ export function KitchenTopBar() {
         <span className="hidden text-sm font-semibold text-muted-foreground md:inline">{t("stationLabel")}</span>
       </div>
       <div className="flex items-center gap-3 md:mr-52">
-        <div className="flex items-center gap-2 rounded-lg border bg-muted px-2 py-1.5 md:px-3">
+        <div className="nb-border-sm flex items-center gap-2 rounded-lg bg-chip px-2 py-1.5 md:px-3">
           <span
             className={cn(
               "h-2 w-2 rounded-full",
