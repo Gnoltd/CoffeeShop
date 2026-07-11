@@ -2,10 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { Star, Info, Gift, ArrowRight, CheckCircle2, Wallet, Sparkles } from "lucide-react"
+import { Star, Info, Gift, ArrowRight, CheckCircle2, Wallet, Sparkles, Ticket } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatNumber, formatDateVN, formatOrderId } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
+import { Link } from "@/i18n/navigation"
 import { getLoyaltyBalance, getLoyaltyTierProgress, getLoyaltyTransactions, type LoyaltyTierProgress, type LoyaltyTransaction, type LoyaltyTransactionType } from "@/lib/supabase/loyalty-data"
 import { AnimatedCounter } from "@/components/motion/animated-counter"
 import { ProgressRing } from "@/components/motion/progress-ring"
@@ -100,6 +101,19 @@ export function LoyaltyView() {
           </div>
         </button>
       </section>
+
+      <Link
+        href="/loyalty/redemptions"
+        className="mt-3 flex items-center justify-between rounded-xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted"
+      >
+        <span className="flex items-center gap-3">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/25 text-accent-foreground">
+            <Ticket className="h-5 w-5" />
+          </span>
+          <span className="font-medium text-card-foreground">{t("myRedemptionsLink")}</span>
+        </span>
+        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
 
       <section className="mt-3 rounded-xl border bg-card p-4 shadow-sm">
         <div className="flex items-center gap-2 text-accent-foreground">

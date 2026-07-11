@@ -103,7 +103,12 @@ export function RewardLookup() {
                   </p>
                 </div>
               </div>
-              {redemption.fulfilledAt !== null ? (
+              {redemption.appliedOrderId !== null ? (
+                <span className="flex shrink-0 items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4" />
+                  {t("appliedAtCheckoutLabel")}
+                </span>
+              ) : redemption.fulfilledAt !== null ? (
                 <span className="flex shrink-0 items-center gap-1 rounded-lg bg-green-100 px-3 py-1.5 text-xs font-bold text-green-700">
                   <CheckCircle2 className="h-4 w-4" />
                   {t("fulfilledLabel")}
@@ -126,6 +131,9 @@ export function RewardLookup() {
               <p className="mt-2 text-xs text-muted-foreground">
                 {t("fulfilledAtLabel")}: {formatDateTime(redemption.fulfilledAt, locale)}
               </p>
+            )}
+            {redemption.appliedOrderId !== null && (
+              <p className="mt-2 text-xs text-muted-foreground">{t("appliedAtCheckoutHint")}</p>
             )}
           </div>
         ))}

@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
-import { CreditCard, Banknote, QrCode, TableIcon, Sparkles } from "lucide-react"
+import { CreditCard, Banknote, QrCode, TableIcon, Sparkles, Gift, Check } from "lucide-react"
 import { Link, useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { cancelPendingOrder } from "@/lib/supabase/orders-data"
+import { getMyRedemptions, type MyRedemption } from "@/lib/supabase/rewards-data"
 import { useCart } from "@/hooks/useCart"
 import { useTables } from "@/hooks/useTables"
 import { QrScannerOverlay } from "@/components/customer/qr-scanner-overlay"
@@ -41,6 +42,8 @@ export function CheckoutView() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [pointsBalance, setPointsBalance] = useState(0)
   const [redeemValuePerPoint, setRedeemValuePerPoint] = useState(0)
+  const [usableRedemptions, setUsableRedemptions] = useState<MyRedemption[]>([])
+  const [selectedRedemptionIds, setSelectedRedemptionIds] = useState<string[]>([])
   const [isPlacing, setIsPlacing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
@@ -59,6 +62,9 @@ export function CheckoutView() {
       setIsLoggedIn(true)
       const { data: profile } = await supabase.from("profiles").select("loyalty_points_balance").eq("id", user.id).single()
       if (profile) setPointsBalance(profile.loyalty_points_balance)
+      getMyRedemptions(supabase)
+        .then((all) => setUsableRedemptions(all.filter((r) => !r.isUsed && !r.isExpired)))
+        .catch(() => setUsableRedemptions([]))
     })
     supabase.from("loyalty_settings").select("redeem_value_vnd_per_point").eq("id", 1).single().then(({ data }) => {
       if (data) setRedeemValuePerPoint(data.redeem_value_vnd_per_point)
@@ -86,8 +92,15 @@ export function CheckoutView() {
   const tableNumber = activeTable?.number
   const canRedeem = pointsBalance >= REDEEM_CHUNK_POINTS
   const loyaltyDiscount = redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS * redeemValuePerPoint : 0
-  const discount = promoDiscount + loyaltyDiscount
+  const redemptionDiscount = usableRedemptions
+    .filter((r) => selectedRedemptionIds.includes(r.id))
+    .reduce((sum, r) => sum + r.discountValueVnd, 0)
+  const discount = promoDiscount + loyaltyDiscount + redemptionDiscount
   const total = Math.max(subtotal - discount, 0)
+
+  function toggleRedemption(id: string) {
+    setSelectedRedemptionIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
 
   async function handlePlaceOrder() {
     if (items.length === 0 || (payAt === "now" && !paymentMethod) || (orderType === "dine-in" && !activeTable)) return
@@ -104,6 +117,7 @@ export function CheckoutView() {
           payAt,
           promoCode,
           redeemLoyaltyPoints: redeemLoyalty && canRedeem ? REDEEM_CHUNK_POINTS : 0,
+          redemptionIds: selectedRedemptionIds,
           paymentCollected: false,
           locale,
           items: items.map((item) => ({
@@ -121,13 +135,20 @@ export function CheckoutView() {
         return
       }
       clear()
+      setSelectedRedemptionIds([])
       if (orderType === "dine-in" && tableNumber) {
         router.push(`/orders/${data.orderId}?table=${encodeURIComponent(tableNumber)}`)
       } else {
         router.push(`/orders/${data.orderId}`)
       }
-    } catch {
-      setError(paymentMethod === "stripe" ? t("cardPaymentUnavailable") : t("placeOrderError"))
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      if (message.includes("invalid_redemption_code") || message.includes("redemption_already_used") || message.includes("redemption_expired")) {
+        setError(t("redemptionInvalidError"))
+        setSelectedRedemptionIds([])
+      } else {
+        setError(paymentMethod === "stripe" ? t("cardPaymentUnavailable") : t("placeOrderError"))
+      }
       setIsPlacing(false)
     }
   }
@@ -230,6 +251,12 @@ export function CheckoutView() {
             <span className="font-bold text-green-600">-{formatVND(promoDiscount)}</span>
           </div>
         )}
+        {redemptionDiscount > 0 && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground">{t("rewardsDiscountLabel")}</span>
+            <span className="font-bold text-green-600">-{formatVND(redemptionDiscount)}</span>
+          </div>
+        )}
       </section>
 
       <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
@@ -270,6 +297,45 @@ export function CheckoutView() {
           </p>
         )}
       </section>
+
+      {isLoggedIn && usableRedemptions.length > 0 && (
+        <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-bold text-card-foreground">{t("myRewardsTitle")}</h2>
+            <Gift className="h-6 w-6 text-accent-foreground/70" />
+          </div>
+          <div className="flex flex-col gap-2">
+            {usableRedemptions.map((r) => {
+              const selected = selectedRedemptionIds.includes(r.id)
+              const name = locale === "vi" ? r.rewardNameVi : r.rewardNameEn
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => toggleRedemption(r.id)}
+                  className={cn(
+                    "flex items-center justify-between gap-3 rounded-lg border-2 bg-card p-3 text-left transition-colors",
+                    selected ? "border-primary bg-primary/5" : "border-transparent"
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    <span
+                      className={cn(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+                        selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                      )}
+                    >
+                      {selected && <Check className="h-3 w-3" />}
+                    </span>
+                    <span className="text-sm font-medium text-card-foreground">{name}</span>
+                  </span>
+                  <span className="text-sm font-bold text-primary">-{formatVND(r.discountValueVnd)}</span>
+                </button>
+              )
+            })}
+          </div>
+        </section>
+      )}
 
       <section className="mb-6 space-y-2">
         <h2 className="font-bold text-card-foreground">{t("payTiming")}</h2>
@@ -324,7 +390,7 @@ export function CheckoutView() {
         <div className="flex flex-col">
           <span className="text-xs text-muted-foreground">{t("total")}</span>
           <span className="text-xl font-bold text-primary">{formatVND(total)}</span>
-          {redeemLoyalty && (
+          {discount > 0 && (redeemLoyalty || redemptionDiscount > 0) && (
             <span className="text-[11px] text-accent-foreground/80">
               {t("discountApplied", { amount: formatVND(discount) })}
             </span>

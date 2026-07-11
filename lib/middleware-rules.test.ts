@@ -45,6 +45,14 @@ describe("resolveRedirect — auth-required exact paths", () => {
   it("allows a logged-in customer to reach /profile/addresses", () => {
     expect(resolveRedirect("/profile/addresses", "customer")).toBeNull()
   })
+
+  it("redirects an anonymous guest away from /loyalty/redemptions", () => {
+    expect(resolveRedirect("/loyalty/redemptions", null)).toBe("/login")
+  })
+
+  it("allows a logged-in customer to reach /loyalty/redemptions", () => {
+    expect(resolveRedirect("/loyalty/redemptions", "customer")).toBeNull()
+  })
 })
 
 describe("resolveRedirect — existing /staff and /admin behavior unaffected", () => {
