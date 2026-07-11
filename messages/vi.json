@@ -3,6 +3,9 @@
     "name": "PhaDinCoffee",
     "tagline": "Đặt trước. Tích điểm. Thưởng thức."
   },
+  "Theme": {
+    "toggleLabel": "Chuyển giao diện sáng/tối"
+  },
   "Nav": {
     "menu": "Thực Đơn",
     "cart": "Giỏ Hàng",

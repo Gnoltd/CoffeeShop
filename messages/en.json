@@ -3,6 +3,9 @@
     "name": "PhaDinCoffee",
     "tagline": "Order ahead. Earn rewards. Enjoy."
   },
+  "Theme": {
+    "toggleLabel": "Toggle light/dark theme"
+  },
   "Nav": {
     "menu": "Menu",
     "cart": "Cart",

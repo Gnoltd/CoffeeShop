@@ -6,6 +6,8 @@ import { Be_Vietnam_Pro, Playfair_Display } from "next/font/google";
 import { routing } from "@/i18n/routing";
 import { LanguageSwitcher } from "@/components/shared/language-switcher";
 import { RoleBadge } from "@/components/shared/role-badge";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { TablesProvider } from "@/hooks/useTables";
 import { CartProvider } from "@/hooks/useCart";
 import { OrdersProvider } from "@/hooks/useOrders";
@@ -68,20 +70,30 @@ export default async function RootLayout({
       lang={locale}
       className={`${beVietnamPro.variable} ${playfairDisplay.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("phadincoffee-theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark");}catch(e){}})();`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <TablesProvider>
-            <CartProvider>
-              <OrdersProvider>
-                <div className="fixed top-2 right-2 z-50 flex items-center gap-2">
-                  <RoleBadge role={role} />
-                  <LanguageSwitcher />
-                </div>
-                {children}
-              </OrdersProvider>
-            </CartProvider>
-          </TablesProvider>
-        </NextIntlClientProvider>
+        <ThemeProvider>
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <TablesProvider>
+              <CartProvider>
+                <OrdersProvider>
+                  <div className="fixed top-2 right-2 z-50 flex items-center gap-2">
+                    <RoleBadge role={role} />
+                    <ThemeToggle />
+                    <LanguageSwitcher />
+                  </div>
+                  {children}
+                </OrdersProvider>
+              </CartProvider>
+            </TablesProvider>
+          </NextIntlClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
