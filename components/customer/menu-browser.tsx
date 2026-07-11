@@ -93,7 +93,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t("searchPlaceholder")}
-          className="h-11 rounded-xl pl-9"
+          className="nb-border h-11 rounded-lg bg-card pl-9"
         />
       </div>
 
@@ -120,7 +120,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
               type="button"
               onClick={() => openItem(item)}
               className={cn(
-                "flex w-full items-center gap-3 rounded-xl border bg-card p-2 text-left shadow-sm transition-shadow hover:shadow-md md:h-full md:flex-col md:items-stretch md:p-0 md:overflow-hidden",
+                "nb-border nb-shadow nb-press flex w-full items-center gap-3 rounded-xl bg-card p-2 text-left md:h-full md:flex-col md:items-stretch md:p-0 md:overflow-hidden",
                 !item.isAvailable && "opacity-70"
               )}
             >
@@ -130,31 +130,32 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
               />
               <div className="flex min-w-0 flex-1 flex-col gap-1 md:p-4">
                 <div className="flex items-start justify-between gap-2">
-                  <span className="line-clamp-1 font-semibold text-card-foreground md:text-base">{name(item)}</span>
+                  <span className="line-clamp-1 font-bold text-card-foreground md:text-base">{name(item)}</span>
                   {item.isPopular && (
-                    <Badge className="shrink-0 bg-primary text-primary-foreground hover:bg-primary">
+                    <Badge variant="neubrutal" className="shrink-0">
                       {t("popular")}
                     </Badge>
                   )}
                 </div>
                 <p className="line-clamp-1 text-xs text-muted-foreground md:line-clamp-2 md:text-sm md:h-10">{description(item)}</p>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className="font-bold text-primary md:text-base">{formatVND(item.basePrice)}</span>
+                  <span className="font-extrabold text-price md:text-base">{formatVND(item.basePrice)}</span>
                   {item.isAvailable ? (
                     <motion.span
                       role="button"
+                      aria-label={t("add")}
                       whileTap={TAP_SCALE}
                       transition={TAP_TRANSITION}
                       onClick={(e) => {
                         e.stopPropagation()
                         quickAdd(item)
                       }}
-                      className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-sm"
+                      className="nb-border-sm nb-shadow-sm -m-1.5 flex h-11 w-11 items-center justify-center rounded-full bg-primary p-1.5 text-primary-foreground"
                     >
                       <Plus className="h-4 w-4" />
                     </motion.span>
                   ) : (
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-muted-foreground">
+                    <span className="nb-border-sm flex h-8 w-8 items-center justify-center rounded-full bg-chip text-muted-foreground">
                       <Ban className="h-4 w-4" />
                     </span>
                   )}
