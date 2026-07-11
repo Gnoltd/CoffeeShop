@@ -115,14 +115,14 @@ export function ProfileView({ role = null }: { role?: string | null }) {
         <div className="flex-1 min-w-0 md:flex-[2]">
           <section className="mb-6 flex flex-col items-center gap-3 md:items-start">
             <div className="relative">
-              <div className="flex h-28 w-28 items-center justify-center rounded-full border-4 border-muted bg-muted">
+              <div className="nb-border flex h-28 w-28 items-center justify-center rounded-full bg-chip">
                 <User className="h-12 w-12 text-muted-foreground" />
               </div>
               <button
                 type="button"
                 disabled
                 title="Not implemented yet — no avatar upload backend"
-                className="absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-70 shadow-lg"
+                className="nb-border-sm absolute bottom-0 right-0 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground opacity-70"
               >
                 <Pencil className="h-4 w-4" />
               </button>
@@ -181,14 +181,14 @@ export function ProfileView({ role = null }: { role?: string | null }) {
                           if (e.key === "Enter") saveEdit()
                           if (e.key === "Escape") cancelEdit()
                         }}
-                        className="h-11 flex-1 rounded-xl border-2 border-primary bg-card px-4 text-card-foreground focus:outline-none"
+                        className="nb-border h-11 flex-1 rounded-xl bg-card px-4 text-card-foreground focus:outline-none"
                       />
                       <PressFeedback
                         type="button"
                         onClick={saveEdit}
                         aria-label={t("save")}
                         title={t("save")}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"
+                        className="nb-border-sm flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground"
                       >
                         <Check className="h-4 w-4" />
                       </PressFeedback>
@@ -197,7 +197,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
                         onClick={cancelEdit}
                         aria-label={t("cancel")}
                         title={t("cancel")}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border text-muted-foreground"
+                        className="nb-border-sm flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-card text-muted-foreground"
                       >
                         <X className="h-4 w-4" />
                       </PressFeedback>
@@ -206,7 +206,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
                     <PressFeedback
                       type="button"
                       onClick={() => startEdit(field)}
-                      className="flex h-11 w-full items-center justify-between rounded-xl border-2 border-transparent bg-muted px-4 text-left transition-colors hover:border-primary/40"
+                      className="nb-border flex h-11 w-full items-center justify-between rounded-xl bg-card px-4 text-left"
                     >
                       <span className="text-card-foreground">{profile[field]}</span>
                       <Pencil className="h-4 w-4 text-muted-foreground" />
@@ -217,7 +217,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
             })}
             <div>
               <label className="mb-1 block px-1 text-xs font-medium text-muted-foreground">{t("email")}</label>
-              <div className="flex h-11 w-full items-center rounded-xl bg-muted px-4">
+              <div className="nb-border-sm flex h-11 w-full items-center rounded-xl bg-chip px-4">
                 <span className="text-card-foreground">{email}</span>
               </div>
             </div>
@@ -226,10 +226,10 @@ export function ProfileView({ role = null }: { role?: string | null }) {
 
         {/* Right Column: Menu Options */}
         <div className="w-full md:flex-1 md:max-w-md">
-          <section className="overflow-hidden rounded-2xl border bg-card shadow-sm">
+          <section className="nb-border nb-shadow overflow-hidden rounded-2xl bg-card">
             <Link
               href="/orders"
-              className="flex items-center justify-between border-b p-4 transition-colors hover:bg-muted"
+              className="flex items-center justify-between border-b-2 border-ink/15 p-4"
             >
               <span className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/15 text-secondary">
@@ -242,7 +242,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
 
             <Link
               href="/loyalty"
-              className="flex items-center justify-between border-b p-4 transition-colors hover:bg-muted"
+              className="flex items-center justify-between border-b-2 border-ink/15 p-4"
             >
               <span className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/25 text-accent-foreground">
@@ -258,7 +258,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
 
             <Link
               href="/profile/addresses"
-              className="flex items-center justify-between border-b p-4 transition-colors hover:bg-muted"
+              className="flex items-center justify-between border-b-2 border-ink/15 p-4"
             >
               <span className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -272,7 +272,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
             <button
               type="button"
               onClick={toggleLocale}
-              className="flex w-full items-center justify-between border-b p-4 text-left transition-colors hover:bg-muted"
+              className="flex w-full items-center justify-between border-b-2 border-ink/15 p-4 text-left"
             >
               <span className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -290,7 +290,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
 
             <Link
               href="/profile/settings"
-              className="flex items-center justify-between border-b p-4 transition-colors hover:bg-muted"
+              className="flex items-center justify-between border-b-2 border-ink/15 p-4"
             >
               <span className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
@@ -304,7 +304,7 @@ export function ProfileView({ role = null }: { role?: string | null }) {
             <PressFeedback
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center justify-between p-4 text-left transition-colors hover:bg-muted"
+              className="flex w-full items-center justify-between p-4 text-left"
             >
               <span className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10 text-destructive">
