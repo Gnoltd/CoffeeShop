@@ -58,18 +58,18 @@ export function LoyaltyView() {
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10">
         {/* Left Column: Loyalty Balance & Tier details */}
         <div className="flex-1 min-w-0 md:flex-[2]">
-          <section className="rounded-xl border bg-muted p-5 shadow-sm">
+          <section className="nb-border nb-shadow rounded-xl bg-chip p-5">
             <div className="mb-2 flex items-center gap-2 text-primary">
               <Star className="h-4 w-4" fill="currentColor" />
-              <span className="text-xs font-bold uppercase tracking-wider text-secondary">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-secondary">
                 {t("currentBalance")}
               </span>
             </div>
             <div className="mb-4 flex items-baseline gap-2">
-              <AnimatedCounter value={balance} format={formatNumber} className="text-5xl font-extrabold text-primary" />
-              <span className="font-bold text-primary/80">{t("pts")}</span>
+              <AnimatedCounter value={balance} format={formatNumber} className="text-5xl font-extrabold text-price" />
+              <span className="font-extrabold text-price/80">{t("pts")}</span>
             </div>
-            <div className="space-y-3 rounded-xl border bg-card/60 p-4">
+            <div className="nb-border-sm space-y-3 rounded-xl bg-card p-4">
               <div className="flex items-start gap-3">
                 <Info className="h-5 w-5 shrink-0 text-secondary" />
                 <p className="text-sm text-card-foreground">{t("earnRateInfo")}</p>
@@ -82,10 +82,10 @@ export function LoyaltyView() {
           </section>
 
           <section className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
-              <h3 className="self-start font-bold text-card-foreground">{currentTierName}</h3>
+            <div className="nb-border nb-shadow-sm flex flex-col items-center justify-center gap-3 rounded-xl bg-card p-4">
+              <h3 className="self-start font-extrabold text-card-foreground">{currentTierName}</h3>
               <ProgressRing percent={progressPercent} size={88} strokeWidth={7}>
-                <span className="text-lg font-bold text-accent-foreground">{progressPercent}%</span>
+                <span className="text-lg font-extrabold text-accent-foreground">{progressPercent}%</span>
               </ProgressRing>
               <p className="text-center text-xs text-secondary">
                 {nextTierName && tier?.pointsToNext != null
@@ -96,7 +96,7 @@ export function LoyaltyView() {
             <button
               type="button"
               onClick={() => setRewardsOpen(true)}
-              className="flex flex-col justify-between rounded-xl bg-primary p-4 text-left text-primary-foreground shadow-sm transition-opacity hover:opacity-90 animate-pulse-subtle"
+              className="nb-border nb-shadow-sm nb-press-sm flex flex-col justify-between rounded-xl bg-primary p-4 text-left text-primary-foreground"
             >
               <h3 className="font-bold">{t("redeemAction")}</h3>
               <div className="mt-4 flex justify-end">
@@ -107,7 +107,7 @@ export function LoyaltyView() {
 
           <Link
             href="/loyalty/redemptions"
-            className="mt-3 flex items-center justify-between rounded-xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted"
+            className="nb-border nb-shadow-sm nb-press-sm mt-3 flex items-center justify-between rounded-xl bg-card p-4"
           >
             <span className="flex items-center gap-3">
               <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/25 text-accent-foreground">
@@ -118,7 +118,7 @@ export function LoyaltyView() {
             <ArrowRight className="h-4 w-4 text-muted-foreground" />
           </Link>
 
-          <section className="mt-3 rounded-xl border bg-card p-4 shadow-sm">
+          <section className="nb-border nb-shadow-sm mt-3 rounded-xl bg-card p-4">
             <div className="flex items-center gap-2 text-accent-foreground">
               <Sparkles className="h-4 w-4" />
               <h3 className="font-bold text-card-foreground">{t("promoTitle")}</h3>
@@ -150,7 +150,7 @@ export function LoyaltyView() {
                 const Icon = meta.icon
                 return (
                   <StaggerItem key={transaction.id}>
-                    <div className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-sm">
+                    <div className="nb-border-sm flex items-center justify-between gap-3 rounded-xl bg-card p-3">
                       <div className="flex items-center gap-3">
                         <div className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", meta.iconClass)}>
                           <Icon className="h-5 w-5" />
