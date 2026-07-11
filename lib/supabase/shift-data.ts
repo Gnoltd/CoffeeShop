@@ -16,10 +16,26 @@ export type ShiftReport = {
   transactions: ShiftTransaction[]
 }
 
-export async function getShiftReport(supabase: SupabaseClient): Promise<ShiftReport | null> {
-  const { data, error } = await supabase.rpc("get_shift_report")
+export type ShiftHistoryEntry = {
+  id: string
+  openedAt: number
+  closedAt: number
+  startingCash: number
+  countedCash: number
+  difference: number
+  totalRevenue: number
+}
+
+export async function getShiftReport(supabase: SupabaseClient, shiftId?: string): Promise<ShiftReport | null> {
+  const { data, error } = await supabase.rpc("get_shift_report", { p_shift_id: shiftId ?? null })
   if (error) throw error
   return data as ShiftReport | null
+}
+
+export async function getShiftHistory(supabase: SupabaseClient): Promise<ShiftHistoryEntry[]> {
+  const { data, error } = await supabase.rpc("get_shift_history")
+  if (error) throw error
+  return (data ?? []) as ShiftHistoryEntry[]
 }
 
 export async function openShift(supabase: SupabaseClient, startingCash: number): Promise<ShiftReport> {

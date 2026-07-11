@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { getShiftReport, openShift, closeShift } from "./shift-data"
+import { getShiftReport, getShiftHistory, openShift, closeShift } from "./shift-data"
 
 const SAMPLE_REPORT = {
   id: "shift-1",
@@ -16,15 +16,26 @@ const SAMPLE_REPORT = {
 }
 
 describe("getShiftReport", () => {
-  it("calls the RPC with no shift id and returns the report as-is", async () => {
+  it("calls the RPC with a null shift id (current open shift) by default", async () => {
     const rpcSpy = vi.fn(() => Promise.resolve({ data: SAMPLE_REPORT, error: null }))
     const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
 
     const report = await getShiftReport(supabase)
 
-    expect(rpcSpy).toHaveBeenCalledWith("get_shift_report")
+    expect(rpcSpy).toHaveBeenCalledWith("get_shift_report", { p_shift_id: null })
     expect(report?.expectedCash).toBe(590000)
     expect(report?.byMethod[0].method).toBe("cash")
+  })
+
+  it("passes a specific shift id through to fetch a past shift's report", async () => {
+    const closed = { ...SAMPLE_REPORT, id: "shift-9", closedAt: 1752110000000 }
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: closed, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    const report = await getShiftReport(supabase, "shift-9")
+
+    expect(rpcSpy).toHaveBeenCalledWith("get_shift_report", { p_shift_id: "shift-9" })
+    expect(report?.id).toBe("shift-9")
   })
 
   it("returns null when no shift is open", async () => {
@@ -32,6 +43,37 @@ describe("getShiftReport", () => {
     const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
 
     expect(await getShiftReport(supabase)).toBeNull()
+  })
+})
+
+describe("getShiftHistory", () => {
+  it("returns the list of past closed shifts", async () => {
+    const history = [
+      {
+        id: "shift-9",
+        openedAt: 1752100000000,
+        closedAt: 1752110000000,
+        startingCash: 500000,
+        countedCash: 585000,
+        difference: -5000,
+        totalRevenue: 120000,
+      },
+    ]
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: history, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    const result = await getShiftHistory(supabase)
+
+    expect(rpcSpy).toHaveBeenCalledWith("get_shift_history")
+    expect(result).toHaveLength(1)
+    expect(result[0].totalRevenue).toBe(120000)
+  })
+
+  it("returns an empty array when no shifts have ever been closed", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: null, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    expect(await getShiftHistory(supabase)).toEqual([])
   })
 })
 
