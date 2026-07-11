@@ -180,7 +180,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t("searchPlaceholder")}
-              className="h-10 w-full rounded-lg border-none bg-muted pl-9 pr-3 text-sm outline-none focus:ring-2 focus:ring-primary"
+              className="nb-border-sm h-10 w-full rounded-lg bg-card pl-9 pr-3 text-sm outline-none"
             />
           </div>
         </div>
@@ -198,10 +198,10 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
               type="button"
               onClick={() => setSelectedCategory(category.id)}
               className={cn(
-                "whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-bold transition-colors",
+                "nb-border-sm nb-shadow-sm nb-press-sm whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-extrabold",
                 selectedCategory === category.id
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted text-card-foreground hover:bg-accent/30"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-card text-card-foreground"
               )}
             >
               {categoryLabel(category)}
@@ -218,14 +218,14 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
                   key={item.id}
                   type="button"
                   onClick={() => addToOrder(item)}
-                  className="flex flex-col gap-2 rounded-xl border bg-card p-2 text-left shadow-sm transition-all hover:shadow-md active:scale-95"
+                  className="nb-border-sm nb-shadow-sm nb-press-sm flex flex-col gap-2 rounded-xl bg-card p-2 text-left"
                 >
-                  <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <div className="flex aspect-square w-full items-center justify-center rounded-lg bg-chip text-muted-foreground">
                     <Icon className="h-8 w-8" />
                   </div>
                   <div className="px-1 pb-1">
                     <h3 className="line-clamp-1 font-bold text-card-foreground">{name(item)}</h3>
-                    <p className="mt-1 text-lg font-bold text-primary">{formatVND(item.basePrice)}</p>
+                    <p className="mt-1 text-lg font-extrabold text-price">{formatVND(item.basePrice)}</p>
                   </div>
                 </button>
               )
@@ -260,7 +260,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
         <button
           type="button"
           onClick={() => setMobileView("order")}
-          className="fixed inset-x-4 bottom-4 z-20 flex items-center justify-between rounded-xl bg-primary px-5 py-4 text-primary-foreground shadow-lg md:hidden"
+          className="nb-border nb-shadow fixed inset-x-4 bottom-4 z-20 flex items-center justify-between rounded-xl bg-primary px-5 py-4 text-primary-foreground md:hidden"
         >
           <span className="text-sm font-bold">{t("viewOrder", { count: orderItemCount })}</span>
           <span className="text-sm font-bold">{formatVND(total)}</span>
@@ -402,13 +402,13 @@ function OrderPanel({
                       </p>
                     )}
                   </div>
-                  <p className="font-bold text-primary">{formatVND(line.unitPrice * line.quantity)}</p>
+                  <p className="font-extrabold text-price">{formatVND(line.unitPrice * line.quantity)}</p>
                 </div>
-                <div className="flex items-center gap-2 self-start rounded-lg bg-card p-1">
+                <div className="nb-border-sm flex items-center gap-2 self-start rounded-lg bg-card p-1">
                   <button
                     type="button"
                     onClick={() => updateQuantity(line.lineId, line.quantity - 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md transition-colors hover:bg-muted"
+                    className="flex h-8 w-8 items-center justify-center rounded-md bg-chip"
                   >
                     <Minus className="h-4 w-4" />
                   </button>
@@ -416,7 +416,7 @@ function OrderPanel({
                   <button
                     type="button"
                     onClick={() => updateQuantity(line.lineId, line.quantity + 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-secondary-foreground transition-colors"
+                    className="flex h-8 w-8 items-center justify-center rounded-md bg-secondary text-secondary-foreground"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -433,13 +433,13 @@ function OrderPanel({
             <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               {t("type")}
             </label>
-            <div className="flex rounded-lg bg-muted p-1">
+            <div className="nb-border-sm flex rounded-lg bg-card p-1">
               <button
                 type="button"
                 onClick={() => setOrderType("dine-in")}
                 className={cn(
-                  "flex-1 rounded-md py-2 text-xs font-bold transition-all",
-                  orderType === "dine-in" ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
+                  "flex-1 rounded-md py-2 text-xs font-extrabold",
+                  orderType === "dine-in" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 )}
               >
                 {t("dineIn")}
@@ -448,8 +448,8 @@ function OrderPanel({
                 type="button"
                 onClick={() => setOrderType("takeaway")}
                 className={cn(
-                  "flex-1 rounded-md py-2 text-xs font-bold transition-all",
-                  orderType === "takeaway" ? "bg-card text-primary shadow-sm" : "text-muted-foreground"
+                  "flex-1 rounded-md py-2 text-xs font-extrabold",
+                  orderType === "takeaway" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
                 )}
               >
                 {t("takeaway")}
@@ -491,10 +491,10 @@ function OrderPanel({
                   title={enabled ? undefined : t("paymentMethodComingSoon")}
                   onClick={() => setPaymentMethod(method)}
                   className={cn(
-                    "rounded-lg border-2 py-2.5 text-[11px] font-bold transition-all",
+                    "nb-border-sm nb-shadow-sm rounded-lg py-2.5 text-[11px] font-extrabold",
                     paymentMethod === method
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-transparent bg-muted text-muted-foreground",
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-card text-muted-foreground",
                     !enabled && "opacity-50"
                   )}
                 >
@@ -524,7 +524,7 @@ function OrderPanel({
           type="button"
           onClick={handleCharge}
           disabled={order.length === 0 || isCharging}
-          className="flex items-center justify-between rounded-xl bg-primary px-5 py-4 text-primary-foreground shadow-lg transition-transform active:scale-95 disabled:opacity-50"
+          className="nb-border nb-shadow nb-press flex items-center justify-between rounded-xl bg-primary px-5 py-4 text-primary-foreground disabled:opacity-50"
         >
           <span className="flex flex-col items-start">
             <span className="text-[10px] font-bold uppercase opacity-80">{t("charge")}</span>
