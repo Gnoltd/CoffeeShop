@@ -40,6 +40,11 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-chip: var(--chip);
+  --color-ink: var(--ink);
+  --color-price: var(--price);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -56,22 +61,22 @@
  */
 :root {
   --background: #fff8f2;
-  --foreground: #3a2e22;
-  --card: #ffffff;
-  --card-foreground: #3a2e22;
-  --popover: #ffffff;
-  --popover-foreground: #3a2e22;
+  --foreground: #2b2118;
+  --card: #fffaf5;
+  --card-foreground: #2b2118;
+  --popover: #fffaf5;
+  --popover-foreground: #2b2118;
   --primary: #b3341f;
-  --primary-foreground: #fff8f2;
+  --primary-foreground: #ffffff;
   --secondary: #6f4e37;
   --secondary-foreground: #fff8f2;
   --muted: #f3e9dd;
-  --muted-foreground: #7a6c5d;
+  --muted-foreground: #6f4e37;
   --accent: #c9a66b;
-  --accent-foreground: #3a2e22;
+  --accent-foreground: #2b2118;
   --destructive: #c1440e;
-  --border: #e8dcc8;
-  --input: #e8dcc8;
+  --border: #eee0d2;
+  --input: #eee0d2;
   --ring: #b3341f;
   --chart-1: #b3341f;
   --chart-2: #6f4e37;
@@ -80,48 +85,62 @@
   --chart-5: #8b5e3c;
   --radius: 0.75rem;
   --sidebar: #fff8f2;
-  --sidebar-foreground: #3a2e22;
+  --sidebar-foreground: #2b2118;
   --sidebar-primary: #b3341f;
   --sidebar-primary-foreground: #fff8f2;
   --sidebar-accent: #f3e9dd;
-  --sidebar-accent-foreground: #3a2e22;
-  --sidebar-border: #e8dcc8;
+  --sidebar-accent-foreground: #2b2118;
+  --sidebar-border: #eee0d2;
   --sidebar-ring: #b3341f;
   --font-mono: ui-monospace, monospace;
+
+  /* Neubrutalist Modern additions (2026-07-12) */
+  --chip: #f9e9d4;
+  --ink: #2b2118;
+  --price: #b3341f;
+  --success: #3f7d4e;
+  --warn: #c48a1f;
 }
 
 .dark {
-  --background: #241b12;
-  --foreground: #f3e9dd;
-  --card: #2e2117;
-  --card-foreground: #f3e9dd;
-  --popover: #2e2117;
-  --popover-foreground: #f3e9dd;
-  --primary: #e0533a;
-  --primary-foreground: #fff8f2;
-  --secondary: #9c7a5c;
-  --secondary-foreground: #241b12;
-  --muted: #3a2c1f;
-  --muted-foreground: #c9bba8;
-  --accent: #c9a66b;
-  --accent-foreground: #241b12;
-  --destructive: #e0664a;
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: #e0533a;
-  --chart-1: #e0533a;
-  --chart-2: #9c7a5c;
-  --chart-3: #c9a66b;
+  --background: #1c1712;
+  --foreground: #fff8f2;
+  --card: #2b2118;
+  --card-foreground: #fff8f2;
+  --popover: #2b2118;
+  --popover-foreground: #fff8f2;
+  --primary: #e0663f;
+  --primary-foreground: #1c1712;
+  --secondary: #c9a66b;
+  --secondary-foreground: #1c1712;
+  --muted: #241b14;
+  --muted-foreground: #c9a66b;
+  --accent: #f2c88f;
+  --accent-foreground: #1c1712;
+  --destructive: #e0663f;
+  --border: #3a2e22;
+  --input: #3a2e22;
+  --ring: #e0663f;
+  --chart-1: #e0663f;
+  --chart-2: #c9a66b;
+  --chart-3: #f2c88f;
   --chart-4: #e08e45;
   --chart-5: #b3341f;
-  --sidebar: #241b12;
-  --sidebar-foreground: #f3e9dd;
-  --sidebar-primary: #e0533a;
-  --sidebar-primary-foreground: #fff8f2;
-  --sidebar-accent: #3a2c1f;
-  --sidebar-accent-foreground: #f3e9dd;
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: #e0533a;
+  --sidebar: #1c1712;
+  --sidebar-foreground: #fff8f2;
+  --sidebar-primary: #e0663f;
+  --sidebar-primary-foreground: #1c1712;
+  --sidebar-accent: #241b14;
+  --sidebar-accent-foreground: #fff8f2;
+  --sidebar-border: #3a2e22;
+  --sidebar-ring: #e0663f;
+
+  /* Neubrutalist Modern additions (2026-07-12) */
+  --chip: #241b14;
+  --ink: #f2c88f;
+  --price: #ff8a5c;
+  --success: #6bbf80;
+  --warn: #e0b04a;
 }
 
 @layer base {
@@ -130,6 +149,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-variant-numeric: tabular-nums;
   }
   html {
     @apply font-sans;
@@ -162,5 +182,40 @@
   .hero-zoom {
     animation: none;
     opacity: 1;
+  }
+}
+
+/* Neubrutalist Modern shared primitives (spec: 2026-07-12-elevated-warm-redesign-design.md) */
+@layer components {
+  .nb-border {
+    border-width: 2.5px;
+    border-color: var(--ink);
+  }
+  .nb-border-sm {
+    border-width: 2px;
+    border-color: var(--ink);
+  }
+  .nb-shadow {
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .nb-shadow-sm {
+    box-shadow: 2px 2px 0 var(--ink);
+  }
+  .nb-press {
+    transition: transform 100ms ease, box-shadow 100ms ease;
+  }
+  .nb-press:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 var(--ink);
+  }
+  .nb-press-sm:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0 0 0 var(--ink);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nb-press,
+  .nb-press:active {
+    transition: none;
   }
 }
