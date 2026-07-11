@@ -143,7 +143,7 @@ export function MenuManagement({
           <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
           <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
-        <Button className="h-10 gap-2" onClick={() => setFormMode({ type: "add" })}>
+        <Button variant="neubrutal" className="h-10 gap-2" onClick={() => setFormMode({ type: "add" })}>
           <Plus className="h-4 w-4" />
           {t("addItem")}
         </Button>
@@ -171,7 +171,7 @@ export function MenuManagement({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t("searchPlaceholder")}
-            className="h-10 pl-9"
+            className="nb-border-sm h-10 rounded-lg bg-card pl-9"
           />
         </div>
         <div className="flex flex-wrap gap-2">
@@ -179,10 +179,10 @@ export function MenuManagement({
             type="button"
             onClick={() => setSelectedCategory(null)}
             className={cn(
-              "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+              "nb-border-sm nb-shadow-sm nb-press-sm rounded-lg px-3 py-1.5 text-sm font-extrabold",
               selectedCategory === null
                 ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-accent/30"
+                : "bg-card text-muted-foreground"
             )}
           >
             {t("allCategories")}
@@ -193,10 +193,10 @@ export function MenuManagement({
               type="button"
               onClick={() => setSelectedCategory(category.id)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                "nb-border-sm nb-shadow-sm nb-press-sm rounded-lg px-3 py-1.5 text-sm font-extrabold",
                 selectedCategory === category.id
                   ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:bg-accent/30"
+                  : "bg-card text-muted-foreground"
               )}
             >
               {locale === "vi" ? category.nameVi : category.nameEn}
@@ -205,7 +205,7 @@ export function MenuManagement({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-card shadow-sm">
+      <div className="nb-border-sm nb-shadow-sm overflow-x-auto rounded-xl bg-card">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
@@ -247,7 +247,7 @@ export function MenuManagement({
                     </div>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={cn("rounded-full px-2.5 py-1 text-xs font-medium", CATEGORY_BADGE_STYLE)}>
+                    <span className={cn("nb-border-sm rounded-full px-2.5 py-1 text-xs font-extrabold", CATEGORY_BADGE_STYLE)}>
                       {categoryLabel(item.categoryId)}
                     </span>
                   </td>
@@ -312,7 +312,7 @@ export function MenuManagement({
               type="button"
               onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              className="rounded-lg border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+              className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-1 text-xs font-extrabold text-muted-foreground disabled:pointer-events-none disabled:opacity-40"
             >
               {t("previous")}
             </button>
@@ -322,10 +322,10 @@ export function MenuManagement({
                 type="button"
                 onClick={() => setCurrentPage(page)}
                 className={cn(
-                  "rounded-lg border px-3 py-1 text-xs font-medium transition-colors",
+                  "nb-border-sm nb-press-sm rounded-lg px-3 py-1 text-xs font-extrabold",
                   page === currentPage
-                    ? "border-primary bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground"
                 )}
               >
                 {page}
@@ -335,7 +335,7 @@ export function MenuManagement({
               type="button"
               onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              className="rounded-lg border px-3 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-40"
+              className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-1 text-xs font-extrabold text-muted-foreground disabled:pointer-events-none disabled:opacity-40"
             >
               {t("next")}
             </button>
