@@ -65,7 +65,7 @@ export function KitchenBoard({
           <section
             key={column.status}
             className={cn(
-              "h-full flex-col overflow-hidden rounded-xl border bg-muted",
+              "nb-border-sm h-full flex-col overflow-hidden rounded-xl bg-muted",
               activeColumn === column.status ? "flex" : "hidden",
               "md:flex"
             )}
@@ -84,7 +84,7 @@ export function KitchenBoard({
               {columnOrders.map((order) => {
                 const isReady = column.status === "ready"
                 return (
-                  <div key={order.id} className="rounded-xl border bg-card shadow-sm">
+                  <div key={order.id} className="nb-border-sm nb-shadow-sm rounded-xl bg-card">
                     <div
                       className={cn(
                         "flex items-start justify-between border-b p-3",
@@ -133,7 +133,7 @@ export function KitchenBoard({
                     <div className="space-y-2 p-3">
                       {order.items.map((item, index) => (
                         <div key={index} className="flex items-start gap-3">
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-bold text-card-foreground">
+                          <div className="nb-border-sm flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-chip text-sm font-bold text-card-foreground">
                             {item.quantity}x
                           </div>
                           <div>
@@ -157,10 +157,10 @@ export function KitchenBoard({
                         type="button"
                         onClick={() => onAdvance(order.id)}
                         className={cn(
-                          "flex w-full items-center justify-center gap-2 rounded-b-xl py-3 text-base font-bold text-white transition-all active:scale-[0.99]",
-                          column.status === "paid" && "bg-primary hover:brightness-110",
-                          column.status === "preparing" && "bg-amber-600 hover:brightness-110",
-                          column.status === "ready" && "bg-green-600 hover:brightness-110"
+                          "nb-press flex w-full items-center justify-center gap-2 rounded-b-xl border-t-2 border-ink py-3 text-base font-extrabold text-white",
+                          column.status === "paid" && "bg-primary",
+                          column.status === "preparing" && "bg-amber-600",
+                          column.status === "ready" && "bg-green-600"
                         )}
                       >
                         {column.status === "paid" && (
