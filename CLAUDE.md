@@ -9,7 +9,7 @@ decision was made or the full bug-hunt narrative behind a fix.
 ## Status
 
 Everything shipped so far is real end-to-end. Next.js app (bilingual,
-role-gated), full customer/staff/admin UI, live Supabase DB (33
+role-gated), full customer/staff/admin UI, live Supabase DB (35
 migrations) with RLS, live Realtime sync across Inventory/Tables/Orders/
 Staff accounts, 3-state table occupancy/cleaning, deferred (Pay
 Now/Pay Later) payment with method-chosen-at-serving-time (including
@@ -18,8 +18,9 @@ three payment methods (Cash/Stripe/VNPay), real customer reviews, real
 admin menu-image upload, real Profile persistence, real Admin
 Dashboard KPIs, shift closing (cash reconciliation), real Google
 sign-in, real Profile Settings (password change + Google account
-linking), an admin-editable per-item Sizes editor, and a real
-forgot-password/reset-via-email flow all work end-to-end. Deployed at
+linking), an admin-editable per-item Sizes editor, a real
+forgot-password/reset-via-email flow, real Loyalty tier progress, and
+a real Rewards catalog/redemption all work end-to-end. Deployed at
 **https://phadincoffee.vercel.app**, auto-deploys on push to `main`. See
 `daily.md` for what's currently open — it's kept short and recap-free by
 design, so check it before this file for "what's left."
@@ -520,7 +521,7 @@ you need to find your way around; check the dated docs for full detail.
 
 ## Database (`supabase/migrations/`)
 
-33 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
+35 migrations applied to the live hosted project (`qhiypdqnrnzndxdwqxbx`)
 via the Supabase MCP server's `apply_migration`. Every table in `public`
 has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 
@@ -547,6 +548,8 @@ has RLS enabled (confirmed via `list_tables`/`get_advisors`).
 | `0031` | `shifts` table + `orders.paid_at` + shift open/report/close RPCs |
 | `0032` | `change_order_payment_method()` (Pay Later method correction) |
 | `0033` | `menu_item_sizes.sort_order` (admin Sizes editor display order) |
+| `0034` | `loyalty_tiers` table + `get_my_loyalty_tier_progress()` (real Loyalty tier progress) |
+| `0035` | `rewards`/`reward_redemptions` tables + `redeem_reward()` (real Rewards catalog/redemption) |
 
 A real admin account (`admin@phadincoffee.dev`) was bootstrapped via
 direct SQL insert into `auth.users` (public signup hits the shared email
@@ -597,9 +600,9 @@ except for the actual emailed-link round trip (shared email-sender
 rate-limit risk, same as signup confirmation). Real Admin Dashboard
 KPIs and shift closing (above) are shipped but still need a hand
 live-verification pass — see `daily.md`'s Open list. Loyalty tier
-progress is now real (migration `0034`, above). Remaining known-mock
-surface: rewards catalog/redemption (no table) — check `daily.md` for
-current status.
+progress (migration `0034`) and rewards catalog/redemption (migration
+`0035`) are now both real, all shipped and live-verified end-to-end.
+No known-mock surfaces remain — check `daily.md` for current status.
 When adding anything new:
 shared brand tokens, `useTranslations`/`getTranslations` with both
 message files updated together, Base UI's `render` prop for polymorphic
