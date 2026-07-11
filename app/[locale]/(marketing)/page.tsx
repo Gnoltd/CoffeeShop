@@ -1,12 +1,10 @@
 import { getTranslations } from "next-intl/server"
 import { LandingView } from "@/components/marketing/landing-view"
-import { createClient } from "@/lib/supabase/server"
-import { getMenuItems } from "@/lib/supabase/menu-data"
+import { getPublicMenuData } from "@/lib/supabase/menu-data-cached"
 
 export default async function LandingPage() {
   const t = await getTranslations("Landing")
-  const supabase = await createClient()
-  const items = await getMenuItems(supabase)
+  const { items } = await getPublicMenuData()
   const bestSellers = items.filter((item) => item.isPopular)
 
   return (
