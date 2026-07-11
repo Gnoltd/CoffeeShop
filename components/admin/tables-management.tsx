@@ -79,7 +79,7 @@ export function TablesManagement() {
     <div className="mx-auto flex max-w-6xl flex-col gap-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-card-foreground">{t("title")}</h2>
-        <Button className="h-10 gap-2" onClick={() => setShowAddForm(true)}>
+        <Button variant="neubrutal" className="h-10 gap-2" onClick={() => setShowAddForm(true)}>
           <Plus className="h-4 w-4" />
           {t("addTable")}
         </Button>
@@ -88,7 +88,7 @@ export function TablesManagement() {
       {error && <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
             <Grid2x2 className="h-5 w-5" />
           </div>
@@ -97,7 +97,7 @@ export function TablesManagement() {
             <p className="text-xl font-bold text-card-foreground">{tables.length}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
             <CircleCheck className="h-5 w-5" />
           </div>
@@ -106,7 +106,7 @@ export function TablesManagement() {
             <p className="text-xl font-bold text-card-foreground">{availableCount}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
             <Sparkles className="h-5 w-5" />
           </div>
@@ -115,7 +115,7 @@ export function TablesManagement() {
             <p className="text-xl font-bold text-card-foreground">{cleaningCount}</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border bg-card p-4 shadow-sm">
+        <div className="nb-border-sm nb-shadow-sm flex items-center gap-3 rounded-xl bg-card p-4">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary/15 text-secondary">
             <ScanLine className="h-5 w-5" />
           </div>
@@ -134,8 +134,8 @@ export function TablesManagement() {
             <div
               key={table.id}
               className={cn(
-                "flex flex-col items-center gap-3 rounded-xl border bg-card p-5 shadow-sm transition-colors",
-                isEditing && "border-primary ring-2 ring-primary/30"
+                "nb-border-sm nb-shadow-sm flex flex-col items-center gap-3 rounded-xl bg-card p-5",
+                isEditing && "border-primary"
               )}
             >
               <button
@@ -153,10 +153,10 @@ export function TablesManagement() {
                       : t("cleaningDone")
                 }
                 className={cn(
-                  "inline-flex items-center gap-1 self-start rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors",
-                  table.status === "available" && "bg-green-100 text-green-700 hover:bg-green-200",
-                  table.status === "occupied" && "bg-red-100 text-red-700 hover:bg-red-200",
-                  table.status === "cleaning" && "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                  "nb-border-sm nb-press-sm inline-flex items-center gap-1 self-start rounded-full px-2.5 py-1 text-[11px] font-extrabold",
+                  table.status === "available" && "bg-green-100 text-green-700",
+                  table.status === "occupied" && "bg-red-100 text-red-700",
+                  table.status === "cleaning" && "bg-amber-100 text-amber-700"
                 )}
               >
                 {table.status === "available" && <CircleCheck className="h-3 w-3" />}
@@ -165,7 +165,7 @@ export function TablesManagement() {
                 {table.status === "available" ? t("available") : table.status === "occupied" ? t("occupied") : t("cleaning")}
               </button>
 
-              <div className="flex h-32 w-32 items-center justify-center rounded-xl border bg-muted">
+              <div className="nb-border-sm flex h-32 w-32 items-center justify-center rounded-xl bg-chip">
                 {qrCodes[table.id] ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -246,7 +246,7 @@ export function TablesManagement() {
               <p className="font-mono text-[10px] text-muted-foreground">{table.qrToken}</p>
               <div className="flex w-full gap-2">
                 <Button
-                  variant="secondary"
+                  variant="neubrutal"
                   size="sm"
                   className="h-9 flex-1 gap-1.5"
                   disabled={!qrCodes[table.id]}
@@ -256,9 +256,9 @@ export function TablesManagement() {
                   {t("downloadQr")}
                 </Button>
                 <Button
-                  variant="outline"
+                  variant="neubrutal"
                   size="sm"
-                  className="h-9 flex-1 gap-1.5"
+                  className="h-9 flex-1 gap-1.5 bg-secondary"
                   onClick={() => regenerateToken(table.id).catch(() => setError(t("updateError")))}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
