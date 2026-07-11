@@ -17,7 +17,7 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
   return (
     <section
       className={cn(
-        "h-full flex-col overflow-hidden rounded-xl border bg-muted",
+        "nb-border-sm h-full flex-col overflow-hidden rounded-xl bg-muted",
         active ? "flex" : "hidden",
         "md:flex"
       )}
@@ -42,7 +42,7 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
             <div
               key={table.id}
               className={cn(
-                "flex items-center justify-between gap-2 rounded-lg border p-3",
+                "nb-border-sm flex items-center justify-between gap-2 rounded-lg p-3",
                 table.status === "available" && "bg-green-50 dark:bg-green-950/20",
                 table.status === "occupied" && "bg-red-50 dark:bg-red-950/20",
                 table.status === "cleaning" && "bg-amber-50 dark:bg-amber-950/20"
@@ -68,7 +68,7 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
                         : t("cleaningDone")
                   }
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold transition-colors",
+                    "nb-border-sm nb-shadow-sm nb-press-sm inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-extrabold",
                     table.status === "available" && "bg-green-100 text-green-700 hover:bg-green-200",
                     table.status === "occupied" && "bg-red-100 text-red-700 hover:bg-red-200",
                     table.status === "cleaning" && "bg-amber-100 text-amber-700 hover:bg-amber-200"
@@ -102,7 +102,7 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
                       setError(null)
                       serveTable(readyOrderIds).catch(() => setError(t("updateError")))
                     }}
-                    className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground hover:brightness-110"
+                    className="nb-border-sm nb-shadow-sm nb-press-sm flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-xs font-extrabold text-primary-foreground"
                   >
                     <Utensils className="h-3 w-3" />
                     {t("markServed")}
@@ -116,7 +116,7 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
                         setError(null)
                         confirmCashPayment(awaitingPaymentOrder.id).catch(() => setError(t("updateError")))
                       }}
-                      className="rounded-lg bg-secondary px-3 py-2 text-xs font-bold text-secondary-foreground hover:brightness-110"
+                      className="nb-border-sm nb-shadow-sm nb-press-sm rounded-lg bg-secondary px-3 py-2 text-xs font-extrabold text-secondary-foreground"
                     >
                       {t("confirmCashReceived")}
                     </button>
@@ -126,7 +126,7 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
                         setError(null)
                         undoCashPayment(awaitingPaymentOrder.id).catch(() => setError(t("updateError")))
                       }}
-                      className="rounded-lg border px-3 py-2 text-xs font-bold text-muted-foreground hover:bg-muted"
+                      className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-2 text-xs font-extrabold text-muted-foreground"
                     >
                       {t("undoCash")}
                     </button>
