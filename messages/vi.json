@@ -17,6 +17,7 @@
     "settings": "Cài Đặt",
     "foodCost": "Chi Phí Thực Phẩm",
     "shift": "Ca Làm",
+    "rewards": "Ưu Đãi",
     "openMenu": "Mở menu"
   },
   "Landing": {
@@ -417,6 +418,20 @@
     "queueOrders": "{count} Đơn",
     "waitTimeLabel": "TG Chờ Dự Kiến",
     "waitTimeValue": "~{minutes} phút"
+  },
+  "StaffRewards": {
+    "title": "Đổi Thưởng",
+    "subtitle": "Nhập mã đổi thưởng của khách để tra cứu và xác nhận đã nhận.",
+    "codePlaceholder": "VD: A1B2C3D4",
+    "searchError": "Không thể tìm mã — vui lòng thử lại.",
+    "noMatch": "Không tìm thấy lượt đổi thưởng nào với mã này.",
+    "redeemedAtLabel": "Đã đổi lúc",
+    "pointsUnit": "điểm",
+    "fulfilledLabel": "Đã Nhận",
+    "fulfilledAtLabel": "Nhận lúc",
+    "markFulfilledButton": "Xác Nhận Đã Nhận",
+    "fulfillError": "Không thể xác nhận — vui lòng thử lại.",
+    "alreadyFulfilledError": "Ưu đãi này đã được nhận trước đó."
   },
   "StaffOrderHistory": {
     "title": "Lịch Sử Đơn Hàng",

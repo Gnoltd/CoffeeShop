@@ -17,6 +17,7 @@
     "settings": "Settings",
     "foodCost": "Food Cost",
     "shift": "Shift",
+    "rewards": "Rewards",
     "openMenu": "Open menu"
   },
   "Landing": {
@@ -417,6 +418,20 @@
     "queueOrders": "{count, plural, one {# Order} other {# Orders}}",
     "waitTimeLabel": "Wait Time",
     "waitTimeValue": "~{minutes} min"
+  },
+  "StaffRewards": {
+    "title": "Reward Redemptions",
+    "subtitle": "Enter a customer's redemption code to look it up and mark it fulfilled.",
+    "codePlaceholder": "e.g. A1B2C3D4",
+    "searchError": "Couldn't search for that code — please try again.",
+    "noMatch": "No redemption found for that code.",
+    "redeemedAtLabel": "Redeemed",
+    "pointsUnit": "pts",
+    "fulfilledLabel": "Fulfilled",
+    "fulfilledAtLabel": "Fulfilled at",
+    "markFulfilledButton": "Mark Fulfilled",
+    "fulfillError": "Couldn't mark this as fulfilled — please try again.",
+    "alreadyFulfilledError": "This reward has already been fulfilled."
   },
   "StaffOrderHistory": {
     "title": "Order History",

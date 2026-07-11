@@ -9,6 +9,7 @@ import { canAccessAdmin } from "@/lib/roles"
 const NAV_ITEMS = [
   { href: "/staff/pos", labelKey: "pos" },
   { href: "/staff/orders", labelKey: "kitchenDisplay" },
+  { href: "/staff/rewards", labelKey: "rewards" },
 ] as const
 
 export function StaffNav({ role = null }: { role?: string | null }) {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { getRewardsCatalog, redeemReward } from "./rewards-data"
+import { getRewardsCatalog, redeemReward, findRedemptionByCode, fulfillRedemption } from "./rewards-data"
 
 describe("getRewardsCatalog", () => {
   it("selects active rewards ordered by sort_order and maps to camelCase", async () => {
@@ -69,5 +69,62 @@ describe("redeemReward", () => {
     const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
 
     await expect(redeemReward(supabase, "rw-1")).rejects.toThrow("insufficient_points")
+  })
+})
+
+describe("findRedemptionByCode", () => {
+  it("passes the code to the RPC and maps rows to camelCase", async () => {
+    const row = {
+      id: "redemption-1",
+      reward_name_vi: "Cà Phê Đen Miễn Phí",
+      reward_name_en: "Free Black Coffee",
+      points_spent: 50,
+      redeemed_at: "2026-07-11T05:00:00.000Z",
+      fulfilled_at: null,
+      customer_name: "Nguyễn Văn An",
+    }
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: [row], error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    const result = await findRedemptionByCode(supabase, "REDEMPT")
+
+    expect(rpcSpy).toHaveBeenCalledWith("find_redemption_by_code", { p_code: "REDEMPT" })
+    expect(result).toEqual([
+      {
+        id: "redemption-1",
+        rewardNameVi: "Cà Phê Đen Miễn Phí",
+        rewardNameEn: "Free Black Coffee",
+        pointsSpent: 50,
+        redeemedAt: new Date("2026-07-11T05:00:00.000Z").getTime(),
+        fulfilledAt: null,
+        customerName: "Nguyễn Văn An",
+      },
+    ])
+  })
+
+  it("returns an empty array when no redemption matches the code", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: null, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    expect(await findRedemptionByCode(supabase, "NOMATCH")).toEqual([])
+  })
+})
+
+describe("fulfillRedemption", () => {
+  it("passes the redemption id to the RPC and returns the fulfilled timestamp", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: "2026-07-11T05:10:00.000Z", error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    const fulfilledAt = await fulfillRedemption(supabase, "redemption-1")
+
+    expect(rpcSpy).toHaveBeenCalledWith("fulfill_redemption", { p_redemption_id: "redemption-1" })
+    expect(fulfilledAt).toBe(new Date("2026-07-11T05:10:00.000Z").getTime())
+  })
+
+  it("throws when the RPC errors (e.g. already_fulfilled)", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: null, error: new Error("already_fulfilled") }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    await expect(fulfillRedemption(supabase, "redemption-1")).rejects.toThrow("already_fulfilled")
   })
 })
