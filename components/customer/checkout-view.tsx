@@ -193,15 +193,15 @@ export function CheckoutView() {
               ]}
             />
             {orderType === "dine-in" && activeTable && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/20 px-3 py-1.5 text-sm text-accent-foreground">
+              <div className="nb-border-sm inline-flex items-center gap-2 rounded-full bg-chip px-3 py-1.5 text-sm font-bold text-foreground">
                 <TableIcon className="h-4 w-4" />
                 {t("table")}: <strong>{tableNumber}</strong>
               </div>
             )}
             {!activeTable && (
-              <div className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-muted-foreground/40 p-3">
+              <div className="nb-border-sm flex items-center justify-between gap-2 rounded-lg bg-card p-3">
                 <p className="text-xs text-muted-foreground">{t("dineInRequiresScan")}</p>
-                <Button size="sm" variant="outline" className="h-9 shrink-0 gap-1.5" onClick={() => setIsScannerOpen(true)}>
+                <Button size="sm" variant="neubrutal" className="h-9 shrink-0 gap-1.5" onClick={() => setIsScannerOpen(true)}>
                   <QrCode className="h-3.5 w-3.5" />
                   {t("scanTableQr")}
                 </Button>
@@ -229,15 +229,15 @@ export function CheckoutView() {
           )}
 
           {loyaltyEnabled && (
-            <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
+            <section className="nb-border nb-shadow-sm mb-6 space-y-3 rounded-xl bg-chip p-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-card-foreground">{t("loyaltyPoints")}</h2>
+                <h2 className="font-extrabold text-card-foreground">{t("loyaltyPoints")}</h2>
                 <Sparkles className="h-6 w-6 text-accent-foreground/70" />
               </div>
               {isLoggedIn ? (
                 <>
                   <p className="text-sm text-muted-foreground">{t("pointsBalance", { points: pointsBalance })}</p>
-                  <div className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3">
+                  <div className="nb-border-sm flex items-center justify-between gap-3 rounded-lg bg-card p-3">
                     <span className="text-sm font-medium text-card-foreground">
                       {t("redeemLabel", { points: REDEEM_CHUNK_POINTS, amount: formatVND(REDEEM_CHUNK_POINTS * redeemValuePerPoint) })}
                     </span>
@@ -270,9 +270,9 @@ export function CheckoutView() {
           )}
 
           {isLoggedIn && usableRedemptions.length > 0 && (
-            <section className="mb-6 space-y-3 rounded-xl border border-accent/30 bg-accent/10 p-4">
+            <section className="nb-border nb-shadow-sm mb-6 space-y-3 rounded-xl bg-chip p-4">
               <div className="flex items-center justify-between">
-                <h2 className="font-bold text-card-foreground">{t("myRewardsTitle")}</h2>
+                <h2 className="font-extrabold text-card-foreground">{t("myRewardsTitle")}</h2>
                 <Gift className="h-6 w-6 text-accent-foreground/70" />
               </div>
               <div className="flex flex-col gap-2">
@@ -285,22 +285,22 @@ export function CheckoutView() {
                       type="button"
                       onClick={() => toggleRedemption(r.id)}
                       className={cn(
-                        "flex items-center justify-between gap-3 rounded-lg border-2 bg-card p-3 text-left transition-colors",
-                        selected ? "border-primary bg-primary/5" : "border-transparent"
+                        "nb-border-sm nb-press-sm flex items-center justify-between gap-3 rounded-lg bg-card p-3 text-left",
+                        selected && "bg-primary/10"
                       )}
                     >
                       <span className="flex items-center gap-2">
                         <span
                           className={cn(
-                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
-                            selected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-ink",
+                            selected && "bg-primary text-primary-foreground"
                           )}
                         >
                           {selected && <Check className="h-3 w-3" />}
                         </span>
-                        <span className="text-sm font-medium text-card-foreground">{name}</span>
+                        <span className="text-sm font-bold text-card-foreground">{name}</span>
                       </span>
-                      <span className="text-sm font-bold text-primary">-{formatVND(r.discountValueVnd)}</span>
+                      <span className="text-sm font-extrabold text-price">-{formatVND(r.discountValueVnd)}</span>
                     </button>
                   )
                 })}
@@ -334,15 +334,15 @@ export function CheckoutView() {
                     title={enabled ? undefined : t("paymentMethodComingSoon")}
                     onClick={() => setPaymentMethod(id)}
                     className={cn(
-                      "flex flex-col items-center gap-2 rounded-xl border-2 p-4 transition-colors",
+                      "nb-border nb-shadow-sm flex flex-col items-center gap-2 rounded-xl p-4",
                       paymentMethod === id
-                        ? "border-primary bg-primary/5 text-primary"
-                        : "border-transparent bg-muted text-muted-foreground",
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card text-muted-foreground",
                       !enabled && "opacity-50"
                     )}
                   >
                     <Icon className="h-7 w-7" />
-                    <span className="text-xs font-bold">{t(labelKey)}</span>
+                    <span className="text-xs font-extrabold">{t(labelKey)}</span>
                   </PressFeedback>
                 ))}
               </div>
@@ -352,8 +352,8 @@ export function CheckoutView() {
 
         {/* Right Column: Sticky Summary & Checkout Action */}
         <div className="w-full md:w-80 md:flex-[2] md:sticky md:top-20 md:self-start">
-          <section className="mb-6 space-y-3 rounded-xl border bg-muted p-4">
-            <h2 className="font-bold text-card-foreground">{t("summary")}</h2>
+          <section className="nb-border nb-shadow-sm mb-6 space-y-3 rounded-xl bg-chip p-4">
+            <h2 className="font-extrabold text-card-foreground">{t("summary")}</h2>
             <div className="space-y-3 max-h-[40vh] overflow-y-auto">
               {items.map((item) => {
                 const name = locale === "vi" ? item.nameVi : item.nameEn
@@ -409,10 +409,10 @@ export function CheckoutView() {
           )}
 
           {/* Desktop Place Order Card */}
-          <div className="hidden md:flex flex-col gap-4 rounded-xl border bg-card p-5 shadow-sm">
+          <div className="nb-border nb-shadow hidden md:flex flex-col gap-4 rounded-xl bg-card p-5">
             <div className="flex flex-col">
               <span className="text-xs text-muted-foreground">{t("total")}</span>
-              <span className="text-2xl font-bold text-primary">{formatVND(total)}</span>
+              <span className="text-2xl font-extrabold text-price">{formatVND(total)}</span>
               {discount > 0 && (redeemLoyalty || redemptionDiscount > 0) && (
                 <span className="text-[11px] text-accent-foreground/80 mt-1">
                   {t("discountApplied", { amount: formatVND(discount) })}
@@ -420,9 +420,10 @@ export function CheckoutView() {
               )}
             </div>
             <Button
+              variant="neubrutal"
               onClick={handlePlaceOrder}
               disabled={(payAt === "now" && !paymentMethod) || (orderType === "dine-in" && !activeTable) || isPlacing}
-              className="h-12 w-full rounded-xl text-base font-bold"
+              className="h-12 w-full text-base"
             >
               {t("placeOrder")}
             </Button>
@@ -442,9 +443,10 @@ export function CheckoutView() {
           )}
         </div>
         <Button
+          variant="neubrutal"
           onClick={handlePlaceOrder}
           disabled={(payAt === "now" && !paymentMethod) || (orderType === "dine-in" && !activeTable) || isPlacing}
-          className="h-12 rounded-xl px-8 text-base font-bold"
+          className="h-12 px-8 text-base"
         >
           {t("placeOrder")}
         </Button>
