@@ -38,7 +38,16 @@ current count/state**, this file is history only.
 - `staff` and `admin` are real URL-segment folders, not route groups
   (a route group would collide with `(customer)`'s bare paths).
 - Visual style: brick red (#B3341F) + coffee brown (#6F4E37) + caramel
-  (#C9A66B) + cream, Be Vietnam Pro font, ~12px corners.
+  (#C9A66B) + cream, Be Vietnam Pro font. **As of 2026-07-12, mid
+  redesign** (design locked, implementation not yet started — see
+  `docs/superpowers/specs/2026-07-12-elevated-warm-redesign-design.md`)
+  to a "Neubrutalist Modern" treatment of these same brand colors:
+  thick ink-colored borders, flat hard-offset shadows that collapse on
+  press instead of soft/blurred shadows, sharper corners than the
+  original ~12px, and a first-ever dark mode. Colors/hues are
+  unchanged — only shape/depth/typography evolve. Until that redesign
+  ships, the shipped app still looks like the original soft, ~12px-
+  corner style described above.
 - i18n: next-intl with locale-prefixed routing (`/vi/...`, `/en/...`),
   Vietnamese default — chosen over a lightweight cookie-only approach
   despite the bigger route-restructuring cost.
