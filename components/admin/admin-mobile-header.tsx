@@ -14,7 +14,7 @@ export function AdminMobileHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
         type="button"
         onClick={onOpenMenu}
         aria-label={tNav("openMenu")}
-        className="rounded-lg p-1.5 text-card-foreground transition-colors hover:bg-muted"
+        className="nb-border-sm rounded-lg bg-card p-1.5 text-card-foreground"
       >
         <Menu className="h-5 w-5" />
       </button>

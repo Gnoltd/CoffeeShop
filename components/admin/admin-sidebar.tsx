@@ -42,10 +42,10 @@ function AdminNavContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <Link href="/" className="mb-6 flex items-center gap-2 px-4" onClick={onNavigate}>
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+        <div className="nb-border-sm flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Coffee className="h-5 w-5" />
         </div>
-        <span className="font-bold text-primary">{tBrand("name")}</span>
+        <span className="font-extrabold text-primary">{tBrand("name")}</span>
       </Link>
       <nav className="flex-1 space-y-1 px-2">
         {NAV_ITEMS.map(({ href, labelKey, icon: Icon }) => {
@@ -56,10 +56,10 @@ function AdminNavContent({ onNavigate }: { onNavigate?: () => void }) {
               href={href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors",
+                "nb-border-sm flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-extrabold",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted"
+                  ? "border-ink bg-primary text-primary-foreground"
+                  : "border-transparent text-muted-foreground"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -77,10 +77,10 @@ function AdminNavContent({ onNavigate }: { onNavigate?: () => void }) {
               href={href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors",
+                "nb-border-sm flex items-center gap-3 rounded-lg px-4 py-2.5 text-sm font-extrabold",
                 isActive
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted"
+                  ? "border-ink bg-primary text-primary-foreground"
+                  : "border-transparent text-muted-foreground"
               )}
             >
               <Icon className="h-4 w-4" />
