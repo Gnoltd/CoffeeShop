@@ -345,12 +345,9 @@ you need to find your way around; check the dated docs for full detail.
   `find_redemption_by_code()`/`fulfill_redemption()` (staff lookup,
   below) were updated in the same pass (migration `0041`) to treat
   `applied_order_id` as equally final as `fulfilled_at`, so staff can't
-  double-honor a code a customer already spent online.
-  **Known verification gap**: the full round trip (redeem → select at
-  checkout → place order → confirm marked used) has not been
-  live-verified end-to-end — the test customer account's points
-  balance was too low and topping it up would mean fabricating loyalty
-  ledger data in production, which wasn't done. See `daily.md`.
+  double-honor a code a customer already spent online. Full round trip
+  (redeem → select at checkout → place order → marked used) confirmed
+  working live 2026-07-11.
 - Profile's name/phone are real (`lib/supabase/profile-data.ts`,
   `profiles_update_own` RLS), inline pencil-edit writes through directly
   (no RPC needed). Email is the real logged-in Auth email, deliberately
