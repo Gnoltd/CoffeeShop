@@ -13,7 +13,6 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { payExistingOrder, changeOrderPaymentMethod, type RealPaymentMethod } from "@/lib/supabase/orders-data"
 import { getShopSettings } from "@/lib/supabase/settings-data"
-import { getAddresses } from "@/lib/supabase/address-data"
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
 import { StepProgress } from "@/components/motion/step-progress"
 import { PressFeedback } from "@/components/motion/press-feedback"
@@ -73,7 +72,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [openReviewIndex, setOpenReviewIndex] = useState<number | null>(null)
   const [shopPhone, setShopPhone] = useState("")
-  const [customerAddress, setCustomerAddress] = useState("")
+  const [shopAddress, setShopAddress] = useState("")
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -84,21 +83,14 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
 
   useEffect(() => {
     getShopSettings(supabase)
-      .then((settings) => setShopPhone(settings.phone))
-      .catch(() => setShopPhone(""))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      getAddresses(supabase, user.id)
-        .then((addresses) => {
-          const defaultAddress = addresses.find((a) => a.isDefault) ?? addresses[0]
-          if (defaultAddress) setCustomerAddress(defaultAddress.address)
-        })
-        .catch(() => setCustomerAddress(""))
-    })
+      .then((settings) => {
+        setShopPhone(settings.phone)
+        setShopAddress(settings.address)
+      })
+      .catch(() => {
+        setShopPhone("")
+        setShopAddress("")
+      })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -327,9 +319,9 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/30 text-accent-foreground">
                 <MapPin className="h-5 w-5" />
               </div>
-              {customerAddress && (
+              {shopAddress && (
                 <div>
-                  <h4 className="text-sm font-bold text-card-foreground">{customerAddress}</h4>
+                  <h4 className="text-sm font-bold text-card-foreground">{shopAddress}</h4>
                 </div>
               )}
             </div>
