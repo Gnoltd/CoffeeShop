@@ -1,8 +1,8 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel"
 import {
   createTable as createTableQuery,
   getTableByToken,
@@ -75,37 +75,29 @@ export function TablesProvider({ children }: { children: ReactNode }) {
       if (!cancelled) setTables(rows)
     })
 
-    const channel = supabase
-      .channel("tables-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tables" },
-        (payload: RealtimePostgresChangesPayload<TableRow>) => {
-          if (payload.eventType === "DELETE") {
-            const oldId = (payload.old as { id?: string }).id
-            if (!oldId) return
-            setTables((prev) => prev.filter((t) => t.id !== oldId))
-            return
-          }
-          const mapped = mapTableRow(payload.new as TableRow)
-          setTables((prev) =>
-            prev.some((t) => t.id === mapped.id) ? prev.map((t) => (t.id === mapped.id ? mapped : t)) : [...prev, mapped]
-          )
-        }
-      )
-      .subscribe((status) => {
-        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
-          console.warn(`Tables realtime subscription status: ${status}`)
-        }
-      })
-
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
     }
-    // Runs once on mount; `supabase` is a stable client held in state.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [supabase])
+
+  useRealtimeChannel(supabase, "tables-changes", [
+    {
+      table: "tables",
+      event: "*",
+      onChange: (payload) => {
+        if (payload.eventType === "DELETE") {
+          const oldId = (payload.old as { id?: string }).id
+          if (!oldId) return
+          setTables((prev) => prev.filter((t) => t.id !== oldId))
+          return
+        }
+        const mapped = mapTableRow(payload.new as TableRow)
+        setTables((prev) =>
+          prev.some((t) => t.id === mapped.id) ? prev.map((t) => (t.id === mapped.id ? mapped : t)) : [...prev, mapped]
+        )
+      },
+    },
+  ])
 
   async function addTable(input: TableInput) {
     await createTableQuery(supabase, input)

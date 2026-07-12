@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel"
 import {
   advanceOrderStatus,
   confirmCashPayment as confirmCashPaymentQuery,
@@ -68,28 +69,21 @@ export function KitchenOrdersProvider({ children }: { children: ReactNode }) {
       if (!cancelled) setIsLoading(false)
     })
 
-    const channel = supabase
-      .channel("kitchen-orders-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        // Staff sees every order (orders_select_staff has no per-row
-        // filtering concerns), so a plain refetch on any change is both
-        // correct and simple — the board is small enough this is cheap.
-        if (!cancelled) refetch()
-      })
-      .subscribe((status) => {
-        if (cancelled) return
-        setIsRealtimeConnected(status === "SUBSCRIBED")
-        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
-          console.warn(`Kitchen orders realtime subscription status: ${status}`)
-        }
-      })
-
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [supabase])
+
+  // Staff sees every order (orders_select_staff has no per-row filtering
+  // concerns), so a plain refetch on any change is both correct and
+  // simple — the board is small enough this is cheap.
+  useRealtimeChannel(
+    supabase,
+    "kitchen-orders-changes",
+    [{ table: "orders", event: "*", onChange: () => refetch() }],
+    { onStatusChange: (status) => setIsRealtimeConnected(status === "SUBSCRIBED") }
+  )
 
   async function advance(orderId: string) {
     const order = orders.find((o) => o.id === orderId)

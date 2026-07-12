@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel"
 import { getMyOrders, getOrderForTracking, type OrderForTracking } from "@/lib/supabase/orders-data"
 
 export type { OrderForTracking }
@@ -35,29 +36,24 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setIsLoadingMyOrders(false)
       })
 
-    const channel = supabase
-      .channel("my-orders-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        // Realtime confirms *that* a row visible to this session changed;
-        // re-fetching the small "my orders" list is simpler and cheap
-        // enough than hand-merging a partial payload against joined
-        // table/menu_item names this component doesn't have inline.
-        getMyOrders(supabase).then((rows) => {
-          if (!cancelled) setMyOrders(rows)
-        })
-      })
-      .subscribe((status) => {
-        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
-          console.warn(`My-orders realtime subscription status: ${status}`)
-        }
-      })
-
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [supabase])
+
+  // Realtime confirms *that* a row visible to this session changed;
+  // re-fetching the small "my orders" list is simpler and cheap enough
+  // than hand-merging a partial payload against joined table/menu_item
+  // names this component doesn't have inline.
+  useRealtimeChannel(supabase, "my-orders-changes", [
+    {
+      table: "orders",
+      event: "*",
+      onChange: () => {
+        getMyOrders(supabase).then(setMyOrders)
+      },
+    },
+  ])
 
   async function getOrder(orderId: string): Promise<OrderForTracking | null> {
     return getOrderForTracking(supabase, orderId)

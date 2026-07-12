@@ -1,8 +1,8 @@
 "use client"
 
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react"
-import type { RealtimePostgresChangesPayload } from "@supabase/supabase-js"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel"
 import {
   adjustStock as adjustStockQuery,
   createIngredient,
@@ -71,48 +71,38 @@ export function InventoryProvider({ children }: { children: ReactNode }) {
         if (!cancelled) setIsLoading(false)
       })
 
-    const channel = supabase
-      .channel("inventory-changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "ingredients" },
-        (payload: RealtimePostgresChangesPayload<IngredientRow>) => {
-          if (payload.eventType === "DELETE") {
-            const oldId = (payload.old as { id?: string }).id
-            if (!oldId) return
-            setIngredients((prev) => prev.filter((i) => i.id !== oldId))
-            return
-          }
-          const mapped = mapIngredientRow(payload.new as IngredientRow)
-          setIngredients((prev) =>
-            prev.some((i) => i.id === mapped.id)
-              ? prev.map((i) => (i.id === mapped.id ? mapped : i))
-              : [...prev, mapped]
-          )
-        }
-      )
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "inventory_logs" },
-        (payload: RealtimePostgresChangesPayload<InventoryLogRow>) => {
-          const row = payload.new as InventoryLogRow
-          const ingredient = ingredientsRef.current.find((i) => i.id === row.ingredient_id)
-          setLogs((prev) => [mapInventoryLogRow(row, ingredient?.nameVi ?? "", ingredient?.nameEn ?? ""), ...prev])
-        }
-      )
-      .subscribe((status) => {
-        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
-          console.warn(`Inventory realtime subscription status: ${status}`)
-        }
-      })
-
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
     }
-    // Runs once on mount; `supabase` is a stable client held in state.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [supabase])
+
+  useRealtimeChannel(supabase, "inventory-changes", [
+    {
+      table: "ingredients",
+      event: "*",
+      onChange: (payload) => {
+        if (payload.eventType === "DELETE") {
+          const oldId = (payload.old as { id?: string }).id
+          if (!oldId) return
+          setIngredients((prev) => prev.filter((i) => i.id !== oldId))
+          return
+        }
+        const mapped = mapIngredientRow(payload.new as IngredientRow)
+        setIngredients((prev) =>
+          prev.some((i) => i.id === mapped.id) ? prev.map((i) => (i.id === mapped.id ? mapped : i)) : [...prev, mapped]
+        )
+      },
+    },
+    {
+      table: "inventory_logs",
+      event: "INSERT",
+      onChange: (payload) => {
+        const row = payload.new as InventoryLogRow
+        const ingredient = ingredientsRef.current.find((i) => i.id === row.ingredient_id)
+        setLogs((prev) => [mapInventoryLogRow(row, ingredient?.nameVi ?? "", ingredient?.nameEn ?? ""), ...prev])
+      },
+    },
+  ])
 
   async function restock(id: string) {
     const ingredient = ingredientsRef.current.find((i) => i.id === id)

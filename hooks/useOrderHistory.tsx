@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel"
 import { getOrderHistory, type OrderHistoryFilters, type OrderHistoryRow } from "@/lib/supabase/orders-data"
 
 /** No default window -- an unset bound means "all time," matching customers' own order history. */
@@ -25,7 +26,7 @@ export function useOrderHistory(filters: OrderHistoryFilters, page: number, page
   useEffect(() => {
     let cancelled = false
 
-    function refetch() {
+    function fetchPage() {
       setIsLoading(true)
       getOrderHistory(supabase, resolvedFilters, { limit: pageSize, offset: (page - 1) * pageSize })
         .then(({ rows, totalCount }) => {
@@ -39,25 +40,34 @@ export function useOrderHistory(filters: OrderHistoryFilters, page: number, page
         })
     }
 
-    refetch()
-
-    const channel = supabase
-      .channel("order-history-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        if (!cancelled) refetch()
-      })
-      .subscribe((status) => {
-        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
-          console.warn(`Order history realtime subscription status: ${status}`)
-        }
-      })
+    fetchPage()
 
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtersKey, page, pageSize])
+
+  useRealtimeChannel(
+    supabase,
+    "order-history-changes",
+    [
+      {
+        table: "orders",
+        event: "*",
+        onChange: () => {
+          setIsLoading(true)
+          getOrderHistory(supabase, resolvedFilters, { limit: pageSize, offset: (page - 1) * pageSize })
+            .then(({ rows, totalCount }) => {
+              setRows(rows)
+              setTotalCount(totalCount)
+            })
+            .finally(() => setIsLoading(false))
+        },
+      },
+    ],
+    { deps: [filtersKey, page, pageSize] }
+  )
 
   return { rows, totalCount, isLoading }
 }
