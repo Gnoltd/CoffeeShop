@@ -137,6 +137,20 @@ Reusable facts that apply anywhere in the codebase, not tied to one feature.
   state uses hyphenated `"dine-in"` and must translate before any RPC
   call. Was a real bug (every dine-in order silently failed) until
   fixed 2026-07-07.
+- **Order-status lifecycle logic intentionally lives in two separate
+  places**, not one: `hooks/useKitchenOrders.tsx`'s `NEXT_STATUS` map
+  (staff-driven kitchen progression, paid→preparing→ready→served) and
+  `supabase/functions/_shared/order-status.ts`'s `buildPaidUpdate`
+  (the served-or-not branch a payment webhook applies when money
+  clears). Considered unifying these during an architecture review
+  (2026-07-12) and rejected it — they're triggered by different events
+  (a staff tap vs. a gateway callback), live in different runtimes
+  (Next.js client bundle vs. Deno edge function) with no shared-code
+  bridge between them (`tsconfig.json` excludes `supabase/functions`
+  entirely), and don't call each other. Unifying would mean inventing
+  new cross-runtime tooling to remove one repeated `"served"` string
+  comparison — not worth it. Don't re-propose merging them without a
+  third concern showing up that actually needs the same table.
 - **Any code reading `profiles.role` directly** (not via
   `current_user_role()` or a function built on it) risks ignoring
   `is_active` — three call sites needed fixing for exactly this once;
@@ -781,3 +795,21 @@ shared brand tokens, `useTranslations`/`getTranslations` with both
 message files updated together, Base UI's `render` prop for polymorphic
 Buttons, "disabled + tooltip" for unbacked actions, DI'd query-layer
 modules, guest-safe RPCs for anything a logged-out user needs to touch.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as GitHub issues in `Gnoltd/CoffeeShop`, managed via the `gh`
+CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default canonical labels (`needs-triage`, `needs-info`,
+`ready-for-agent`, `ready-for-human`, `wontfix`). See
+`docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: root `CONTEXT.md` + `docs/adr/`. See
+`docs/agents/domain.md`.
