@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import {
   CookingPot, Check, PackageCheck, CircleCheckBig, Clock, TableIcon, ShoppingBag, Store, Phone, Utensils,
-  CreditCard, Banknote, QrCode,
+  CreditCard, Banknote, QrCode, Ban, Receipt,
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
 import { formatOrderId, formatVND } from "@/lib/format"
@@ -46,6 +46,16 @@ const STATUS_LABEL_KEY: Record<OrderStatus, string> = {
   served: "statusServed",
   completed: "statusCompleted",
   cancelled: "statusCancelled",
+}
+
+const STATUS_ICON: Record<OrderStatus, typeof Check> = {
+  pending_payment: Receipt,
+  paid: Check,
+  preparing: CookingPot,
+  ready: PackageCheck,
+  served: Utensils,
+  completed: CircleCheckBig,
+  cancelled: Ban,
 }
 
 export function OrderTracking({ orderId, table }: { orderId: string; table?: string }) {
@@ -187,6 +197,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
 
   const currentStep = STATUS_STEP[order.status]
   const paymentMethod = order.paymentMethod
+  const StatusIcon = STATUS_ICON[order.status]
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-28 pt-4 sm:px-6 md:max-w-5xl md:px-8 md:pb-8">
@@ -197,7 +208,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
             <p className="text-xs font-extrabold uppercase tracking-widest text-secondary">{t("orderId")}</p>
             <h2 className="mb-4 text-3xl font-extrabold text-price">#{formatOrderId(order.id)}</h2>
             <div className="nb-border-sm mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-full bg-primary/15">
-              <CookingPot className="h-12 w-12 text-primary" />
+              <StatusIcon className="h-12 w-12 text-primary" />
             </div>
             <h3 className="mb-1 text-xl font-semibold text-card-foreground">{t(STATUS_LABEL_KEY[order.status])}</h3>
             {order.status === "preparing" && (
