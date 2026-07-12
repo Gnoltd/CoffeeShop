@@ -199,8 +199,8 @@ export function SettingsView() {
             >
               <span
                 className={cn(
-                  "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
-                  loyaltyDraft.enabled ? "translate-x-4" : "translate-x-0"
+                  "absolute left-0 top-0 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                  loyaltyDraft.enabled ? "translate-x-5" : "translate-x-0"
                 )}
               />
             </button>
