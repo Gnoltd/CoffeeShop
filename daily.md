@@ -38,13 +38,34 @@
    VNPay breakdown already existed in `shift-report-detail.tsx`, not
    outstanding work. All three were corrected in the relevant phase's
    plan doc rather than built again from scratch.
+   **Post-phase-4 consistency sweep** (pushed `2753459`, 2026-07-12):
+   the 4 phases covered every *page*, but a follow-up audit
+   ("Browse Menu" in Cart, "Go to Admin Dashboard" in Profile still
+   plain-styled) found ~30 more files the phase plans hadn't listed —
+   mostly modals/forms/panels reached from an already-migrated page
+   (address book, profile settings, my redemptions, rewards catalog
+   modal, review form, reset password, every admin add/edit modal,
+   staff order history, reward lookup) plus shared chrome (role badge,
+   language switcher, theme toggle). All re-skinned to match. Also
+   found and fixed a real latent bug while doing this: the shared
+   `Input` primitive (`components/ui/input.tsx`) still shipped
+   Tailwind's own `border border-input` utility classes, which — same
+   as the ROLE_STYLES bug from Phase 4 — always beat the custom
+   `.nb-border-sm` component-layer class per Tailwind's layer cascade
+   (utilities > components). Any `<Input>` a phase had given an
+   `nb-border*` className (e.g. Cart's promo code field) was silently
+   still rendering with a thin default border, never the intended thick
+   ink one. Fixed at the primitive so every current and future `<Input>`
+   is correct with no per-callsite override needed; the same fix was
+   applied to `SegmentedControl`, `AnimatedTabBar`, `SideDrawer`, and
+   `BottomSheet`.
    **The one remaining step**: live-verify the whole redesign on
    **https://phadincoffee.vercel.app** — colors, dark mode toggle/
    persistence, both locales, real mobile devices (iOS Safari + Android
    Chrome, not just a resized desktop browser) — across all pages in
-   one pass now that everything is shipped, per the spec's own
-   verification plan. Deliberately deferred across all four phases by
-   explicit user request; do it as a single pass, not phase-by-phase.
+   one pass now that everything (including this sweep) is shipped, per
+   the spec's own verification plan. Deliberately deferred by explicit
+   user request; do it as a single pass, not phase-by-phase.
 
 2. **Live-verify the Admin Dashboard by hand** — KPIs are real
    (`get_dashboard_stats()`, migration `0026`), but a full manual
