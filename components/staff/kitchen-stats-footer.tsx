@@ -18,6 +18,20 @@ const LOAD_STYLES: Record<LoadLevel, { bar: string; text: string; labelKey: "loa
   busy: { bar: "bg-destructive", text: "text-destructive", labelKey: "loadBusy" },
 }
 
+// Pinned to the shop's own timezone (not the visitor's) — without this,
+// SSR (Vercel's server, UTC) and hydration (the browser's local
+// timezone) render different clock text on the very first paint,
+// producing a React hydration mismatch (error #418).
+export function formatKitchenClock(now: number, locale: string): string {
+  return new Date(now).toLocaleTimeString(locale === "vi" ? "vi-VN" : "en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: locale !== "vi",
+  })
+}
+
 export function KitchenStatsFooter({ orders, now }: { orders: KdsOrder[]; now: number }) {
   const locale = useLocale()
   const t = useTranslations("KitchenDisplay")
@@ -34,17 +48,7 @@ export function KitchenStatsFooter({ orders, now }: { orders: KdsOrder[]; now: n
           activeOrders.reduce((sum, o) => sum + (now - o.createdAt), 0) / activeCount / 60000
         )
 
-  // Pinned to the shop's own timezone (not the visitor's) — without this,
-  // SSR (Vercel's server, UTC) and hydration (the browser's local
-  // timezone) render different clock text on the very first paint,
-  // producing a React hydration mismatch (error #418).
-  const clock = new Date(now).toLocaleTimeString(locale === "vi" ? "vi-VN" : "en-US", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: locale !== "vi",
-  })
+  const clock = formatKitchenClock(now, locale)
 
   return (
     <footer className="nb-border-sm flex shrink-0 flex-col gap-2 rounded-xl bg-muted px-4 py-3 md:h-12 md:flex-row md:items-center md:gap-8 md:px-6 md:py-0">
