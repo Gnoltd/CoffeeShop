@@ -15,6 +15,7 @@
 // inventory deduction or double loyalty award.
 
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { buildPaidUpdate } from "../_shared/order-status.ts"
 
 async function verifyStripeSignature(rawBody: string, signatureHeader: string, secret: string): Promise<boolean> {
   const parts = Object.fromEntries(
@@ -74,14 +75,11 @@ Deno.serve(async (req) => {
     const { data: order } = await serviceClient.from("orders").select("status").eq("id", orderId).maybeSingle()
 
     if (event.type === "checkout.session.completed") {
-      // A pre-kitchen Pay Now order also needs `status` flipped to
-      // 'paid' (that's what makes it kitchen-visible). A Pay Later
-      // order is already 'served' by the time its deferred payment
-      // clears -- only payment_status changes there; the
-      // complete_order_when_served_and_paid trigger (migration 0022)
-      // takes it to 'completed' from that single field flip.
-      const update = order?.status === "served" ? { payment_status: "paid" } : { status: "paid", payment_status: "paid" }
-      await serviceClient.from("orders").update(update).eq("id", orderId).eq("payment_status", "pending")
+      await serviceClient
+        .from("orders")
+        .update(buildPaidUpdate(order?.status))
+        .eq("id", orderId)
+        .eq("payment_status", "pending")
     } else if (order?.status === "pending_payment") {
       // Only a still-pre-kitchen order should be cancelled on expiry --
       // a served order whose deferred payment attempt expired just

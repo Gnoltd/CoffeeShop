@@ -8,41 +8,13 @@
 // cancellation logic needed.
 
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { verifyVnpaySignature } from "../_shared/vnpay.ts"
 
-// VNPay signs with PHP urlencode()-style encoding — spaces become "+",
-// not "%20" like encodeURIComponent's default. See place-order's
-// buildVnpayCheckoutUrl for the matching outgoing-side fix and the
-// live-testing story behind it.
-function vnpayEncode(value: string): string {
-  return encodeURIComponent(value).replace(/%20/g, "+")
-}
-
-async function verifyVnpaySignature(params: URLSearchParams, secret: string): Promise<boolean> {
-  const received = params.get("vnp_SecureHash")
-  if (!received) return false
-  const entries = Array.from(params.entries()).filter(
-    ([k]) => k !== "vnp_SecureHash" && k !== "vnp_SecureHashType" && k !== "orderId" && k !== "locale"
-  )
-  entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-  const signString = entries.map(([k, v]) => `${k}=${vnpayEncode(v)}`).join("&")
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-512" },
-    false,
-    ["sign"]
-  )
-  const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signString))
-  const computed = Array.from(new Uint8Array(signed))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-  if (computed.length !== received.length) return false
-  let mismatch = 0
-  for (let i = 0; i < computed.length; i++) {
-    mismatch |= computed.charCodeAt(i) ^ received.charCodeAt(i)
-  }
-  return mismatch === 0
-}
+// vnpay-return's URL carries orderId/locale query params (added by
+// place-order's returnUrl construction) that aren't part of VNPay's own
+// signed param set — unlike vnpay-ipn, which is called directly by
+// VNPay's servers with only vnp_* params.
+const RETURN_URL_EXTRA_PARAMS = ["orderId", "locale"]
 
 Deno.serve(async (req) => {
   const params = new URL(req.url).searchParams
@@ -51,7 +23,7 @@ Deno.serve(async (req) => {
   const siteUrl = Deno.env.get("SITE_URL")!
   const hashSecret = Deno.env.get("VNPAY_HASH_SECRET")
 
-  if (!orderId || !hashSecret || !(await verifyVnpaySignature(params, hashSecret))) {
+  if (!orderId || !hashSecret || !(await verifyVnpaySignature(params, hashSecret, RETURN_URL_EXTRA_PARAMS))) {
     return Response.redirect(`${siteUrl}/${locale}/checkout?paymentFailed=1`, 302)
   }
 

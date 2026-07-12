@@ -12,6 +12,8 @@
 // session, same reasoning as place-order.
 
 import { createClient } from "jsr:@supabase/supabase-js@2"
+import { createStripeCheckoutSession } from "../_shared/stripe.ts"
+import { buildVnpayCheckoutUrl } from "../_shared/vnpay.ts"
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,132 +21,6 @@ const corsHeaders = {
 }
 
 const VALID_LOCALES = ["vi", "en"]
-
-function flattenForStripe(value: unknown, prefix: string, out: string[]): void {
-  if (Array.isArray(value)) {
-    value.forEach((item, i) => flattenForStripe(item, `${prefix}[${i}]`, out))
-  } else if (value !== null && typeof value === "object") {
-    for (const [key, v] of Object.entries(value as Record<string, unknown>)) {
-      flattenForStripe(v, prefix ? `${prefix}[${key}]` : key, out)
-    }
-  } else if (value !== undefined && value !== null) {
-    out.push(`${encodeURIComponent(prefix)}=${encodeURIComponent(String(value))}`)
-  }
-}
-
-async function createStripeCheckoutSession(params: {
-  orderId: string
-  total: number
-  successUrl: string
-  cancelUrl: string
-}): Promise<{ url: string } | { error: string }> {
-  const body: string[] = []
-  flattenForStripe(
-    {
-      mode: "payment",
-      success_url: params.successUrl,
-      cancel_url: params.cancelUrl,
-      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-      metadata: { order_id: params.orderId },
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: "vnd",
-            unit_amount: params.total,
-            product_data: { name: "PhaDinCoffee Order" },
-          },
-        },
-      ],
-    },
-    "",
-    body
-  )
-
-  const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${Deno.env.get("STRIPE_SECRET_KEY")!}`,
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: body.join("&"),
-  })
-
-  const json = await response.json()
-  if (!response.ok) {
-    return { error: json?.error?.message ?? "Stripe rejected the checkout session" }
-  }
-  return { url: json.url as string }
-}
-
-const VNPAY_GATEWAY_URL = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-
-function toVnpayDateString(d: Date): string {
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Ho_Chi_Minh",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(d)
-  const get = (type: string) => parts.find((p) => p.type === type)!.value
-  return `${get("year")}${get("month")}${get("day")}${get("hour")}${get("minute")}${get("second")}`
-}
-
-function vnpayEncode(value: string): string {
-  return encodeURIComponent(value).replace(/%20/g, "+")
-}
-
-async function signVnpayParams(params: Record<string, string>, secret: string): Promise<string> {
-  const sortedKeys = Object.keys(params).sort()
-  const signString = sortedKeys.map((k) => `${k}=${vnpayEncode(params[k])}`).join("&")
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-512" },
-    false,
-    ["sign"]
-  )
-  const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signString))
-  return Array.from(new Uint8Array(signed))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-}
-
-async function buildVnpayCheckoutUrl(params: {
-  orderId: string
-  total: number
-  ipAddr: string
-  locale: string
-  returnUrl: string
-}): Promise<string> {
-  const now = new Date()
-  const expire = new Date(now.getTime() + 15 * 60 * 1000)
-  const vnpParams: Record<string, string> = {
-    vnp_Version: "2.1.0",
-    vnp_Command: "pay",
-    vnp_TmnCode: Deno.env.get("VNPAY_TMN_CODE")!,
-    vnp_Amount: String(params.total * 100),
-    vnp_CurrCode: "VND",
-    vnp_TxnRef: params.orderId,
-    vnp_OrderInfo: `Thanh toan don hang ${params.orderId}`,
-    vnp_OrderType: "other",
-    vnp_Locale: params.locale === "vi" ? "vn" : "en",
-    vnp_ReturnUrl: params.returnUrl,
-    vnp_IpAddr: params.ipAddr,
-    vnp_CreateDate: toVnpayDateString(now),
-    vnp_ExpireDate: toVnpayDateString(expire),
-  }
-  const secureHash = await signVnpayParams(vnpParams, Deno.env.get("VNPAY_HASH_SECRET")!)
-  const query = Object.keys(vnpParams)
-    .sort()
-    .map((k) => `${k}=${vnpayEncode(vnpParams[k])}`)
-    .join("&")
-  return `${VNPAY_GATEWAY_URL}?${query}&vnp_SecureHash=${secureHash}`
-}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {

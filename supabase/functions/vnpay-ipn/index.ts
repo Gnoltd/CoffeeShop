@@ -15,41 +15,8 @@
 // double loyalty award.
 
 import { createClient } from "jsr:@supabase/supabase-js@2"
-
-// VNPay signs with PHP urlencode()-style encoding — spaces become "+",
-// not "%20" like encodeURIComponent's default. See place-order's
-// buildVnpayCheckoutUrl for the matching outgoing-side fix and the
-// live-testing story behind it.
-function vnpayEncode(value: string): string {
-  return encodeURIComponent(value).replace(/%20/g, "+")
-}
-
-async function verifyVnpaySignature(params: URLSearchParams, secret: string): Promise<boolean> {
-  const received = params.get("vnp_SecureHash")
-  if (!received) return false
-  const entries = Array.from(params.entries()).filter(
-    ([k]) => k !== "vnp_SecureHash" && k !== "vnp_SecureHashType"
-  )
-  entries.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-  const signString = entries.map(([k, v]) => `${k}=${vnpayEncode(v)}`).join("&")
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-512" },
-    false,
-    ["sign"]
-  )
-  const signed = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(signString))
-  const computed = Array.from(new Uint8Array(signed))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("")
-  if (computed.length !== received.length) return false
-  let mismatch = 0
-  for (let i = 0; i < computed.length; i++) {
-    mismatch |= computed.charCodeAt(i) ^ received.charCodeAt(i)
-  }
-  return mismatch === 0
-}
+import { verifyVnpaySignature } from "../_shared/vnpay.ts"
+import { buildPaidUpdate } from "../_shared/order-status.ts"
 
 function ipnResponse(rspCode: string, message: string): Response {
   return new Response(JSON.stringify({ RspCode: rspCode, Message: message }), {
@@ -95,11 +62,11 @@ Deno.serve(async (req) => {
   }
 
   if (responseCode === "00") {
-    // Pay Later order: already 'served' by the time payment clears --
-    // only payment_status changes; complete_order_when_served_and_paid
-    // (migration 0022) takes it to 'completed' from there.
-    const update = order.status === "served" ? { payment_status: "paid" } : { status: "paid", payment_status: "paid" }
-    await serviceClient.from("orders").update(update).eq("id", orderId).eq("payment_status", "pending")
+    await serviceClient
+      .from("orders")
+      .update(buildPaidUpdate(order.status))
+      .eq("id", orderId)
+      .eq("payment_status", "pending")
   } else if (order.status === "pending_payment") {
     // Only cancel a still-pre-kitchen order -- a served order whose
     // deferred payment failed just stays served/unpaid for a retry.
