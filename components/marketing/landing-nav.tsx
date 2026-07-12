@@ -37,7 +37,7 @@ export function LandingNav() {
       </div>
       <Link
         href="/signup"
-        className="md:mr-16 hidden rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-100 md:block"
+        className="md:mr-72 hidden rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-100 md:block"
       >
         {t("navSignUp")}
       </Link>
