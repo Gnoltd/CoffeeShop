@@ -85,6 +85,10 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
           WebkitMaskImage: mask,
         }}
       />
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-40 h-28 bg-gradient-to-t from-background to-transparent"
+        aria-hidden
+      />
       <div className="pointer-events-none absolute left-0 right-0 top-[14%] z-50 flex flex-col items-center px-5 text-center">
         <h1 className="leading-[0.95] text-white">
           <span

@@ -9,7 +9,7 @@ export function AdminMobileHeader({ onOpenMenu }: { onOpenMenu: () => void }) {
   const tNav = useTranslations("Nav")
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card pl-2 pr-4 md:hidden">
+    <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card pl-2 pr-52 md:hidden">
       <button
         type="button"
         onClick={onOpenMenu}

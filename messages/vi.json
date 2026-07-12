@@ -807,6 +807,10 @@
     "statusNeedsImprovement": "Cần Cải Thiện",
     "validationError": "Vui lòng nhập số dương hợp lệ cho tất cả các trường.",
     "salesRequiredError": "Doanh thu món ăn phải lớn hơn 0.",
-    "placeholder": "Nhập số tiền (VNĐ)"
+    "placeholder": "Nhập số tiền (VNĐ)",
+    "howCalculated": "Cách tính",
+    "insightGood": "Ở mức {percent}%, bạn thấp hơn {amount} so với ngưỡng 28% dựa trên số liệu này — duy trì tốt nhé.",
+    "insightNormal": "Ở mức {percent}%, bạn nằm trong khoảng chấp nhận được 28–32%, nhưng cao hơn {amount} so với ngưỡng lý tưởng 28% dựa trên số liệu này.",
+    "insightNeedsImprovement": "Ở mức {percent}%, bạn cao hơn {amount} so với ngưỡng 32% dựa trên số liệu này — nên xem lại khẩu phần hoặc đàm phán lại giá nhà cung cấp."
   }
 }

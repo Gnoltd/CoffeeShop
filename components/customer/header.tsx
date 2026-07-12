@@ -25,7 +25,7 @@ export function CustomerHeader({ showBack = false }: { showBack?: boolean }) {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-4 md:h-16">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 pl-4 pr-52 md:h-16 md:px-4">
         {/* Back button — mobile only when showBack */}
         {showBack && (
           <button

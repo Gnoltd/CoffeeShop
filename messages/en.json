@@ -807,6 +807,10 @@
     "statusNeedsImprovement": "Needs Improvement",
     "validationError": "Please enter a valid positive number for every field.",
     "salesRequiredError": "Food sales must be greater than 0.",
-    "placeholder": "Enter amount (VND)"
+    "placeholder": "Enter amount (VND)",
+    "howCalculated": "How it's calculated",
+    "insightGood": "At {percent}%, you're {amount} under the 28% benchmark on these figures — nice cushion, keep it up.",
+    "insightNormal": "At {percent}%, you're within the acceptable 28–32% range, but {amount} above the ideal 28% benchmark on these figures.",
+    "insightNeedsImprovement": "At {percent}%, you're {amount} above the 32% benchmark on these figures — worth tightening portioning or renegotiating supplier costs."
   }
 }

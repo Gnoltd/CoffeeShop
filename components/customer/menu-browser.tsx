@@ -150,7 +150,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
                         e.stopPropagation()
                         quickAdd(item)
                       }}
-                      className="nb-border-sm nb-shadow-sm -m-1.5 flex h-11 w-11 items-center justify-center rounded-full bg-primary p-1.5 text-primary-foreground"
+                      className="nb-border-sm nb-shadow-sm flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
                     >
                       <Plus className="h-4 w-4" />
                     </motion.span>

@@ -205,7 +205,124 @@ export function MenuManagement({
         </div>
       </div>
 
-      <div className="nb-border-sm nb-shadow-sm overflow-x-auto rounded-xl bg-card">
+      <div className="flex flex-col gap-3 md:hidden">
+        {pagedItems.map((item) => {
+          const Icon = ICONS[item.icon]
+          const isAvailable = item.isAvailable
+          return (
+            <div key={item.id} className="nb-border-sm nb-shadow-sm flex flex-col gap-3 rounded-xl bg-card p-4">
+              <div className="flex items-center gap-3">
+                {item.imageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={item.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
+                ) : (
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-bold text-card-foreground">
+                    {locale === "vi" ? item.nameVi : item.nameEn}
+                  </p>
+                  <p className="truncate text-xs italic text-muted-foreground">
+                    {locale === "vi" ? item.nameEn : item.nameVi}
+                  </p>
+                </div>
+                <span className="shrink-0 font-bold text-primary">{formatVND(item.basePrice)}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2">
+                <span className={cn("nb-border-sm rounded-full px-2.5 py-1 text-xs font-extrabold", CATEGORY_BADGE_STYLE)}>
+                  {categoryLabel(item.categoryId)}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={isAvailable}
+                    aria-label={t("available")}
+                    onClick={() => toggleAvailability(item)}
+                    className={cn(
+                      "relative h-6 w-11 shrink-0 rounded-full transition-colors",
+                      isAvailable ? "bg-primary" : "bg-muted-foreground/30"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform",
+                        isAvailable ? "translate-x-5" : "translate-x-0"
+                      )}
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFormMode({ type: "edit", item })}
+                    aria-label={t("edit")}
+                    title={t("edit")}
+                    className="rounded-lg p-2 text-secondary transition-colors hover:bg-secondary/10"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    aria-label={t("delete")}
+                    title={t("delete")}
+                    className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+
+        <div className="flex flex-col items-center justify-between gap-3 rounded-xl border bg-muted/40 px-4 py-3">
+          <span className="text-xs text-muted-foreground">
+            {t("showingItems", {
+              start: visibleItems.length === 0 ? 0 : pageStart + 1,
+              end: Math.min(pageStart + PAGE_SIZE, visibleItems.length),
+              total: visibleItems.length,
+            })}
+          </span>
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-1 text-xs font-extrabold text-muted-foreground disabled:pointer-events-none disabled:opacity-40"
+            >
+              {t("previous")}
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => setCurrentPage(page)}
+                className={cn(
+                  "nb-border-sm nb-press-sm rounded-lg px-3 py-1 text-xs font-extrabold",
+                  page === currentPage
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-muted-foreground"
+                )}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-1 text-xs font-extrabold text-muted-foreground disabled:pointer-events-none disabled:opacity-40"
+            >
+              {t("next")}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="nb-border-sm nb-shadow-sm hidden overflow-x-auto rounded-xl bg-card md:block">
         <table className="w-full border-collapse text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">

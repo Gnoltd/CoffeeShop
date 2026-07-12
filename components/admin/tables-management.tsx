@@ -244,11 +244,11 @@ export function TablesManagement() {
               )}
 
               <p className="font-mono text-[10px] text-muted-foreground">{table.qrToken}</p>
-              <div className="flex w-full gap-2">
+              <div className="flex w-full flex-col gap-2 sm:flex-row">
                 <Button
                   variant="neubrutal"
                   size="sm"
-                  className="h-9 flex-1 gap-1.5"
+                  className="h-9 w-full gap-1.5 sm:flex-1"
                   disabled={!qrCodes[table.id]}
                   onClick={() => downloadQr(table.number, qrCodes[table.id])}
                 >
@@ -258,7 +258,7 @@ export function TablesManagement() {
                 <Button
                   variant="neubrutal"
                   size="sm"
-                  className="h-9 flex-1 gap-1.5 bg-secondary"
+                  className="h-9 w-full gap-1.5 bg-secondary sm:flex-1"
                   onClick={() => regenerateToken(table.id).catch(() => setError(t("updateError")))}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
