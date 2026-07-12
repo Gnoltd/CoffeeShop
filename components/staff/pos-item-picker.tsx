@@ -1,14 +1,6 @@
 "use client"
 
-import { useState } from "react"
-import { useLocale, useTranslations } from "next-intl"
-import { X, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { formatVND } from "@/lib/format"
-import { BottomSheet } from "@/components/motion/bottom-sheet"
-import { SegmentedControl } from "@/components/motion/segmented-control"
-import { PressFeedback } from "@/components/motion/press-feedback"
+import { SizeExtrasSheet, type SizeModifierSelection } from "@/components/shared/size-extras-sheet"
 import type { MenuItem } from "@/lib/supabase/menu-data"
 
 export type PosPickerSelection = {
@@ -21,11 +13,9 @@ export type PosPickerSelection = {
 
 /**
  * POS's size/extras picker for an item that has size options and/or
- * modifier groups — mirrors the customer-side QuickAddPopup's exact
- * selection logic (default size, required-group defaults, price calc,
- * extras-grouped-as-one-list layout) so both stay in sync, but reports
- * the selection back via onAdd instead of writing to useCart (POS keeps
- * its own local order state, a separate staff-side transaction).
+ * modifier groups — reports the selection back via onAdd instead of
+ * writing to useCart (POS keeps its own local order state, a separate
+ * staff-side transaction).
  */
 export function PosItemPicker({
   item,
@@ -36,170 +26,15 @@ export function PosItemPicker({
   onAdd: (selection: PosPickerSelection) => void
   onClose: () => void
 }) {
-  const locale = useLocale()
-  const t = useTranslations("Menu")
-
-  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(
-    item.hasSizeOptions ? item.sizes?.find((s) => s.priceDelta === 0)?.id ?? item.sizes?.[0]?.id ?? null : null
-  )
-  const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>(() => {
-    const defaults: Record<string, string> = {}
-    item.modifierGroups.forEach((group) => {
-      if (group.required) defaults[group.id] = group.options[0].id
-    })
-    return defaults
-  })
-
-  const sizeDelta = item.sizes?.find((s) => s.id === selectedSizeId)?.priceDelta ?? 0
-  const modifierDelta = Object.entries(selectedModifiers).reduce((sum, [groupId, optionId]) => {
-    const group = item.modifierGroups.find((g) => g.id === groupId)
-    const option = group?.options.find((o) => o.id === optionId)
-    return sum + (option?.priceDelta ?? 0)
-  }, 0)
-  const price = item.basePrice + sizeDelta + modifierDelta
-  const extraGroups = item.modifierGroups.filter((g) => g.options.length === 1)
-  const otherGroups = item.modifierGroups.filter((g) => g.options.length > 1)
-
-  function handleAdd() {
-    const size = item.sizes?.find((s) => s.id === selectedSizeId)
-    const modifierIds = Object.values(selectedModifiers)
-    const modifierNames = modifierIds.map((optionId) => {
-      const group = item.modifierGroups.find((g) => g.options.some((o) => o.id === optionId))!
-      const option = group.options.find((o) => o.id === optionId)!
-      return locale === "vi" ? option.nameVi : option.nameEn
-    })
+  function handleAdd(selection: SizeModifierSelection) {
     onAdd({
-      sizeId: size?.id ?? null,
-      sizeName: size?.name ?? null,
-      modifierIds,
-      modifierNames,
-      unitPrice: price,
+      sizeId: selection.size?.id ?? null,
+      sizeName: selection.size?.name ?? null,
+      modifierIds: selection.modifierIds,
+      modifierNames: selection.modifierNames,
+      unitPrice: selection.unitPrice,
     })
-    onClose()
   }
 
-  return (
-    <BottomSheet onClose={onClose}>
-      <div className="flex items-center justify-between border-b px-5 py-4">
-        <h2 className="font-bold text-card-foreground">{locale === "vi" ? item.nameVi : item.nameEn}</h2>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-full p-1 text-muted-foreground hover:bg-muted"
-          aria-label={t("close")}
-        >
-          <X className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto px-5 py-4">
-        {item.hasSizeOptions && item.sizes.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("size")}</span>
-            <SegmentedControl
-              variant="tabs"
-              layoutId="pos-picker-size-pill"
-              value={selectedSizeId ?? ""}
-              onChange={setSelectedSizeId}
-              options={item.sizes.map((size) => ({ value: size.id, label: size.name }))}
-            />
-          </div>
-        )}
-
-        {extraGroups.length > 0 && (
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {t("extrasLabel")}
-            </span>
-            <div className="flex flex-col gap-2">
-              {extraGroups.map((group) => {
-                const option = group.options[0]
-                const selected = selectedModifiers[group.id] === option.id
-                return (
-                  <PressFeedback
-                    key={group.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedModifiers((prev) => {
-                        if (prev[group.id] === option.id) {
-                          const next = { ...prev }
-                          delete next[group.id]
-                          return next
-                        }
-                        return { ...prev, [group.id]: option.id }
-                      })
-                    }
-                    className={cn(
-                      "flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm transition-colors",
-                      selected
-                        ? "border-primary bg-primary/10 font-semibold text-card-foreground"
-                        : "border-border text-card-foreground"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Check className={cn("h-4 w-4 shrink-0", selected ? "text-primary" : "text-transparent")} />
-                      <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
-                    </div>
-                    <span className={selected ? "text-primary" : "text-muted-foreground"}>
-                      {option.priceDelta > 0 ? `+${formatVND(option.priceDelta)}` : t("freeLabel")}
-                    </span>
-                  </PressFeedback>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {otherGroups.map((group) => (
-          <div key={group.id} className="flex flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {locale === "vi" ? group.nameVi : group.nameEn}
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              {group.options.map((option) => {
-                const selected = selectedModifiers[group.id] === option.id
-                return (
-                  <PressFeedback
-                    key={option.id}
-                    type="button"
-                    onClick={() =>
-                      setSelectedModifiers((prev) => {
-                        if (!group.required && prev[group.id] === option.id) {
-                          const next = { ...prev }
-                          delete next[group.id]
-                          return next
-                        }
-                        return { ...prev, [group.id]: option.id }
-                      })
-                    }
-                    className={cn(
-                      "flex flex-col items-start gap-0.5 rounded-lg border-2 px-3 py-2 text-sm transition-colors",
-                      selected
-                        ? "border-primary bg-primary/10 font-semibold text-card-foreground"
-                        : "border-border text-card-foreground"
-                    )}
-                  >
-                    <div className="flex w-full items-center justify-between">
-                      <span>{locale === "vi" ? option.nameVi : option.nameEn}</span>
-                      {selected && <Check className="h-4 w-4 text-primary" />}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {option.priceDelta > 0 ? `+${formatVND(option.priceDelta)}` : t("freeLabel")}
-                    </span>
-                  </PressFeedback>
-                )
-              })}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between border-t px-5 py-4">
-        <span className="text-lg font-bold text-primary">{formatVND(price)}</span>
-        <Button onClick={handleAdd} className="h-11 rounded-xl px-6 font-bold">
-          {t("add")}
-        </Button>
-      </div>
-    </BottomSheet>
-  )
+  return <SizeExtrasSheet item={item} onAdd={handleAdd} onClose={onClose} />
 }

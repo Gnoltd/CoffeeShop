@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart, type CartModifier } from "@/hooks/useCart"
+import { useSizeModifierSelection } from "@/hooks/useSizeModifierSelection"
 import { StarRating } from "@/components/customer/star-rating"
 import { createClient } from "@/lib/supabase/client"
 import { getMenuItemReviews, type MenuItemReview } from "@/lib/supabase/reviews-data"
@@ -48,51 +49,39 @@ export function ProductDetail({ item }: { item: MenuItem }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item.id])
 
-  const [selectedSizeId, setSelectedSizeId] = useState<string | null>(
-    item.hasSizeOptions ? item.sizes?.find((s) => s.priceDelta === 0)?.id ?? item.sizes?.[0]?.id ?? null : null
-  )
-  const [selectedModifiers, setSelectedModifiers] = useState<Record<string, string>>(() => {
-    const defaults: Record<string, string> = {}
-    item.modifierGroups?.forEach((group) => {
-      if (group.required) defaults[group.id] = group.options[0].id
-    })
-    return defaults
-  })
+  const {
+    selectedSizeId,
+    setSelectedSizeId,
+    selectedModifiers,
+    toggleModifier,
+    selectedSize,
+    selectedOptions,
+    price,
+    extraGroups,
+    otherGroups,
+  } = useSizeModifierSelection(item)
   const [note, setNote] = useState("")
 
   const name = locale === "vi" ? item.nameVi : item.nameEn
   const description = locale === "vi" ? item.descriptionVi : item.descriptionEn
   const Icon = ICONS[item.icon]
 
-  const sizeDelta = item.sizes?.find((s) => s.id === selectedSizeId)?.priceDelta ?? 0
-  const modifierDelta = Object.entries(selectedModifiers).reduce((sum, [groupId, optionId]) => {
-    const group = item.modifierGroups?.find((g) => g.id === groupId)
-    const option = group?.options.find((o) => o.id === optionId)
-    return sum + (option?.priceDelta ?? 0)
-  }, 0)
-  const price = item.basePrice + sizeDelta + modifierDelta
-  const extraGroups = item.modifierGroups?.filter((g) => g.options.length === 1) ?? []
-  const otherGroups = item.modifierGroups?.filter((g) => g.options.length > 1) ?? []
-
   function handleAddToCart() {
-    const size = item.sizes?.find((s) => s.id === selectedSizeId)
-    const modifiers: CartModifier[] = Object.entries(selectedModifiers).map(([groupId, optionId]) => {
-      const group = item.modifierGroups!.find((g) => g.id === groupId)!
-      const option = group.options.find((o) => o.id === optionId)!
-      return {
-        groupId,
-        optionId,
-        labelVi: option.nameVi,
-        labelEn: option.nameEn,
-        priceDelta: option.priceDelta,
-      }
-    })
+    const modifiers: CartModifier[] = selectedOptions.map(({ group, option }) => ({
+      groupId: group.id,
+      optionId: option.id,
+      labelVi: option.nameVi,
+      labelEn: option.nameEn,
+      priceDelta: option.priceDelta,
+    }))
     const trimmedNote = note.trim()
     addItem({
       menuItemId: item.id,
       nameVi: item.nameVi,
       nameEn: item.nameEn,
-      size: size ? { id: size.id, label: size.name, priceDelta: size.priceDelta } : undefined,
+      size: selectedSize
+        ? { id: selectedSize.id, label: selectedSize.name, priceDelta: selectedSize.priceDelta }
+        : undefined,
       modifiers,
       note: trimmedNote || undefined,
       unitPrice: price,
@@ -161,16 +150,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                     <PressFeedback
                       key={group.id}
                       type="button"
-                      onClick={() =>
-                        setSelectedModifiers((prev) => {
-                          if (prev[group.id] === option.id) {
-                            const next = { ...prev }
-                            delete next[group.id]
-                            return next
-                          }
-                          return { ...prev, [group.id]: option.id }
-                        })
-                      }
+                      onClick={() => toggleModifier(group, option.id)}
                       className={cn(
                         "nb-border-sm nb-shadow-sm nb-press-sm flex items-center justify-between rounded-lg px-3 py-2 text-sm",
                         selected
@@ -204,16 +184,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                     <PressFeedback
                       key={option.id}
                       type="button"
-                      onClick={() =>
-                        setSelectedModifiers((prev) => {
-                          if (!group.required && prev[group.id] === option.id) {
-                            const next = { ...prev }
-                            delete next[group.id]
-                            return next
-                          }
-                          return { ...prev, [group.id]: option.id }
-                        })
-                      }
+                      onClick={() => toggleModifier(group, option.id)}
                       className={cn(
                         "nb-border-sm nb-shadow-sm nb-press-sm flex flex-col items-start gap-0.5 rounded-lg px-3 py-2 text-sm",
                         selected
