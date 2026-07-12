@@ -34,7 +34,12 @@ export function KitchenStatsFooter({ orders, now }: { orders: KdsOrder[]; now: n
           activeOrders.reduce((sum, o) => sum + (now - o.createdAt), 0) / activeCount / 60000
         )
 
+  // Pinned to the shop's own timezone (not the visitor's) — without this,
+  // SSR (Vercel's server, UTC) and hydration (the browser's local
+  // timezone) render different clock text on the very first paint,
+  // producing a React hydration mismatch (error #418).
   const clock = new Date(now).toLocaleTimeString(locale === "vi" ? "vi-VN" : "en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
