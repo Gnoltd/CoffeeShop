@@ -60,14 +60,23 @@ export function CheckoutView() {
   const REDEEM_CHUNK_POINTS = 50
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       setIsLoggedIn(true)
-      const { data: profile } = await supabase.from("profiles").select("loyalty_points_balance").eq("id", user.id).single()
-      if (profile) setPointsBalance(profile.loyalty_points_balance)
+      supabase
+        .from("profiles")
+        .select("loyalty_points_balance")
+        .eq("id", user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (profile) setPointsBalance(profile.loyalty_points_balance)
+        })
       getMyRedemptions(supabase)
         .then((all) => setUsableRedemptions(all.filter((r) => !r.isUsed && !r.isExpired)))
-        .catch(() => setUsableRedemptions([]))
+        .catch((err) => {
+          console.error("Failed to load redemptions on checkout", err)
+          setUsableRedemptions([])
+        })
     })
     getLoyaltySettings(supabase).then((settings) => {
       setRedeemValuePerPoint(settings.redeemValueVndPerPoint)
