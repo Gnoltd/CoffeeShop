@@ -2,20 +2,14 @@
 
 import { useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { Coffee, CupSoda, Cookie, Milk, Sparkles, ArrowRight } from "lucide-react"
+import { Sparkles, ArrowRight } from "lucide-react"
 import { Link } from "@/i18n/navigation"
 import { LandingNav } from "@/components/marketing/landing-nav"
 import { SpotlightHero } from "@/components/marketing/spotlight-hero"
 import { formatVND } from "@/lib/format"
 import { QrScannerOverlay } from "@/components/customer/qr-scanner-overlay"
-import type { MenuItem, MenuIcon } from "@/lib/supabase/menu-data"
-
-const ICONS: Record<MenuIcon, typeof Coffee> = {
-  coffee: Coffee,
-  "cup-soda": CupSoda,
-  cookie: Cookie,
-  milk: Milk,
-}
+import { ItemImage } from "@/components/customer/item-image"
+import type { MenuItem } from "@/lib/supabase/menu-data"
 
 const CATEGORY_CHIPS = [
   { id: "coffee", labelVi: "Cà Phê", labelEn: "Coffee" },
@@ -63,7 +57,6 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
           </div>
           <div className="flex gap-3 overflow-x-auto px-4 pb-2 md:grid md:grid-cols-4 md:gap-6 md:overflow-x-visible md:px-0">
             {bestSellers.map((item) => {
-              const Icon = ICONS[item.icon]
               const name = locale === "vi" ? item.nameVi : item.nameEn
               return (
                 <Link
@@ -71,9 +64,7 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
                   href="/menu"
                   className="nb-border nb-shadow nb-press flex w-36 shrink-0 flex-col gap-2 rounded-xl bg-card p-2 md:w-auto md:shrink"
                 >
-                  <div className="flex h-32 items-center justify-center rounded-lg bg-chip text-muted-foreground md:h-40">
-                    <Icon className="h-10 w-10 md:h-12 md:w-12" />
-                  </div>
+                  <ItemImage item={item} className="h-32 w-full rounded-lg md:h-40" />
                   <h4 className="text-sm font-bold leading-tight text-card-foreground">{name}</h4>
                   <span className="font-extrabold text-price">{formatVND(item.basePrice)}</span>
                 </Link>

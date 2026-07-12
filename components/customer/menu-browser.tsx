@@ -3,40 +3,21 @@
 import { useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
 import { motion } from "framer-motion"
-import { Coffee, CupSoda, Cookie, Milk, Search, Plus, Ban } from "lucide-react"
+import { Search, Plus, Ban } from "lucide-react"
 import { Link, useRouter } from "@/i18n/navigation"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { useCart } from "@/hooks/useCart"
+import { ItemImage } from "@/components/customer/item-image"
 import { QuickAddPopup } from "@/components/customer/quick-add-popup"
 import { SegmentedControl } from "@/components/motion/segmented-control"
 import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
 import { TAP_SCALE, TAP_TRANSITION } from "@/components/motion/press-feedback"
-import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
+import type { MenuCategory, MenuItem } from "@/lib/supabase/menu-data"
 
 const ALL_CATEGORY = "all"
-
-const ICONS: Record<MenuIcon, typeof Coffee> = {
-  coffee: Coffee,
-  "cup-soda": CupSoda,
-  cookie: Cookie,
-  milk: Milk,
-}
-
-function ItemImage({ item, className }: { item: MenuItem; className?: string }) {
-  if (item.imageUrl) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={item.imageUrl} alt="" className={cn("object-cover", className)} />
-  }
-  const Icon = ICONS[item.icon]
-  return (
-    <div className={cn("flex items-center justify-center bg-muted text-muted-foreground", className)}>
-      <Icon className="h-8 w-8" />
-    </div>
-  )
-}
 
 export function MenuBrowser({ categories, items }: { categories: MenuCategory[]; items: MenuItem[] }) {
   const locale = useLocale()
@@ -132,7 +113,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
                 <div className="flex items-start justify-between gap-2">
                   <span className="line-clamp-1 font-bold text-card-foreground md:text-base">{name(item)}</span>
                   {item.isPopular && (
-                    <Badge variant="neubrutal" className="shrink-0">
+                    <Badge variant="neubrutal" className="shrink-0 text-primary">
                       {t("popular")}
                     </Badge>
                   )}
