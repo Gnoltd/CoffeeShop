@@ -105,7 +105,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10">
         {/* Left Column: Hero image (sticky) */}
         <div className="w-full md:w-[40%] md:sticky md:top-20 md:self-start">
-          <div className="flex h-64 w-full items-center justify-center bg-muted text-muted-foreground sm:h-80 md:h-[400px] md:rounded-2xl md:overflow-hidden md:border shadow-sm">
+          <div className="nb-border nb-shadow flex h-64 w-full items-center justify-center bg-chip text-muted-foreground sm:h-80 md:h-[400px] md:rounded-2xl md:overflow-hidden">
             {item.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.imageUrl} alt={name} className="h-full w-full object-cover" />
@@ -119,7 +119,7 @@ export function ProductDetail({ item }: { item: MenuItem }) {
         <div className="flex-1 px-4 md:px-0">
           <div className="flex items-start justify-between gap-3">
             <h1 className="text-2xl font-bold text-card-foreground md:text-3xl">{name}</h1>
-            <span className="whitespace-nowrap text-xl font-bold text-primary md:text-2xl">{formatVND(price)}</span>
+            <span className="whitespace-nowrap text-xl font-extrabold text-price md:text-2xl">{formatVND(price)}</span>
           </div>
 
           {reviewCount > 0 && (
@@ -172,10 +172,10 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                         })
                       }
                       className={cn(
-                        "flex items-center justify-between rounded-lg border-2 px-3 py-2 text-sm transition-colors",
+                        "nb-border-sm nb-shadow-sm nb-press-sm flex items-center justify-between rounded-lg px-3 py-2 text-sm",
                         selected
-                          ? "border-primary bg-primary/10 font-semibold text-card-foreground"
-                          : "border-border text-card-foreground"
+                          ? "bg-primary/10 font-bold text-card-foreground"
+                          : "bg-card text-card-foreground"
                       )}
                     >
                       <div className="flex items-center gap-2">
@@ -215,10 +215,10 @@ export function ProductDetail({ item }: { item: MenuItem }) {
                         })
                       }
                       className={cn(
-                        "flex flex-col items-start gap-0.5 rounded-lg border-2 px-3 py-2 text-sm transition-colors",
+                        "nb-border-sm nb-shadow-sm nb-press-sm flex flex-col items-start gap-0.5 rounded-lg px-3 py-2 text-sm",
                         selected
-                          ? "border-primary bg-primary/10 font-semibold text-card-foreground"
-                          : "border-border text-card-foreground"
+                          ? "bg-primary/10 font-bold text-card-foreground"
+                          : "bg-card text-card-foreground"
                       )}
                     >
                       <div className="flex w-full items-center justify-between">
@@ -248,21 +248,22 @@ export function ProductDetail({ item }: { item: MenuItem }) {
               onChange={(e) => setNote(e.target.value)}
               placeholder={t("notePlaceholder")}
               rows={2}
-              className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-card-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="nb-border-sm w-full resize-none rounded-lg bg-card px-3 py-2 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none"
             />
           </section>
 
           {/* Desktop inline Add to Cart CTA */}
-          <div className="hidden md:flex items-center justify-between mt-8 p-4 border bg-muted/30 rounded-2xl">
+          <div className="nb-border nb-shadow-sm hidden md:flex items-center justify-between mt-8 p-4 bg-chip rounded-2xl">
             <div className="flex flex-col">
               <span className="text-xs text-muted-foreground">{t("total")}</span>
-              <span className="text-2xl font-bold text-primary">{formatVND(price)}</span>
+              <span className="text-2xl font-extrabold text-price">{formatVND(price)}</span>
             </div>
             <motion.div whileTap={item.isAvailable ? TAP_SCALE : undefined} transition={TAP_TRANSITION}>
               <Button
+                variant="neubrutal"
                 onClick={handleAddToCart}
                 disabled={!item.isAvailable}
-                className="h-12 gap-2 rounded-xl px-8 text-base font-bold"
+                className="h-12 gap-2 px-8 text-base"
               >
                 {tProduct("addToCart")}
               </Button>
@@ -284,9 +285,9 @@ export function ProductDetail({ item }: { item: MenuItem }) {
             ) : (
               <div className="flex flex-col gap-3">
                 {reviews.map((review) => (
-                  <div key={review.id} className="rounded-xl border bg-card p-3 shadow-sm">
+                  <div key={review.id} className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-bold text-muted-foreground">
+                      <div className="nb-border-sm flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-chip text-sm font-bold text-muted-foreground">
                         {(review.reviewerName ?? tProduct("anonymousReviewer")).charAt(0)}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -323,14 +324,15 @@ export function ProductDetail({ item }: { item: MenuItem }) {
         initial={{ y: 80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-        className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-between border-t bg-card px-6 py-4 shadow-[0_-4px_12px_-1px_rgba(0,0,0,0.1)] md:hidden"
+        className="nb-border border-x-0 border-b-0 fixed inset-x-0 bottom-0 z-40 flex items-center justify-between bg-card px-6 py-4 md:hidden"
       >
-        <span className="text-xl font-bold text-primary">{formatVND(price)}</span>
+        <span className="text-xl font-extrabold text-price">{formatVND(price)}</span>
         <motion.div whileTap={item.isAvailable ? TAP_SCALE : undefined} transition={TAP_TRANSITION}>
           <Button
+            variant="neubrutal"
             onClick={handleAddToCart}
             disabled={!item.isAvailable}
-            className="h-12 gap-2 rounded-xl px-8 text-base font-bold"
+            className="h-12 gap-2 px-8 text-base"
           >
             {tProduct("addToCart")}
           </Button>
