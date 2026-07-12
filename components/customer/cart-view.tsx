@@ -131,7 +131,7 @@ export function CartView() {
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-4 px-4 py-24 text-center">
         <ShoppingBasket className="h-12 w-12 text-muted-foreground" />
         <p className="text-muted-foreground">{t("empty")}</p>
-        <Button className="h-11" render={<Link href="/menu" />} nativeButton={false}>
+        <Button variant="neubrutal" className="h-11" render={<Link href="/menu" />} nativeButton={false}>
           {t("browseMenu")}
         </Button>
       </div>

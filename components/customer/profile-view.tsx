@@ -138,13 +138,13 @@ export function ProfileView({ role = null }: { role?: string | null }) {
           </section>
 
           {role && isStaffRole && (
-            <section className="mb-6 rounded-2xl border-2 border-secondary/30 bg-secondary/10 p-4 shadow-sm">
+            <section className="nb-border nb-shadow-sm mb-6 rounded-2xl bg-chip p-4">
               <div className="mb-3 flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary">
+                <span className="nb-border-sm flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary">
                   <LayoutDashboard className="h-5 w-5" />
                 </span>
                 <div>
-                  <p className="font-semibold text-card-foreground">
+                  <p className="font-bold text-card-foreground">
                     {role === "staff" ? t("staffAccessHeadlineStaff") : t("staffAccessHeadlineAdmin")}
                   </p>
                   <p className="text-sm text-muted-foreground">
@@ -153,7 +153,8 @@ export function ProfileView({ role = null }: { role?: string | null }) {
                 </div>
               </div>
               <Button
-                className="h-11 w-full rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                variant="neubrutal"
+                className="h-11 w-full bg-secondary"
                 render={<Link href={ROLE_HOME[role]} />}
                 nativeButton={false}
               >
