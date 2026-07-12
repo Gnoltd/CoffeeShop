@@ -83,7 +83,7 @@ export default async function RootLayout({
             <TablesProvider>
               <CartProvider>
                 <OrdersProvider>
-                  <div className="fixed top-2 right-2 z-50 flex items-center gap-2">
+                  <div id="header-actions-stack" className="fixed top-2 right-2 z-50 flex items-center gap-2">
                     <RoleBadge role={role} />
                     <ThemeToggle />
                     <LanguageSwitcher />
