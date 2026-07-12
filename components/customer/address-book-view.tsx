@@ -104,7 +104,7 @@ export function AddressBookView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-5xl md:px-8">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-4 pb-28 md:max-w-5xl md:px-8 md:py-4">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-card-foreground">{t("title")}</h2>
         {editingId === null && (

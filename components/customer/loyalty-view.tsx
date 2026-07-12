@@ -54,7 +54,7 @@ export function LoyaltyView() {
   const progressPercent = tier?.progressPercent ?? 0
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-5xl md:px-8">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-4 pb-28 md:max-w-5xl md:px-8 md:py-4">
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-10">
         {/* Left Column: Loyalty Balance & Tier details */}
         <div className="flex-1 min-w-0 md:flex-[2]">

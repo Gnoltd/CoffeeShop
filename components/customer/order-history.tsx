@@ -65,7 +65,7 @@ export function OrderHistory() {
   const filtered = sorted.filter((order) => matchesFilter(order.status, filter))
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-5xl md:px-8">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-4 pb-28 md:max-w-5xl md:px-8 md:py-4">
       <SegmentedControl
         layoutId="order-history-filter-pill"
         className="mb-4"

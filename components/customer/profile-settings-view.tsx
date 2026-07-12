@@ -83,7 +83,7 @@ export function ProfileSettingsView() {
   const googleIdentity = identities.find((i) => i.provider === "google")
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-5xl md:px-8">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-4 pb-28 md:max-w-5xl md:px-8 md:py-4">
       <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:items-start md:gap-8">
         <section className="rounded-2xl border bg-card p-4 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-card-foreground">{t("changePasswordTitle")}</h2>

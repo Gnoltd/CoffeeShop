@@ -37,7 +37,7 @@ export function MyRedemptionsView() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl px-4 py-4 md:max-w-5xl md:px-8">
+    <div className="mx-auto w-full max-w-2xl px-4 pt-4 pb-28 md:max-w-5xl md:px-8 md:py-4">
       <h2 className="mb-1 text-lg font-semibold text-card-foreground">{t("title")}</h2>
       <p className="mb-4 text-sm text-muted-foreground">{t("subtitle")}</p>
 

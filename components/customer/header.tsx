@@ -25,13 +25,13 @@ export function CustomerHeader({ showBack = false }: { showBack?: boolean }) {
 
   return (
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 pl-4 pr-52 md:h-16 md:px-4">
+      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 pl-4 pr-64 md:h-16 md:px-4">
         {/* Back button — mobile only when showBack */}
         {showBack && (
           <button
             type="button"
             onClick={() => router.back()}
-            className="mr-1 md:hidden"
+            className="mr-1 shrink-0 md:hidden"
             aria-label={tCustomer("back")}
           >
             <ChevronLeft className="h-5 w-5 text-muted-foreground" />
@@ -39,9 +39,9 @@ export function CustomerHeader({ showBack = false }: { showBack?: boolean }) {
         )}
 
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <Coffee className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-primary">{t("name")}</span>
+        <Link href="/" className="flex min-w-0 items-center gap-2">
+          <Coffee className="h-5 w-5 shrink-0 text-primary" />
+          <span className="truncate font-semibold text-primary">{t("name")}</span>
         </Link>
 
         {/* Spacer */}
