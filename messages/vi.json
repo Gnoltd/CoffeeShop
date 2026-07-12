@@ -255,7 +255,9 @@
     "statusCompleted": "Hoàn Tất",
     "statusCancelled": "Đã Hủy",
     "empty": "Không có đơn hàng nào.",
-    "loading": "Đang tải đơn hàng của bạn…"
+    "loading": "Đang tải đơn hàng của bạn…",
+    "reorder": "Đặt Lại",
+    "reorderAdded": "Đã thêm vào giỏ hàng"
   },
   "OrderTracking": {
     "orderId": "Mã Đơn Hàng",

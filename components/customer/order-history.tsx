@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react"
 import { useLocale, useTranslations } from "next-intl"
-import { ChevronRight } from "lucide-react"
-import { Link } from "@/i18n/navigation"
+import { ChevronRight, RotateCcw, Check } from "lucide-react"
+import { Link, useRouter } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { formatOrderId, formatVND } from "@/lib/format"
-import { useOrders, type OrderStatus } from "@/hooks/useOrders"
+import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
+import { useCart } from "@/hooks/useCart"
 import { SegmentedControl } from "@/components/motion/segmented-control"
 import { StaggerList, StaggerItem } from "@/components/motion/stagger-list"
 
@@ -58,8 +59,28 @@ function formatOrderDate(timestamp: number, locale: string): string {
 export function OrderHistory() {
   const locale = useLocale()
   const t = useTranslations("OrderHistory")
+  const router = useRouter()
   const { myOrders, isLoadingMyOrders } = useOrders()
+  const { addItem } = useCart()
   const [filter, setFilter] = useState<Filter>("all")
+  const [reorderedId, setReorderedId] = useState<string | null>(null)
+
+  function handleReorder(order: OrderForTracking) {
+    order.items.forEach((item) => {
+      addItem(
+        {
+          menuItemId: item.menuItemId,
+          nameVi: item.nameVi,
+          nameEn: item.nameEn,
+          modifiers: [],
+          unitPrice: item.unitPrice,
+        },
+        item.quantity
+      )
+    })
+    setReorderedId(order.id)
+    setTimeout(() => router.push("/cart"), 500)
+  }
 
   const sorted = useMemo(() => [...myOrders].sort((a, b) => b.createdAt - a.createdAt), [myOrders])
   const filtered = sorted.filter((order) => matchesFilter(order.status, filter))
@@ -86,32 +107,48 @@ export function OrderHistory() {
               .join(", ")
             return (
               <StaggerItem key={order.id}>
-                <Link
-                  href={`/orders/${order.id}`}
-                  className="nb-border nb-shadow nb-press flex items-center justify-between gap-3 rounded-xl bg-card p-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="font-extrabold text-card-foreground">#{formatOrderId(order.id)}</span>
-                      <span
-                        className={cn(
-                          "nb-border-sm shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold",
-                          STATUS_STYLES[order.status]
-                        )}
-                      >
-                        {t(STATUS_KEYS[order.status])}
-                      </span>
+                <div className="nb-border nb-shadow flex flex-col gap-3 rounded-xl bg-card p-4">
+                  <Link href={`/orders/${order.id}`} className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-extrabold text-card-foreground">#{formatOrderId(order.id)}</span>
+                        <span
+                          className={cn(
+                            "nb-border-sm shrink-0 rounded-full px-2.5 py-1 text-[11px] font-extrabold",
+                            STATUS_STYLES[order.status]
+                          )}
+                        >
+                          {t(STATUS_KEYS[order.status])}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">{formatOrderDate(order.createdAt, locale)}</p>
+                      <p className="mt-1 truncate text-sm text-muted-foreground">
+                        {t("itemCount", { count: order.items.length })}: {itemsLabel}
+                      </p>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">{formatOrderDate(order.createdAt, locale)}</p>
-                    <p className="mt-1 truncate text-sm text-muted-foreground">
-                      {t("itemCount", { count: order.items.length })}: {itemsLabel}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="font-extrabold text-price">{formatVND(order.total)}</span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                </Link>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className="font-extrabold text-price">{formatVND(order.total)}</span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(order)}
+                    className="nb-border-sm nb-shadow-sm nb-press-sm flex items-center justify-center gap-1.5 rounded-lg bg-chip py-2 text-xs font-extrabold text-foreground"
+                  >
+                    {reorderedId === order.id ? (
+                      <>
+                        <Check className="h-3.5 w-3.5 text-success" />
+                        {t("reorderAdded")}
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        {t("reorder")}
+                      </>
+                    )}
+                  </button>
+                </div>
               </StaggerItem>
             )
           })}

@@ -255,7 +255,9 @@
     "statusCompleted": "Completed",
     "statusCancelled": "Cancelled",
     "empty": "No orders yet.",
-    "loading": "Loading your orders…"
+    "loading": "Loading your orders…",
+    "reorder": "Reorder",
+    "reorderAdded": "Added to cart"
   },
   "OrderTracking": {
     "orderId": "Order ID",
