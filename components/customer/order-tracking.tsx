@@ -392,7 +392,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
             <div className="hidden md:block mt-6">
               <a
                 href={`tel:${shopPhone}`}
-                className="flex items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-primary-foreground shadow-md hover:bg-primary/95 transition-colors"
+                className="nb-border nb-shadow-sm nb-press-sm flex items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-primary-foreground"
               >
                 <Phone className="h-5 w-5" />
                 {t("contactShop")}
@@ -404,10 +404,10 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
 
       {/* Mobile fixed bottom Contact bar */}
       {shopPhone && (
-        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/90 p-4 backdrop-blur-md md:hidden">
+        <div className="nb-border border-x-0 border-b-0 fixed inset-x-0 bottom-0 z-40 bg-background/90 p-4 backdrop-blur-md md:hidden">
           <a
             href={`tel:${shopPhone}`}
-            className="mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-primary-foreground shadow-lg transition-transform active:scale-95"
+            className="nb-border nb-shadow-sm nb-press-sm mx-auto flex max-w-2xl items-center justify-center gap-2 rounded-xl bg-primary py-4 font-bold text-primary-foreground"
           >
             <Phone className="h-5 w-5" />
             {t("contactShop")}

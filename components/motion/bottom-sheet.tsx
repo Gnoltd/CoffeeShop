@@ -23,7 +23,7 @@ export function BottomSheet({
         onClick={onClose}
       >
         <motion.div
-          className="flex w-full max-w-sm md:max-w-md flex-col overflow-hidden rounded-t-2xl bg-card shadow-xl sm:rounded-2xl"
+          className="nb-border border-x-0 border-b-0 sm:border-x-2 sm:border-b-2 flex w-full max-w-sm md:max-w-md flex-col overflow-hidden rounded-t-2xl bg-card sm:rounded-2xl"
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
           exit={{ y: "100%" }}

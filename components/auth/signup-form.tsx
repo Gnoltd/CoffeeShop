@@ -14,7 +14,7 @@ function AuthLayoutWrapper({ children }: { children: React.ReactNode }) {
   const tBrand = useTranslations("Brand")
   return (
     <div className="mx-auto w-full max-w-sm px-4 md:max-w-4xl md:px-0">
-      <div className="flex overflow-hidden md:rounded-2xl md:border md:bg-card md:shadow-lg">
+      <div className="flex overflow-hidden md:rounded-2xl md:border-2 md:border-ink md:bg-card md:shadow-[4px_4px_0_var(--ink)]">
         {/* Left Column: Brand decorative artwork (desktop only) */}
         <div className="hidden md:flex flex-1 flex-col justify-between bg-gradient-to-br from-primary to-secondary p-8 text-primary-foreground min-h-[500px]">
           <div className="flex items-center gap-2">

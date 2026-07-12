@@ -22,7 +22,7 @@ export function AnimatedTabBar({
   className?: string
 }) {
   return (
-    <nav className={cn("fixed inset-x-0 bottom-0 z-50 flex items-center justify-around rounded-t-xl bg-card px-2 py-2 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]", className)}>
+    <nav className={cn("nb-border border-x-0 border-b-0 fixed inset-x-0 bottom-0 z-50 flex items-center justify-around rounded-t-xl bg-card px-2 py-2", className)}>
       {items.map((item) => {
         const isActive = item.href === activeHref
         const Icon = item.icon
@@ -36,7 +36,7 @@ export function AnimatedTabBar({
             {isActive && (
               <motion.span
                 layoutId="tab-bar-active-pill"
-                className="absolute inset-0 rounded-xl bg-primary shadow-sm"
+                className="nb-border-sm absolute inset-0 rounded-xl bg-primary"
                 transition={{ type: "spring", stiffness: 300, damping: 22 }}
               />
             )}

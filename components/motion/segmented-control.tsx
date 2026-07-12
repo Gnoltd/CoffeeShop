@@ -12,18 +12,18 @@ export type SegmentOption<T extends string> = {
 
 const VARIANT_STYLES = {
   tabs: {
-    container: "flex gap-1 rounded-lg bg-muted p-1",
+    container: "nb-border-sm flex gap-1 rounded-lg bg-muted p-1",
     option: "relative flex-1 rounded-md py-3 text-sm font-bold transition-colors",
     activeText: "text-card-foreground",
     inactiveText: "text-muted-foreground",
-    pill: "absolute inset-0 rounded-md bg-card shadow-sm",
+    pill: "nb-border-sm absolute inset-0 rounded-md bg-card",
   },
   chips: {
     container: "flex gap-2 overflow-x-auto pb-1",
     option: "relative shrink-0 rounded-full bg-muted px-4 py-2 text-sm font-medium transition-colors",
     activeText: "text-primary-foreground",
     inactiveText: "text-muted-foreground hover:bg-accent/40",
-    pill: "absolute inset-0 rounded-full bg-primary shadow-sm",
+    pill: "nb-border-sm absolute inset-0 rounded-full bg-primary",
   },
 } as const
 

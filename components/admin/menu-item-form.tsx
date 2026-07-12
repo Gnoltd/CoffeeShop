@@ -311,15 +311,15 @@ export function MenuItemForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-card shadow-xl">
-        <div className="flex items-center justify-between border-b px-6 py-4">
+      <div className="nb-border nb-shadow flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-card">
+        <div className="nb-border border-x-0 border-t-0 flex items-center justify-between px-6 py-4">
           <h2 className="text-lg font-bold text-card-foreground">
             {isEditing ? t("editItemTitle") : t("addItem")}
           </h2>
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full p-1 text-muted-foreground hover:bg-muted"
+            className="nb-border-sm nb-press-sm rounded-full bg-card p-1 text-muted-foreground"
             aria-label={t("cancel")}
           >
             <X className="h-5 w-5" />
@@ -348,7 +348,7 @@ export function MenuItemForm({
               <select
                 value={categoryId}
                 onChange={(e) => setCategoryId(e.target.value)}
-                className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="nb-border-sm h-10 w-full rounded-lg bg-card px-3 text-sm text-card-foreground focus:outline-none"
               >
                 {categories.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -376,7 +376,7 @@ export function MenuItemForm({
                 value={descriptionVi}
                 onChange={(e) => setDescriptionVi(e.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="nb-border-sm w-full resize-none rounded-lg bg-card px-3 py-2 text-sm text-card-foreground focus:outline-none"
               />
             </div>
             <div className="space-y-1.5">
@@ -385,7 +385,7 @@ export function MenuItemForm({
                 value={descriptionEn}
                 onChange={(e) => setDescriptionEn(e.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="nb-border-sm w-full resize-none rounded-lg bg-card px-3 py-2 text-sm text-card-foreground focus:outline-none"
               />
             </div>
           </div>
@@ -400,7 +400,7 @@ export function MenuItemForm({
               onChange={(e) => selectFile(e.target.files?.[0] ?? null)}
             />
             {imagePreviewUrl ? (
-              <div className="flex items-center gap-3 rounded-lg border p-3">
+              <div className="nb-border-sm flex items-center gap-3 rounded-lg bg-card p-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={imagePreviewUrl} alt="" className="h-24 w-24 rounded-lg object-cover" />
                 <span className="flex-1 truncate text-sm text-muted-foreground">
@@ -447,7 +447,7 @@ export function MenuItemForm({
             )}
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="nb-border-sm flex items-center justify-between rounded-lg bg-card p-3">
             <span className="text-sm font-medium text-card-foreground">{t("availableToggle")}</span>
             <button
               type="button"
@@ -491,7 +491,7 @@ export function MenuItemForm({
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="nb-border-sm flex items-center justify-between rounded-lg bg-card p-3">
             <span className="text-sm font-medium text-card-foreground">{t("popularToggle")}</span>
             <button
               type="button"
@@ -512,7 +512,7 @@ export function MenuItemForm({
             </button>
           </div>
 
-          <div className="flex items-center justify-between rounded-lg border p-3">
+          <div className="nb-border-sm flex items-center justify-between rounded-lg bg-card p-3">
             <span className="text-sm font-medium text-card-foreground">{t("hasSizeOptionsToggle")}</span>
             <button
               type="button"
@@ -538,7 +538,7 @@ export function MenuItemForm({
             {sizesError && (
               <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{sizesError}</p>
             )}
-            <div className="space-y-2 rounded-lg border p-3">
+            <div className="nb-border-sm space-y-2 rounded-lg bg-card p-3">
               {sizes.length === 0 && <p className="text-sm text-muted-foreground">{t("noSizesYet")}</p>}
               {sizes.map((size, index) => (
                 <div key={index} className="flex items-center gap-2">
@@ -598,7 +598,7 @@ export function MenuItemForm({
             {extrasError && (
               <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{extrasError}</p>
             )}
-            <div className="space-y-2 rounded-lg border p-3">
+            <div className="nb-border-sm space-y-2 rounded-lg bg-card p-3">
               {extraGroups.length === 0 && !showAddExtraForm && (
                 <p className="text-sm text-muted-foreground">{t("noExtrasYet")}</p>
               )}
@@ -637,7 +637,7 @@ export function MenuItemForm({
                     </div>
 
                     {isEditingThis && (
-                      <div className="space-y-2 rounded-lg border border-dashed p-3">
+                      <div className="nb-border-sm space-y-2 rounded-lg bg-chip p-3">
                         {editExtraError && (
                           <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
                             {editExtraError}
@@ -691,7 +691,7 @@ export function MenuItemForm({
             </div>
 
             {showAddExtraForm ? (
-              <div className="space-y-2 rounded-lg border border-dashed p-3">
+              <div className="nb-border-sm space-y-2 rounded-lg bg-chip p-3">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   <Input
                     value={newExtraNameVi}
@@ -749,11 +749,11 @@ export function MenuItemForm({
           {isEditing && initialItem && <MenuItemReviewsPanel itemId={initialItem.id} />}
         </div>
 
-        <div className="flex justify-end gap-2 border-t px-6 py-4">
-          <Button variant="outline" onClick={onCancel}>
+        <div className="nb-border border-x-0 border-b-0 flex justify-end gap-2 px-6 py-4">
+          <Button variant="neubrutal" className="bg-card text-foreground" onClick={onCancel}>
             {t("cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={isUploading}>
+          <Button variant="neubrutal" onClick={handleSave} disabled={isUploading}>
             {isUploading ? t("uploadingButton") : t("save")}
           </Button>
         </div>

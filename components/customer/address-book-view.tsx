@@ -108,7 +108,7 @@ export function AddressBookView() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-card-foreground">{t("title")}</h2>
         {editingId === null && (
-          <Button onClick={startAdd} className="h-9 gap-1.5 rounded-xl px-3 text-sm">
+          <Button variant="neubrutal" onClick={startAdd} className="h-9 gap-1.5 px-3 text-sm">
             <Plus className="h-4 w-4" />
             {t("addButton")}
           </Button>
@@ -118,7 +118,7 @@ export function AddressBookView() {
       {error && <p className="mb-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
 
       {editingId !== null && (
-        <section className="mb-4 rounded-2xl border bg-card p-4 shadow-sm">
+        <section className="nb-border nb-shadow-sm mb-4 rounded-2xl bg-chip p-4">
           <h3 className="mb-3 font-semibold text-card-foreground">
             {editingId === "new" ? t("addTitle") : t("editTitle")}
           </h3>
@@ -129,7 +129,7 @@ export function AddressBookView() {
                 value={form.label}
                 onChange={(e) => setForm((f) => ({ ...f, label: e.target.value }))}
                 placeholder={t("labelPlaceholder")}
-                className="h-11 w-full rounded-xl border border-input bg-background px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground focus:outline-none"
               />
             </div>
             <div className="space-y-1.5">
@@ -138,7 +138,7 @@ export function AddressBookView() {
                 value={form.address}
                 onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
                 placeholder={t("addressPlaceholder")}
-                className="h-11 w-full rounded-xl border border-input bg-background px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground focus:outline-none"
               />
             </div>
             <div className="space-y-1.5">
@@ -147,14 +147,18 @@ export function AddressBookView() {
                 value={form.phone}
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 placeholder={t("phonePlaceholder")}
-                className="h-11 w-full rounded-xl border border-input bg-background px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground focus:outline-none"
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleSave} disabled={isSaving} className="h-11 flex-1 rounded-xl">
+              <Button variant="neubrutal" onClick={handleSave} disabled={isSaving} className="h-11 flex-1">
                 {t("saveButton")}
               </Button>
-              <Button onClick={cancelEdit} variant="outline" className="h-11 flex-1 rounded-xl">
+              <Button
+                variant="neubrutal"
+                onClick={cancelEdit}
+                className="h-11 flex-1 bg-card text-foreground"
+              >
                 {t("cancelButton")}
               </Button>
             </div>
@@ -169,7 +173,7 @@ export function AddressBookView() {
       ) : (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {addresses.map((addr) => (
-            <div key={addr.id} className="rounded-2xl border bg-card p-4 shadow-sm">
+            <div key={addr.id} className="nb-border-sm nb-shadow-sm rounded-2xl bg-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">

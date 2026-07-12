@@ -26,19 +26,19 @@ export function OrderHistoryDetailView({ order }: { order: OrderHistoryDetail })
       </p>
 
       <div className="mb-6 grid grid-cols-2 gap-3 text-sm">
-        <div className="rounded-xl border bg-card p-3">
+        <div className="nb-border-sm rounded-xl bg-card p-3">
           <p className="text-muted-foreground">{t("customerLabel")}</p>
           <p className="font-bold text-card-foreground">{order.customerName ?? t("guestLabel")}</p>
         </div>
-        <div className="rounded-xl border bg-card p-3">
+        <div className="nb-border-sm rounded-xl bg-card p-3">
           <p className="text-muted-foreground">{t("paymentMethodLabel")}</p>
           <p className="font-bold text-card-foreground">{order.paymentMethod}</p>
         </div>
-        <div className="rounded-xl border bg-card p-3">
+        <div className="nb-border-sm rounded-xl bg-card p-3">
           <p className="text-muted-foreground">{t("paymentStatusLabel")}</p>
           <p className="font-bold text-card-foreground">{order.paymentStatus}</p>
         </div>
-        <div className="rounded-xl border bg-card p-3">
+        <div className="nb-border-sm rounded-xl bg-card p-3">
           <p className="text-muted-foreground">{t("columnStatus")}</p>
           <p className="font-bold text-card-foreground">
             {order.status === "completed" ? t("statusCompleted") : t("statusCancelled")}
@@ -47,9 +47,9 @@ export function OrderHistoryDetailView({ order }: { order: OrderHistoryDetail })
       </div>
 
       <section className="space-y-3">
-        <div className="flex items-center justify-between border-b pb-2">
+        <div className="flex items-center justify-between border-b-2 border-ink/15 pb-2">
           <h3 className="text-lg font-semibold text-card-foreground">{t("orderDetailsHeading")}</h3>
-          <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-secondary">
+          <span className="nb-border-sm rounded-full bg-chip px-3 py-1 text-xs font-bold text-secondary">
             {t("itemCount", { count: order.items.length })}
           </span>
         </div>
@@ -66,7 +66,7 @@ export function OrderHistoryDetailView({ order }: { order: OrderHistoryDetail })
             </div>
           ))}
         </div>
-        <div className="space-y-2 rounded-xl bg-muted p-4">
+        <div className="nb-border-sm space-y-2 rounded-xl bg-chip p-4">
           <div className="flex justify-between text-sm text-muted-foreground">
             <span>{t("subtotal")}</span>
             <span>{formatVND(order.subtotal)}</span>
@@ -75,7 +75,7 @@ export function OrderHistoryDetailView({ order }: { order: OrderHistoryDetail })
             <span>{t("discount")}</span>
             <span className="text-destructive">-{formatVND(order.discount)}</span>
           </div>
-          <div className="mt-2 flex items-center justify-between border-t pt-2">
+          <div className="mt-2 flex items-center justify-between border-t-2 border-ink/20 pt-2">
             <span className="font-bold text-card-foreground">{t("total")}</span>
             <span className="text-xl font-black text-primary">{formatVND(order.total)}</span>
           </div>

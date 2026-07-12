@@ -71,9 +71,9 @@ export function RewardLookup() {
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           placeholder={t("codePlaceholder")}
-          className="h-12 rounded-xl font-mono text-lg tracking-widest"
+          className="nb-border h-12 rounded-xl font-mono text-lg tracking-widest"
         />
-        <Button className="h-12 shrink-0 rounded-xl px-5" disabled={isSearching || !code.trim()} onClick={handleSearch}>
+        <Button variant="neubrutal" className="h-12 shrink-0 px-5" disabled={isSearching || !code.trim()} onClick={handleSearch}>
           {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : <Search className="h-5 w-5" />}
         </Button>
       </div>
@@ -86,7 +86,7 @@ export function RewardLookup() {
 
       {results !== null &&
         results.map((redemption) => (
-          <div key={redemption.id} className="rounded-xl border bg-card p-4 shadow-sm">
+          <div key={redemption.id} className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-start gap-3">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -104,18 +104,19 @@ export function RewardLookup() {
                 </div>
               </div>
               {redemption.appliedOrderId !== null ? (
-                <span className="flex shrink-0 items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
+                <span className="nb-border-sm flex shrink-0 items-center gap-1 rounded-lg bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">
                   <CheckCircle2 className="h-4 w-4" />
                   {t("appliedAtCheckoutLabel")}
                 </span>
               ) : redemption.fulfilledAt !== null ? (
-                <span className="flex shrink-0 items-center gap-1 rounded-lg bg-green-100 px-3 py-1.5 text-xs font-bold text-green-700">
+                <span className="nb-border-sm flex shrink-0 items-center gap-1 rounded-lg bg-success/15 px-3 py-1.5 text-xs font-bold text-success">
                   <CheckCircle2 className="h-4 w-4" />
                   {t("fulfilledLabel")}
                 </span>
               ) : (
                 <Button
-                  className="h-10 shrink-0 rounded-xl px-4"
+                  variant="neubrutal"
+                  className="h-10 shrink-0 px-4"
                   disabled={fulfillingId === redemption.id}
                   onClick={() => handleFulfill(redemption)}
                 >

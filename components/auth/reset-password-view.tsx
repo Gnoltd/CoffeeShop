@@ -103,7 +103,7 @@ export function ResetPasswordView() {
             minLength={6}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            className="h-12 w-full rounded-xl border border-input bg-background px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="nb-border h-12 w-full rounded-xl bg-card px-4 text-card-foreground focus:outline-none"
           />
         </div>
         <div className="space-y-1.5">
@@ -115,13 +115,14 @@ export function ResetPasswordView() {
             minLength={6}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            className="h-12 w-full rounded-xl border border-input bg-background px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+            className="nb-border h-12 w-full rounded-xl bg-card px-4 text-card-foreground focus:outline-none"
           />
         </div>
         <Button
+          variant="neubrutal"
           onClick={handleSetNewPassword}
           disabled={isSaving}
-          className="h-12 w-full rounded-xl text-base font-bold"
+          className="h-12 w-full text-base"
         >
           {t("setNewPasswordButton")}
         </Button>

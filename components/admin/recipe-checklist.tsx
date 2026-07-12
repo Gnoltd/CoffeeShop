@@ -25,7 +25,7 @@ export function RecipeChecklist({
   }
 
   return (
-    <div className="space-y-2 rounded-lg border p-3">
+    <div className="nb-border-sm space-y-2 rounded-lg bg-card p-3">
       {ingredients.map((ingredient) => {
         const checked = ingredient.id in selected
         return (

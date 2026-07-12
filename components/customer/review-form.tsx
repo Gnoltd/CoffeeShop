@@ -51,7 +51,7 @@ export function ReviewForm({ itemId, onDone }: { itemId: string; onDone: () => v
   if (isLoading) return null
 
   return (
-    <div className="mt-2 space-y-2 rounded-lg border border-dashed p-3">
+    <div className="nb-border-sm mt-2 space-y-2 rounded-lg bg-chip p-3">
       {error && <p className="text-xs text-destructive">{error}</p>}
       <StarRating rating={rating} size="lg" onRate={setRating} />
       <textarea
@@ -59,13 +59,13 @@ export function ReviewForm({ itemId, onDone }: { itemId: string; onDone: () => v
         onChange={(e) => setComment(e.target.value)}
         placeholder={t("reviewCommentPlaceholder")}
         rows={2}
-        className="w-full resize-none rounded-lg border border-input bg-background px-3 py-2 text-sm text-card-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+        className="nb-border-sm w-full resize-none rounded-lg bg-card px-3 py-2 text-sm text-card-foreground placeholder:text-muted-foreground focus:outline-none"
       />
       <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onDone} disabled={isSaving}>
+        <Button type="button" variant="neubrutal" size="sm" className="bg-card text-foreground" onClick={onDone} disabled={isSaving}>
           {t("reviewCancelButton")}
         </Button>
-        <Button type="button" size="sm" onClick={handleSubmit} disabled={isSaving}>
+        <Button type="button" variant="neubrutal" size="sm" onClick={handleSubmit} disabled={isSaving}>
           {isSaving ? t("reviewSubmitLoading") : t("submitReviewButton")}
         </Button>
       </div>

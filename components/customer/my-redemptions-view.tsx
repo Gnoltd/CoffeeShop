@@ -10,7 +10,7 @@ import { getMyRedemptions, type MyRedemption } from "@/lib/supabase/rewards-data
 function statusMeta(r: MyRedemption): { labelKey: "statusAvailable" | "statusUsed" | "statusExpired"; className: string } {
   if (r.isUsed) return { labelKey: "statusUsed", className: "bg-muted text-muted-foreground" }
   if (r.isExpired) return { labelKey: "statusExpired", className: "bg-destructive/10 text-destructive" }
-  return { labelKey: "statusAvailable", className: "bg-green-100 text-green-700" }
+  return { labelKey: "statusAvailable", className: "bg-success/15 text-success" }
 }
 
 export function MyRedemptionsView() {
@@ -53,7 +53,7 @@ export function MyRedemptionsView() {
             const status = statusMeta(r)
             const canUse = !r.isUsed && !r.isExpired
             return (
-              <div key={r.id} className="rounded-2xl border bg-card p-4 shadow-sm">
+              <div key={r.id} className="nb-border-sm nb-shadow-sm rounded-2xl bg-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -74,7 +74,7 @@ export function MyRedemptionsView() {
                       )}
                     </div>
                   </div>
-                  <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}>
+                  <span className={`nb-border-sm shrink-0 rounded-full px-2.5 py-1 text-[11px] font-bold ${status.className}`}>
                     {t(status.labelKey)}
                   </span>
                 </div>
@@ -82,11 +82,11 @@ export function MyRedemptionsView() {
                   <button
                     type="button"
                     onClick={() => handleCopy(r)}
-                    className="mt-3 flex items-center gap-1.5 rounded-lg border bg-muted/40 px-3 py-2 font-mono text-sm font-bold tracking-widest text-card-foreground transition-colors hover:bg-muted"
+                    className="nb-border-sm nb-press-sm mt-3 flex items-center gap-1.5 rounded-lg bg-chip px-3 py-2 font-mono text-sm font-bold tracking-widest text-card-foreground"
                   >
                     {copiedId === r.id ? (
                       <>
-                        <Check className="h-3.5 w-3.5 text-green-600" />
+                        <Check className="h-3.5 w-3.5 text-success" />
                         {t("copiedLabel")}
                       </>
                     ) : (

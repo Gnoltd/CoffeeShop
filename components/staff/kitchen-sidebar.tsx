@@ -20,7 +20,7 @@ export function KitchenSidebar({
   const isHistoryActive = pathname === "/staff/orders/history"
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r bg-muted/40 py-4 md:flex">
+    <aside className="nb-border border-y-0 border-l-0 hidden w-64 shrink-0 flex-col bg-muted/40 py-4 md:flex">
       <div className="flex items-center gap-3 px-6 pb-4">
         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-secondary/20 text-secondary">
           <CookingPot className="h-5 w-5" />
@@ -36,7 +36,7 @@ export function KitchenSidebar({
           href="/staff/orders"
           className={
             !isHistoryActive
-              ? "flex items-center gap-3 rounded-lg bg-secondary/20 px-4 py-3 font-bold text-secondary"
+              ? "nb-border-sm flex items-center gap-3 rounded-lg bg-chip px-4 py-3 font-bold text-secondary"
               : "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
           }
         >
@@ -47,7 +47,7 @@ export function KitchenSidebar({
           href="/staff/orders/history"
           className={
             isHistoryActive
-              ? "flex items-center gap-3 rounded-lg bg-secondary/20 px-4 py-3 font-bold text-secondary"
+              ? "nb-border-sm flex items-center gap-3 rounded-lg bg-chip px-4 py-3 font-bold text-secondary"
               : "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
           }
         >
@@ -65,7 +65,7 @@ export function KitchenSidebar({
         </button>
       </nav>
 
-      <nav className="space-y-1 border-t px-2 pt-3">
+      <nav className="nb-border border-x-0 border-b-0 space-y-1 px-2 pt-3">
         <Link
           href="/staff/pos"
           className="flex items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
@@ -84,7 +84,7 @@ export function KitchenSidebar({
         )}
       </nav>
 
-      <div className="mx-2 mt-auto rounded-xl border bg-card p-4">
+      <div className="nb-border-sm mx-2 mt-auto rounded-xl bg-card p-4">
         <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
           {t("shiftStats")}
         </p>

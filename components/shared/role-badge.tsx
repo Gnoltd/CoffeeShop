@@ -18,7 +18,7 @@ export async function RoleBadge({ role }: { role: string | null }) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-1 rounded-full border bg-card px-3 py-1 text-xs font-medium text-secondary shadow-sm transition-colors hover:bg-muted"
+      className="nb-border-sm flex items-center gap-1 rounded-full bg-card px-3 py-1 text-xs font-medium text-secondary transition-colors hover:bg-muted"
     >
       <Icon className="h-3.5 w-3.5" />
       {label}

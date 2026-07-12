@@ -16,7 +16,7 @@ export function ThemeToggle() {
       size="icon"
       onClick={toggleTheme}
       aria-label={t("toggleLabel")}
-      className="rounded-full bg-card"
+      className="nb-border-sm nb-press-sm rounded-full border-transparent bg-card"
     >
       {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
     </Button>

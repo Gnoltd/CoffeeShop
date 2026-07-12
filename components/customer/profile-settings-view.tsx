@@ -85,7 +85,7 @@ export function ProfileSettingsView() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pt-4 pb-28 md:max-w-5xl md:px-8 md:py-4">
       <div className="flex flex-col gap-6 md:grid md:grid-cols-2 md:items-start md:gap-8">
-        <section className="rounded-2xl border bg-card p-4 shadow-sm">
+        <section className="nb-border nb-shadow-sm rounded-2xl bg-chip p-4">
           <h2 className="mb-4 text-lg font-semibold text-card-foreground">{t("changePasswordTitle")}</h2>
           {passwordError && (
             <p className="mb-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{passwordError}</p>
@@ -101,7 +101,7 @@ export function ProfileSettingsView() {
                 minLength={6}
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="h-11 w-full rounded-xl border border-input bg-background px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground focus:outline-none"
               />
             </div>
             <div className="space-y-1.5">
@@ -113,29 +113,30 @@ export function ProfileSettingsView() {
                 minLength={6}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="h-11 w-full rounded-xl border border-input bg-background px-4 text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground focus:outline-none"
               />
             </div>
-            <Button onClick={handlePasswordUpdate} disabled={isSavingPassword} className="h-11 w-full rounded-xl">
+            <Button variant="neubrutal" onClick={handlePasswordUpdate} disabled={isSavingPassword} className="h-11 w-full">
               {t("updatePasswordButton")}
             </Button>
           </div>
         </section>
 
-        <section className="rounded-2xl border bg-card p-4 shadow-sm">
+        <section className="nb-border nb-shadow-sm rounded-2xl bg-chip p-4">
           <h2 className="mb-4 text-lg font-semibold text-card-foreground">{t("connectedAccountsTitle")}</h2>
           {identitiesError && (
             <p className="mb-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{identitiesError}</p>
           )}
           {!isLoadingIdentities && (
-            <div className="flex items-center justify-between rounded-xl border p-3">
+            <div className="nb-border-sm flex items-center justify-between rounded-xl bg-card p-3">
               <span className="font-medium text-card-foreground">Google</span>
               {googleIdentity ? (
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-primary">{t("connectedLabel")}</span>
                   <Button
-                    variant="outline"
+                    variant="neubrutal"
                     size="sm"
+                    className="bg-card text-foreground"
                     disabled={identities.length <= 1}
                     onClick={() => handleUnlinkGoogle(googleIdentity)}
                   >
@@ -143,7 +144,7 @@ export function ProfileSettingsView() {
                   </Button>
                 </div>
               ) : (
-                <Button size="sm" onClick={handleConnectGoogle}>
+                <Button variant="neubrutal" size="sm" onClick={handleConnectGoogle}>
                   {t("connectGoogleButton")}
                 </Button>
               )}

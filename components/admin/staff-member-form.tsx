@@ -48,15 +48,15 @@ export function StaffMemberForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-md rounded-xl bg-card shadow-xl">
-        <div className="flex items-center justify-between border-b px-6 py-4">
+      <div className="nb-border nb-shadow w-full max-w-md rounded-xl bg-card">
+        <div className="nb-border border-x-0 border-t-0 flex items-center justify-between px-6 py-4">
           <h2 className="text-lg font-bold text-card-foreground">
             {isEditing ? t("editStaffTitle") : t("addStaff")}
           </h2>
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-full p-1 text-muted-foreground hover:bg-muted"
+            className="nb-border-sm nb-press-sm rounded-full bg-card p-1 text-muted-foreground"
             aria-label={t("cancel")}
           >
             <X className="h-5 w-5" />
@@ -90,7 +90,7 @@ export function StaffMemberForm({
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as StaffRole)}
-              className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+              className="nb-border-sm h-10 w-full rounded-lg bg-card px-3 text-sm text-card-foreground focus:outline-none"
             >
               <option value="staff">{t("roleStaff")}</option>
               <option value="manager">{t("roleManager")}</option>
@@ -99,7 +99,7 @@ export function StaffMemberForm({
           </div>
 
           {isEditing && (
-            <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="nb-border-sm flex items-center justify-between rounded-lg bg-card p-3">
               <span className="text-sm font-medium text-card-foreground">{t("activeToggle")}</span>
               <button
                 type="button"
@@ -124,11 +124,11 @@ export function StaffMemberForm({
           )}
         </div>
 
-        <div className="flex justify-end gap-2 border-t px-6 py-4">
-          <Button variant="outline" onClick={onCancel}>
+        <div className="nb-border border-x-0 border-b-0 flex justify-end gap-2 px-6 py-4">
+          <Button variant="neubrutal" className="bg-card text-foreground" onClick={onCancel}>
             {t("cancel")}
           </Button>
-          <Button onClick={handleSave} disabled={isSaving}>
+          <Button variant="neubrutal" onClick={handleSave} disabled={isSaving}>
             {t("save")}
           </Button>
         </div>

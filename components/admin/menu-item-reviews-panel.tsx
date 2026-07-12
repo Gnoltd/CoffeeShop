@@ -53,9 +53,9 @@ export function MenuItemReviewsPanel({ itemId }: { itemId: string }) {
       {reviews.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("noReviewsForItem")}</p>
       ) : (
-        <div className="space-y-3 rounded-lg border p-3">
+        <div className="nb-border-sm space-y-3 rounded-lg bg-card p-3">
           {reviews.map((review) => (
-            <div key={review.id} className="space-y-1.5 border-b pb-3 last:border-b-0 last:pb-0">
+            <div key={review.id} className="space-y-1.5 border-b-2 border-ink/15 pb-3 last:border-b-0 last:pb-0">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-semibold text-card-foreground">
                   {review.reviewerName ?? t("anonymousReviewer")}
@@ -74,9 +74,9 @@ export function MenuItemReviewsPanel({ itemId }: { itemId: string }) {
                     value={replyDrafts[review.id] ?? ""}
                     onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [review.id]: e.target.value }))}
                     placeholder={t("replyPlaceholder")}
-                    className="h-9 flex-1 rounded-lg border border-input bg-background px-3 text-sm text-card-foreground focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    className="nb-border-sm h-9 flex-1 rounded-lg bg-card px-3 text-sm text-card-foreground focus:outline-none"
                   />
-                  <Button type="button" size="sm" onClick={() => handleReply(review.id)} disabled={savingId === review.id}>
+                  <Button variant="neubrutal" type="button" size="sm" onClick={() => handleReply(review.id)} disabled={savingId === review.id}>
                     {t("replyButton")}
                   </Button>
                 </div>

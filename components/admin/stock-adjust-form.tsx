@@ -50,13 +50,13 @@ export function StockAdjustForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="flex w-full max-w-sm flex-col overflow-hidden rounded-xl bg-card shadow-xl">
-        <div className="flex items-center justify-between border-b px-6 py-4">
+      <div className="nb-border nb-shadow flex w-full max-w-sm flex-col overflow-hidden rounded-xl bg-card">
+        <div className="nb-border border-x-0 border-t-0 flex items-center justify-between px-6 py-4">
           <h2 className="text-lg font-bold text-card-foreground">{t("adjustStockTitle")}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-1 text-muted-foreground hover:bg-muted"
+            className="nb-border-sm nb-press-sm rounded-full bg-card p-1 text-muted-foreground"
             aria-label={t("close")}
           >
             <X className="h-5 w-5" />
@@ -95,22 +95,22 @@ export function StockAdjustForm({
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <Button onClick={handleAdd} className="h-10">
+            <Button variant="neubrutal" onClick={handleAdd} className="h-10">
               {t("addStock")}
             </Button>
-            <Button onClick={handleRemove} variant="outline" className="h-10">
+            <Button variant="neubrutal" onClick={handleRemove} className="h-10 bg-card text-foreground">
               {t("removeStock")}
             </Button>
           </div>
 
-          <div className="border-t pt-4">
+          <div className="nb-border border-x-0 border-b-0 pt-4">
             <Button
               onClick={() => {
                 onMarkOutOfStock()
                 onClose()
               }}
-              variant="outline"
-              className="h-10 w-full gap-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+              variant="neubrutal"
+              className="h-10 w-full gap-2 bg-card text-destructive"
             >
               <TriangleAlert className="h-4 w-4" />
               {t("markOutOfStock")}
@@ -118,8 +118,8 @@ export function StockAdjustForm({
           </div>
         </div>
 
-        <div className="flex justify-end gap-2 border-t px-6 py-4">
-          <Button variant="outline" onClick={onClose}>
+        <div className="nb-border border-x-0 border-b-0 flex justify-end gap-2 px-6 py-4">
+          <Button variant="neubrutal" className="bg-card text-foreground" onClick={onClose}>
             {t("close")}
           </Button>
         </div>

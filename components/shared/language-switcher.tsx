@@ -26,7 +26,7 @@ export function LanguageSwitcher() {
   }
 
   return (
-    <div className="inline-flex rounded-full border bg-background p-0.5 shadow-sm">
+    <div className="nb-border-sm inline-flex rounded-full bg-card p-0.5">
       {routing.locales.map((code) => (
         <button
           key={code}
@@ -34,7 +34,7 @@ export function LanguageSwitcher() {
           onClick={() => switchTo(code)}
           aria-pressed={locale === code}
           className={cn(
-            "min-h-8 min-w-11 rounded-full px-3 text-xs font-medium transition-colors",
+            "min-h-8 min-w-11 rounded-full px-3 text-xs font-bold transition-colors",
             locale === code
               ? "bg-primary text-primary-foreground"
               : "text-muted-foreground hover:text-foreground"

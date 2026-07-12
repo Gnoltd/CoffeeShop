@@ -150,7 +150,7 @@ export function MenuBrowser({ categories, items }: { categories: MenuCategory[];
       {itemCount > 0 && (
         <Link
           href="/cart"
-          className="fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center justify-between rounded-2xl bg-secondary px-5 py-4 text-secondary-foreground shadow-xl transition-colors hover:opacity-95 md:bottom-6 md:max-w-lg md:px-6"
+          className="nb-border nb-shadow nb-press fixed inset-x-4 bottom-20 z-40 mx-auto flex max-w-md items-center justify-between rounded-2xl bg-secondary px-5 py-4 text-secondary-foreground transition-colors hover:opacity-95 md:bottom-6 md:max-w-lg md:px-6"
         >
           <span className="font-semibold">
             {t("viewCart")} · {t("itemCount", { count: itemCount })}

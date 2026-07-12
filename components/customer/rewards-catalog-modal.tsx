@@ -69,7 +69,7 @@ export function RewardsCatalogModal({
 
   return (
     <BottomSheet onClose={onClose}>
-      <div className="flex items-center justify-between border-b px-5 py-4">
+      <div className="nb-border border-x-0 border-t-0 flex items-center justify-between px-5 py-4">
         <div className="flex items-center gap-2">
           <Gift className="h-5 w-5 text-primary" />
           <h2 className="font-bold text-card-foreground">{t("rewardsCatalogTitle")}</h2>
@@ -77,7 +77,7 @@ export function RewardsCatalogModal({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-full p-1 text-muted-foreground hover:bg-muted"
+          className="nb-border-sm nb-press-sm rounded-full bg-card p-1 text-muted-foreground"
           aria-label={tMenu("close")}
         >
           <X className="h-5 w-5" />
@@ -86,25 +86,25 @@ export function RewardsCatalogModal({
 
       {successName ? (
         <div className="flex flex-col items-center gap-4 px-5 py-10 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-green-100 text-green-700">
+          <div className="nb-border-sm flex h-16 w-16 items-center justify-center rounded-full bg-success/15 text-success">
             <CheckCircle2 className="h-9 w-9" />
           </div>
           <p className="font-bold text-card-foreground">{successName}</p>
           <p className="text-sm text-muted-foreground">{t("redeemSuccess")}</p>
           {redemptionCode && (
-            <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 px-6 py-3">
+            <div className="nb-border-sm rounded-xl bg-chip px-6 py-3">
               <p className="text-xs text-muted-foreground">{t("redemptionCodeLabel")}</p>
               <p className="text-2xl font-black tracking-widest text-primary">{redemptionCode}</p>
             </div>
           )}
           <p className="text-xs text-muted-foreground">{t("redemptionCodeHint")}</p>
-          <Button onClick={onClose} className="mt-2 h-11 rounded-xl px-6 font-bold">
+          <Button variant="neubrutal" onClick={onClose} className="mt-2 h-11 px-6">
             {tMenu("close")}
           </Button>
         </div>
       ) : (
         <>
-          <div className="border-b px-5 py-3">
+          <div className="nb-border border-x-0 border-t-0 px-5 py-3">
             <p className="text-sm text-muted-foreground">{t("rewardsCatalogSubtitle")}</p>
             <p className="mt-1 text-sm font-bold text-primary">
               {formatNumber(balance)} {t("pts")}
@@ -131,7 +131,7 @@ export function RewardsCatalogModal({
                 return (
                   <div
                     key={reward.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border bg-card p-3 shadow-sm"
+                    className="nb-border-sm nb-shadow-sm flex items-center justify-between gap-3 rounded-xl bg-card p-3"
                   >
                     <div className="min-w-0">
                       <p className="font-bold text-card-foreground">
@@ -146,9 +146,10 @@ export function RewardsCatalogModal({
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
                       <Button
+                        variant="neubrutal"
                         onClick={() => handleRedeem(reward)}
                         disabled={!affordable || isRedeeming || redeemingId !== null}
-                        className="h-10 rounded-xl px-5 font-bold"
+                        className="h-10 px-5"
                       >
                         {isRedeeming ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

@@ -23,7 +23,7 @@ export function SideDrawer({
         onClick={onClose}
       >
         <motion.div
-          className="flex h-full w-72 max-w-[80vw] flex-col overflow-hidden bg-card shadow-xl"
+          className="nb-border border-y-0 border-l-0 flex h-full w-72 max-w-[80vw] flex-col overflow-hidden bg-card"
           initial={{ x: "-100%" }}
           animate={{ x: 0 }}
           exit={{ x: "-100%" }}

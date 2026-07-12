@@ -11,7 +11,7 @@ import type { OrderHistoryFilters, RealOrderStatus, OrderType } from "@/lib/supa
 const PAGE_SIZE = 20
 
 const STATUS_BADGE: Record<"completed" | "cancelled", string> = {
-  completed: "bg-green-100 text-green-800",
+  completed: "bg-success/15 text-success",
   cancelled: "bg-muted text-muted-foreground",
 }
 
@@ -64,7 +64,7 @@ export function OrderHistoryList() {
     <div className="flex h-full flex-col p-6">
       <h1 className="mb-4 text-2xl font-bold text-card-foreground">{t("title")}</h1>
 
-      <div className="mb-3 flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+      <div className="nb-border-sm mb-3 flex items-center gap-2 rounded-lg bg-card px-3 py-2">
         <Search className="h-4 w-4 text-muted-foreground" />
         <input
           value={searchInput}
@@ -82,7 +82,7 @@ export function OrderHistoryList() {
             setDateFrom(e.target.value || undefined)
             resetToFirstPage()
           }}
-          className="rounded-lg border bg-card px-3 py-2 text-sm"
+          className="nb-border-sm rounded-lg bg-card px-3 py-2 text-sm"
         />
         <input
           type="date"
@@ -91,7 +91,7 @@ export function OrderHistoryList() {
             setDateTo(e.target.value || undefined)
             resetToFirstPage()
           }}
-          className="rounded-lg border bg-card px-3 py-2 text-sm"
+          className="nb-border-sm rounded-lg bg-card px-3 py-2 text-sm"
         />
         <select
           value={statusFilter}
@@ -99,7 +99,7 @@ export function OrderHistoryList() {
             setStatusFilter(e.target.value as RealOrderStatus | "all")
             resetToFirstPage()
           }}
-          className="rounded-lg border bg-card px-3 py-2 text-sm"
+          className="nb-border-sm rounded-lg bg-card px-3 py-2 text-sm"
         >
           <option value="all">{t("statusAll")}</option>
           <option value="completed">{t("statusCompleted")}</option>
@@ -111,7 +111,7 @@ export function OrderHistoryList() {
             setOrderTypeFilter(e.target.value as OrderType | "all")
             resetToFirstPage()
           }}
-          className="rounded-lg border bg-card px-3 py-2 text-sm"
+          className="nb-border-sm rounded-lg bg-card px-3 py-2 text-sm"
         >
           <option value="all">{t("orderTypeAll")}</option>
           <option value="pickup">{t("orderTypePickup")}</option>
@@ -124,9 +124,9 @@ export function OrderHistoryList() {
       ) : rows.length === 0 ? (
         <p className="py-16 text-center text-muted-foreground">{t("empty")}</p>
       ) : (
-        <div className="overflow-x-auto rounded-xl border bg-card">
+        <div className="nb-border nb-shadow-sm overflow-x-auto rounded-xl bg-card">
           <table className="w-full text-sm">
-            <thead className="border-b bg-muted/40 text-left text-xs font-bold uppercase text-muted-foreground">
+            <thead className="border-b-2 border-ink/15 bg-muted/40 text-left text-xs font-bold uppercase text-muted-foreground">
               <tr>
                 <th className="px-4 py-3">{t("columnOrderId")}</th>
                 <th className="px-4 py-3">{t("columnDateTime")}</th>
@@ -139,7 +139,7 @@ export function OrderHistoryList() {
             </thead>
             <tbody>
               {rows.map((order) => (
-                <tr key={order.id} className="border-b last:border-0 hover:bg-muted/20">
+                <tr key={order.id} className="border-b-2 border-ink/15 last:border-0 hover:bg-muted/20">
                   <td className="px-4 py-3">
                     <Link
                       href={`/staff/orders/history/${order.id}`}
@@ -178,7 +178,7 @@ export function OrderHistoryList() {
             type="button"
             disabled={page <= 1}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
-            className="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+            className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-1.5 disabled:opacity-40"
           >
             {t("previous")}
           </button>
@@ -186,7 +186,7 @@ export function OrderHistoryList() {
             type="button"
             disabled={page >= totalPages}
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            className="rounded-lg border px-3 py-1.5 disabled:opacity-40"
+            className="nb-border-sm nb-press-sm rounded-lg bg-card px-3 py-1.5 disabled:opacity-40"
           >
             {t("next")}
           </button>
