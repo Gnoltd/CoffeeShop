@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import {
-  CookingPot, Check, PackageCheck, CircleCheckBig, Clock, TableIcon, ShoppingBag, Store, Phone, Utensils,
+  CookingPot, Check, PackageCheck, CircleCheckBig, Clock, TableIcon, ShoppingBag, MapPin, Phone, Utensils,
   CreditCard, Banknote, QrCode, Ban, Receipt,
 } from "lucide-react"
 import { useLocale, useTranslations } from "next-intl"
@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { payExistingOrder, changeOrderPaymentMethod, type RealPaymentMethod } from "@/lib/supabase/orders-data"
 import { getShopSettings } from "@/lib/supabase/settings-data"
+import { getAddresses } from "@/lib/supabase/address-data"
 import { useOrders, type OrderForTracking, type OrderStatus } from "@/hooks/useOrders"
 import { StepProgress } from "@/components/motion/step-progress"
 import { PressFeedback } from "@/components/motion/press-feedback"
@@ -72,6 +73,7 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [openReviewIndex, setOpenReviewIndex] = useState<number | null>(null)
   const [shopPhone, setShopPhone] = useState("")
+  const [customerAddress, setCustomerAddress] = useState("")
   const searchParams = useSearchParams()
 
   useEffect(() => {
@@ -84,6 +86,19 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
     getShopSettings(supabase)
       .then((settings) => setShopPhone(settings.phone))
       .catch(() => setShopPhone(""))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      getAddresses(supabase, user.id)
+        .then((addresses) => {
+          const defaultAddress = addresses.find((a) => a.isDefault) ?? addresses[0]
+          if (defaultAddress) setCustomerAddress(defaultAddress.address)
+        })
+        .catch(() => setCustomerAddress(""))
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -310,11 +325,13 @@ export function OrderTracking({ orderId, table }: { orderId: string; table?: str
             </div>
             <div className="nb-border nb-shadow-sm flex items-center gap-4 rounded-xl bg-card p-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-accent/30 text-accent-foreground">
-                <Store className="h-5 w-5" />
+                <MapPin className="h-5 w-5" />
               </div>
-              <div>
-                <h4 className="text-sm font-bold text-card-foreground">{t("branchName")}</h4>
-              </div>
+              {customerAddress && (
+                <div>
+                  <h4 className="text-sm font-bold text-card-foreground">{customerAddress}</h4>
+                </div>
+              )}
             </div>
           </section>
         </div>
