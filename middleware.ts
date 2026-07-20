@@ -31,7 +31,12 @@ function buildCsp(nonce: string): string {
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'`,
     `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: blob: ${SUPABASE_ORIGIN}`,
+    // images.unsplash.com: interim allowance for spotlight-hero.tsx's
+    // hardcoded hero photos (CSS background-image, so this CSP's img-src
+    // governs them same as an <img> tag would) -- being replaced by an
+    // admin-managed, Supabase-Storage-hosted image feature (see
+    // docs/superpowers/specs/), at which point this line comes out.
+    `img-src 'self' data: blob: ${SUPABASE_ORIGIN} https://images.unsplash.com`,
     `font-src 'self'`,
     `connect-src 'self' ${SUPABASE_ORIGIN} ${SUPABASE_WS_ORIGIN}`,
     `media-src 'self' blob:`,
