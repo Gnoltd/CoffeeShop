@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
@@ -64,6 +65,9 @@ export default async function RootLayout({
   const messages = await getMessages();
   const supabase = await createClient();
   const role = await getCurrentRole(supabase);
+  // Set by middleware.ts's CSP nonce generation -- required so this one
+  // inline script is allowed under a strict `script-src 'nonce-...'` CSP.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
 
   return (
     <html
@@ -72,6 +76,7 @@ export default async function RootLayout({
     >
       <head>
         <script
+          nonce={nonce}
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem("phadincoffee-theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark");}catch(e){}})();`,
           }}
