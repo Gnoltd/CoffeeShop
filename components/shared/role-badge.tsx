@@ -1,10 +1,12 @@
+"use client"
+
 import { LogIn, User, Briefcase } from "lucide-react"
-import { getTranslations } from "next-intl/server"
+import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { ROLE_HOME } from "@/lib/roles"
 
-export async function RoleBadge({ role }: { role: string | null }) {
-  const t = await getTranslations("RoleNav")
+export function RoleBadge({ role }: { role: string | null }) {
+  const t = useTranslations("RoleNav")
 
   const { label, href, Icon } =
     role === "staff"

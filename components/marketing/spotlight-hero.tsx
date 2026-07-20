@@ -70,6 +70,7 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
 
   return (
     <section
+      id="spotlight-hero"
       className="relative h-screen w-full overflow-hidden bg-black"
       style={{ height: "100dvh" }}
     >

@@ -5,9 +5,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
 import { Be_Vietnam_Pro, Playfair_Display } from "next/font/google";
 import { routing } from "@/i18n/routing";
-import { LanguageSwitcher } from "@/components/shared/language-switcher";
-import { RoleBadge } from "@/components/shared/role-badge";
-import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { HeaderActionsStack } from "@/components/shared/header-actions-stack";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { TablesProvider } from "@/hooks/useTables";
 import { CartProvider } from "@/hooks/useCart";
@@ -88,11 +86,7 @@ export default async function RootLayout({
             <TablesProvider>
               <CartProvider>
                 <OrdersProvider>
-                  <div id="header-actions-stack" className="fixed top-2 right-2 z-50 flex items-center gap-2">
-                    <RoleBadge role={role} />
-                    <ThemeToggle />
-                    <LanguageSwitcher />
-                  </div>
+                  <HeaderActionsStack role={role} />
                   {children}
                 </OrdersProvider>
               </CartProvider>
