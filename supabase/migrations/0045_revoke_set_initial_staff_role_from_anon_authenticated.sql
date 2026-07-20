@@ -1,0 +1,26 @@
+-- 0045_revoke_set_initial_staff_role_from_anon_authenticated.sql
+-- CRITICAL fix found in a full-codebase security review (2026-07-20):
+--
+-- set_initial_staff_role (0017) was designed to be callable ONLY by
+-- service_role -- it has zero internal authorization check of its own
+-- (it uses session_replication_role = replica to deliberately bypass
+-- the prevent_role_self_change trigger), relying entirely on grants for
+-- protection. Its migration did `revoke all on function ... from
+-- public; grant execute ... to service_role;`, intending to lock it
+-- down. But Supabase's project-level default privileges grant EXECUTE
+-- directly to the named anon/authenticated roles at function-creation
+-- time -- a grant that `revoke ... from public` never touches, since
+-- anon/authenticated aren't reached through the PUBLIC pseudo-role.
+-- Verified live: has_function_privilege('anon', 'set_initial_staff_role',
+-- 'execute') returned true -- meaning any anonymous caller could POST
+-- to /rest/v1/rpc/set_initial_staff_role with an arbitrary p_user_id and
+-- p_role: 'admin' and instantly grant themselves (or anyone) full admin
+-- access. This revokes the privilege from the two roles that actually
+-- had it, matching the function's original intent.
+--
+-- This same gap could affect any other function anywhere in this schema
+-- that's meant to be service_role-only -- explicit `revoke execute on
+-- function ... from anon, authenticated` (not `from public`) is the
+-- correct pattern going forward, not just `from public`.
+
+revoke execute on function public.set_initial_staff_role(uuid, public.user_role) from anon, authenticated;
