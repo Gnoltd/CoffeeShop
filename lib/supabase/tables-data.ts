@@ -5,7 +5,12 @@ export type TableOccupancyStatus = "available" | "occupied" | "cleaning"
 export type TableRecord = {
   id: string
   number: string
-  qrToken: string
+  // Absent from the general/Realtime table list (lib/supabase/tables-data.ts's
+  // TABLE_SELECT_SAFE excludes it) -- only get_table_by_qr_token (guest scan
+  // lookup) and get_tables_admin (Admin Tables Management's QR display) ever
+  // populate it; anon/authenticated have no direct column-level SELECT on
+  // tables.qr_code_token at all as of migration 0046/0047.
+  qrToken?: string
   locationVi: string
   locationEn: string
   status: TableOccupancyStatus
@@ -19,13 +24,13 @@ export type TableInput = {
   locationEn: string
 }
 
-const TABLE_SELECT =
-  "id, table_number, qr_code_token, location_vi, location_en, status, cleaning_notified_at, scan_count"
+// Excludes qr_code_token deliberately -- see TableRecord.qrToken's comment.
+const TABLE_SELECT_SAFE = "id, table_number, location_vi, location_en, status, cleaning_notified_at, scan_count"
 
 export type TableRow = {
   id: string
   table_number: string
-  qr_code_token: string
+  qr_code_token?: string
   location_vi: string
   location_en: string
   status: TableOccupancyStatus
@@ -47,7 +52,18 @@ export function mapTableRow(row: TableRow): TableRecord {
 }
 
 export async function getTables(supabase: SupabaseClient): Promise<TableRecord[]> {
-  const { data, error } = await supabase.from("tables").select(TABLE_SELECT).order("table_number")
+  const { data, error } = await supabase.from("tables").select(TABLE_SELECT_SAFE).order("table_number")
+  if (error) throw error
+  return ((data ?? []) as TableRow[]).map(mapTableRow)
+}
+
+// Admin/staff-only: the one legitimate need for tables.qr_code_token beyond
+// the guest scan lookup (Admin Tables Management's QR display/print/regenerate
+// panel). get_tables_admin() checks the caller's role internally and returns
+// the full row (including qr_code_token) regardless of the column-level
+// SELECT restriction, since it's SECURITY DEFINER.
+export async function getTablesWithQrTokens(supabase: SupabaseClient): Promise<TableRecord[]> {
+  const { data, error } = await supabase.rpc("get_tables_admin")
   if (error) throw error
   return ((data ?? []) as TableRow[]).map(mapTableRow)
 }
@@ -56,7 +72,7 @@ export async function createTable(supabase: SupabaseClient, input: TableInput): 
   const { data, error } = await supabase
     .from("tables")
     .insert({ table_number: input.number, location_vi: input.locationVi, location_en: input.locationEn })
-    .select(TABLE_SELECT)
+    .select(TABLE_SELECT_SAFE)
     .single()
   if (error) throw error
   return mapTableRow(data as TableRow)
@@ -67,7 +83,7 @@ export async function renameTable(supabase: SupabaseClient, id: string, number: 
     .from("tables")
     .update({ table_number: number })
     .eq("id", id)
-    .select(TABLE_SELECT)
+    .select(TABLE_SELECT_SAFE)
     .single()
   if (error) throw error
   return mapTableRow(data as TableRow)
@@ -83,7 +99,7 @@ export async function updateTableLocation(
     .from("tables")
     .update({ location_vi: locationVi, location_en: locationEn })
     .eq("id", id)
-    .select(TABLE_SELECT)
+    .select(TABLE_SELECT_SAFE)
     .single()
   if (error) throw error
   return mapTableRow(data as TableRow)
@@ -98,7 +114,7 @@ export async function setTableStatus(
     .from("tables")
     .update({ status })
     .eq("id", id)
-    .select(TABLE_SELECT)
+    .select(TABLE_SELECT_SAFE)
     .single()
   if (error) throw error
   return mapTableRow(data as TableRow)
@@ -123,11 +139,7 @@ export async function incrementScanCount(supabase: SupabaseClient, id: string): 
 }
 
 export async function getTableByToken(supabase: SupabaseClient, token: string): Promise<TableRecord | null> {
-  const { data, error } = await supabase
-    .from("tables")
-    .select(TABLE_SELECT)
-    .eq("qr_code_token", token)
-    .maybeSingle()
+  const { data, error } = await supabase.rpc("get_table_by_qr_token", { p_token: token })
   if (error) throw error
   return data ? mapTableRow(data as TableRow) : null
 }

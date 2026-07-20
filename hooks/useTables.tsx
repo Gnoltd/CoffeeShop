@@ -7,6 +7,7 @@ import {
   createTable as createTableQuery,
   getTableByToken,
   getTables,
+  getTablesWithQrTokens,
   incrementScanCount,
   mapTableRow,
   notifyTableCleaning,
@@ -29,7 +30,11 @@ type TablesContextValue = {
   updateLocation: (id: string, locationVi: string, locationEn: string) => Promise<void>
   setStatus: (id: string, status: TableOccupancyStatus) => Promise<void>
   notifyCleaning: (id: string) => Promise<void>
-  regenerateToken: (id: string) => Promise<void>
+  regenerateToken: (id: string) => Promise<TableRecord>
+  // Admin/staff-only: fetches every table's qrToken via the role-gated
+  // get_tables_admin RPC (see tables-data.ts) -- the general `tables` list
+  // above deliberately never carries qr_code_token.
+  getQrTokens: () => Promise<Record<string, string>>
   activeTable: TableRecord | null
   setActiveTableByToken: (token: string) => Promise<TableRecord | null>
   clearActiveTable: () => void
@@ -121,8 +126,13 @@ export function TablesProvider({ children }: { children: ReactNode }) {
     await notifyTableCleaning(supabase, id)
   }
 
-  async function regenerateToken(id: string) {
-    await regenerateQrTokenQuery(supabase, id)
+  async function regenerateToken(id: string): Promise<TableRecord> {
+    return regenerateQrTokenQuery(supabase, id)
+  }
+
+  async function getQrTokens(): Promise<Record<string, string>> {
+    const rows = await getTablesWithQrTokens(supabase)
+    return Object.fromEntries(rows.map((row) => [row.id, row.qrToken ?? ""]))
   }
 
   async function setActiveTableByToken(token: string): Promise<TableRecord | null> {
@@ -151,6 +161,7 @@ export function TablesProvider({ children }: { children: ReactNode }) {
         setStatus,
         notifyCleaning,
         regenerateToken,
+        getQrTokens,
         activeTable,
         setActiveTableByToken,
         clearActiveTable,

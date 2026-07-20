@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import {
   getTables,
+  getTablesWithQrTokens,
   createTable,
   regenerateQrToken,
   incrementScanCount,
@@ -11,11 +12,13 @@ import {
 } from "./tables-data"
 
 describe("getTables", () => {
-  it("maps snake_case DB rows to camelCase TableRecord", async () => {
+  it("maps snake_case DB rows to camelCase TableRecord, with no qr_code_token requested", async () => {
+    // The general table list deliberately excludes qr_code_token (see
+    // TABLE_SELECT_SAFE in tables-data.ts) -- anon/authenticated have no
+    // column-level SELECT on it at all as of migration 0046/0047.
     const row = {
       id: "tbl-1",
       table_number: "1",
-      qr_code_token: "abc123",
       location_vi: "Khu vực cửa sổ",
       location_en: "Window Area",
       status: "available",
@@ -36,7 +39,7 @@ describe("getTables", () => {
       {
         id: "tbl-1",
         number: "1",
-        qrToken: "abc123",
+        qrToken: undefined,
         locationVi: "Khu vực cửa sổ",
         locationEn: "Window Area",
         status: "available",
@@ -47,12 +50,33 @@ describe("getTables", () => {
   })
 })
 
+describe("getTablesWithQrTokens", () => {
+  it("calls the get_tables_admin RPC and maps rows including qr_code_token", async () => {
+    const row = {
+      id: "tbl-1",
+      table_number: "1",
+      qr_code_token: "abc123",
+      location_vi: "",
+      location_en: "",
+      status: "available",
+      cleaning_notified_at: null,
+      scan_count: 3,
+    }
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: [row], error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
+
+    const result = await getTablesWithQrTokens(supabase)
+
+    expect(rpcSpy).toHaveBeenCalledWith("get_tables_admin")
+    expect(result[0].qrToken).toBe("abc123")
+  })
+})
+
 describe("createTable", () => {
   it("inserts snake_case columns and returns the mapped row", async () => {
     const insertedRow = {
       id: "tbl-new",
       table_number: "7",
-      qr_code_token: "def456",
       location_vi: "Sân vườn",
       location_en: "Garden",
       status: "available",
@@ -72,7 +96,6 @@ describe("createTable", () => {
       location_en: "Garden",
     })
     expect(result.number).toBe("7")
-    expect(result.qrToken).toBe("def456")
   })
 
   it("propagates a unique-constraint error instead of swallowing it", async () => {
@@ -132,18 +155,13 @@ describe("incrementScanCount", () => {
 })
 
 describe("getTableByToken", () => {
-  it("returns null when no table matches the token", async () => {
-    const supabase = {
-      from: () => ({
-        select: () => ({
-          eq: () => ({
-            maybeSingle: () => Promise.resolve({ data: null, error: null }),
-          }),
-        }),
-      }),
-    } as unknown as SupabaseClient
+  it("calls the get_table_by_qr_token RPC with the token", async () => {
+    const rpcSpy = vi.fn(() => Promise.resolve({ data: null, error: null }))
+    const supabase = { rpc: rpcSpy } as unknown as SupabaseClient
 
     const result = await getTableByToken(supabase, "nonexistent-token")
+
+    expect(rpcSpy).toHaveBeenCalledWith("get_table_by_qr_token", { p_token: "nonexistent-token" })
     expect(result).toBeNull()
   })
 })

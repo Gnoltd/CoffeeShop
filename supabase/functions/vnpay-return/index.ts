@@ -18,10 +18,22 @@ const RETURN_URL_EXTRA_PARAMS = ["orderId", "locale"]
 
 Deno.serve(async (req) => {
   const params = new URL(req.url).searchParams
-  const orderId = params.get("orderId")
   const locale = params.get("locale") === "en" ? "en" : "vi"
   const siteUrl = Deno.env.get("SITE_URL")!
   const hashSecret = Deno.env.get("VNPAY_HASH_SECRET")
+
+  // Use vnp_TxnRef (signed, tamper-evident) as the order id, not the
+  // separate `orderId` query param -- that one is excluded from the
+  // signature (see RETURN_URL_EXTRA_PARAMS above) purely because it's
+  // our own return-URL bookkeeping, which means it's NOT tamper-evident:
+  // an attacker could keep a genuinely-signed VNPay callback for their
+  // own trivial order but swap `orderId` to point at a victim's order,
+  // and the signature would still verify. vnp_TxnRef is set to the real
+  // order id at checkout-URL creation time (buildVnpayCheckoutUrl) and
+  // is part of the signed vnp_* field set, so it can't be substituted
+  // without invalidating vnp_SecureHash. vnpay-ipn already used this
+  // field correctly; this brings vnpay-return in line with it.
+  const orderId = params.get("vnp_TxnRef")
 
   if (!orderId || !hashSecret || !(await verifyVnpaySignature(params, hashSecret, RETURN_URL_EXTRA_PARAMS))) {
     return Response.redirect(`${siteUrl}/${locale}/checkout?paymentFailed=1`, 302)

@@ -12,14 +12,30 @@ import { TableForm } from "@/components/admin/table-form"
 export function TablesManagement() {
   const locale = useLocale()
   const t = useTranslations("AdminTables")
-  const { tables, addTable, renameTable, updateLocation, setStatus, regenerateToken } = useTables()
+  const { tables, addTable, renameTable, updateLocation, setStatus, regenerateToken, getQrTokens } = useTables()
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draftNumber, setDraftNumber] = useState("")
   const [draftLocationVi, setDraftLocationVi] = useState("")
   const [draftLocationEn, setDraftLocationEn] = useState("")
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({})
+  // tables.qr_code_token isn't in the shared TablesProvider list at all (see
+  // hooks/useTables.tsx) -- this admin-only page fetches it separately via
+  // the role-gated get_tables_admin RPC.
+  const [tokensById, setTokensById] = useState<Record<string, string>>({})
   const [showAddForm, setShowAddForm] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+    getQrTokens().then((tokens) => {
+      if (!cancelled) setTokensById(tokens)
+    })
+    return () => {
+      cancelled = true
+    }
+    // Runs once on mount; getQrTokens is stable within a TablesProvider lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const totalScans = tables.reduce((sum, table) => sum + table.scanCount, 0)
   const availableCount = tables.filter((table) => table.status === "available").length
@@ -31,11 +47,13 @@ export function TablesManagement() {
     const origin = window.location.origin
 
     Promise.all(
-      tables.map(async (table) => {
-        const url = `${origin}/table/${table.qrToken}`
-        const dataUrl = await QRCode.toDataURL(url, { width: 256, margin: 1 })
-        return [table.id, dataUrl] as const
-      })
+      tables
+        .filter((table) => tokensById[table.id])
+        .map(async (table) => {
+          const url = `${origin}/table/${tokensById[table.id]}`
+          const dataUrl = await QRCode.toDataURL(url, { width: 256, margin: 1 })
+          return [table.id, dataUrl] as const
+        })
     ).then((entries) => {
       if (!cancelled) setQrCodes(Object.fromEntries(entries))
     })
@@ -43,7 +61,7 @@ export function TablesManagement() {
     return () => {
       cancelled = true
     }
-  }, [tables])
+  }, [tables, tokensById])
 
   function downloadQr(tableNumber: string, dataUrl: string) {
     const link = document.createElement("a")
@@ -243,7 +261,7 @@ export function TablesManagement() {
                 </div>
               )}
 
-              <p className="font-mono text-[10px] text-muted-foreground">{table.qrToken}</p>
+              <p className="font-mono text-[10px] text-muted-foreground">{tokensById[table.id]}</p>
               <div className="flex w-full flex-col gap-2 sm:flex-row">
                 <Button
                   variant="neubrutal"
@@ -259,7 +277,15 @@ export function TablesManagement() {
                   variant="neubrutal"
                   size="sm"
                   className="h-9 w-full gap-1.5 bg-secondary sm:flex-1"
-                  onClick={() => regenerateToken(table.id).catch(() => setError(t("updateError")))}
+                  onClick={() =>
+                    regenerateToken(table.id)
+                      .then((updated) => {
+                        if (updated.qrToken) {
+                          setTokensById((prev) => ({ ...prev, [table.id]: updated.qrToken! }))
+                        }
+                      })
+                      .catch(() => setError(t("updateError")))
+                  }
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
                   {t("regenerateCode")}
