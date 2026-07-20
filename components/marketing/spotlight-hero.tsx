@@ -89,7 +89,7 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
         className="pointer-events-none absolute inset-x-0 bottom-0 z-40 h-28 bg-gradient-to-t from-background to-transparent"
         aria-hidden
       />
-      <div className="pointer-events-none absolute left-0 right-0 top-[14%] z-50 flex flex-col items-center px-5 text-center">
+      <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-6 px-6 text-center sm:gap-8">
         <h1 className="leading-[0.95] text-white">
           <span
             className="hero-anim hero-reveal font-playfair block text-5xl font-normal italic sm:text-7xl md:text-8xl"
@@ -104,32 +104,34 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
             {t("heroLine2")}
           </span>
         </h1>
-      </div>
-      <div
-        className="hero-anim hero-fade absolute bottom-24 left-10 z-50 hidden max-w-[260px] sm:block md:left-14"
-        style={{ animationDelay: "0.7s" }}
-      >
-        <p className="text-sm leading-relaxed text-white/80">{t("heroLeftText")}</p>
-      </div>
-      <div
-        className="hero-anim hero-fade absolute bottom-24 left-5 right-5 z-50 flex max-w-full flex-col items-start gap-4 sm:left-auto sm:right-10 sm:max-w-[260px] sm:gap-5 md:right-14"
-        style={{ animationDelay: "0.85s" }}
-      >
-        <p className="text-xs leading-relaxed text-white/80 sm:text-sm">{t("heroRightText")}</p>
-        <Link
-          href="/menu"
-          className="rounded-full bg-primary px-7 py-3 text-sm font-medium text-primary-foreground transition-all hover:scale-[1.03] hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 active:scale-95"
+        <div
+          className="hero-anim hero-fade flex max-w-sm flex-col gap-2 sm:max-w-md"
+          style={{ animationDelay: "0.6s" }}
         >
-          {t("orderNow")}
-        </Link>
-        <button
-          type="button"
-          onClick={onScanQr}
-          className="flex items-center gap-2 rounded-full border border-white/70 px-7 py-3 text-sm font-medium text-white transition-all hover:scale-[1.03] hover:bg-white/10 active:scale-95"
+          <p className="hidden text-sm leading-relaxed text-white/80 sm:block sm:text-base">
+            {t("heroLeftText")}
+          </p>
+          <p className="text-sm leading-relaxed text-white/80 sm:text-base">{t("heroRightText")}</p>
+        </div>
+        <div
+          className="hero-anim hero-fade flex w-full max-w-xs flex-col items-center gap-4"
+          style={{ animationDelay: "0.85s" }}
         >
-          <QrCode className="h-4 w-4" aria-hidden />
-          {t("scanQr")}
-        </button>
+          <Link
+            href="/menu"
+            className="w-full rounded-full bg-primary px-7 py-3 text-sm font-medium text-primary-foreground transition-all hover:scale-[1.03] hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/30 active:scale-95"
+          >
+            {t("orderNow")}
+          </Link>
+          <button
+            type="button"
+            onClick={onScanQr}
+            className="flex w-full items-center justify-center gap-2 rounded-full border border-white/70 px-7 py-3 text-sm font-medium text-white transition-all hover:scale-[1.03] hover:bg-white/10 active:scale-95"
+          >
+            <QrCode className="h-4 w-4" aria-hidden />
+            {t("scanQr")}
+          </button>
+        </div>
       </div>
     </section>
   )

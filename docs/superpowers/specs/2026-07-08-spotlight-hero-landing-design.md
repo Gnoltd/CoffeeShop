@@ -74,6 +74,22 @@ inline `height: 100dvh`. Layers by z-index:
      `hover:bg-white/10`), calls `onScanQr` to open the existing
      `QrScannerOverlay`.
 
+### Revision (2026-07-21 — centered layout)
+
+The top-anchored headline (`top-[14%]`) plus separately bottom-anchored
+description/CTA blocks left the headline overlapping the absolute
+`LandingNav` on some mobile viewports, and left a large dead gap between
+headline and CTAs — reported via a live mobile screenshot. Resolution:
+headline, description paragraph(s), and both CTAs now live in one
+`absolute inset-0 flex flex-col items-center justify-center` block,
+vertically centered in the hero instead of split between `top-[14%]` and
+`bottom-24`. This guarantees clearance from the nav at any viewport
+height and removes the dead middle space; the fade-in stagger (headline
+reveal, then paragraph at `0.6s`, then CTAs at `0.85s`) is preserved.
+`heroLeftText` stays `sm:block`-only (unchanged from the original
+design), now stacked above `heroRightText` in the same centered column
+rather than in a separate bottom-left corner block.
+
 ## Nav (adapted from spec)
 
 `absolute top-0 left-0 right-0 z-[60] flex items-center justify-between
