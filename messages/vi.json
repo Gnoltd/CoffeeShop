@@ -794,7 +794,18 @@
     "savedMessage": "Đã lưu thay đổi.",
     "loading": "Đang tải…",
     "loadError": "Không thể tải cài đặt — vui lòng thử lại.",
-    "saveError": "Không thể lưu cài đặt — vui lòng thử lại."
+    "saveError": "Không thể lưu cài đặt — vui lòng thử lại.",
+    "landingHeroTitle": "Trang Chủ",
+    "landingHeroBasePhoto1": "Ảnh Nền 1",
+    "landingHeroBasePhoto2": "Ảnh Nền 2",
+    "landingHeroBasePhoto3": "Ảnh Nền 3",
+    "landingHeroRevealPhoto": "Ảnh Hiệu Ứng",
+    "landingHeroUploadPrompt": "Nhấn để tải lên",
+    "landingHeroSaveButton": "Lưu Trang Chủ",
+    "landingHeroSavedMessage": "Đã cập nhật trang chủ.",
+    "landingHeroSaveError": "Không thể lưu — vui lòng thử lại.",
+    "landingHeroImageTooLargeError": "Ảnh phải nhỏ hơn 8MB.",
+    "landingHeroImageInvalidTypeError": "Vui lòng chọn một tệp ảnh."
   },
   "FoodCost": {
     "title": "Tính Tỷ Lệ Chi Phí Thực Phẩm",

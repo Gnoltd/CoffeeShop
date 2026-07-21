@@ -794,7 +794,18 @@
     "savedMessage": "Changes saved.",
     "loading": "Loading…",
     "loadError": "Couldn't load settings — please try again.",
-    "saveError": "Couldn't save settings — please try again."
+    "saveError": "Couldn't save settings — please try again.",
+    "landingHeroTitle": "Landing Page",
+    "landingHeroBasePhoto1": "Background Photo 1",
+    "landingHeroBasePhoto2": "Background Photo 2",
+    "landingHeroBasePhoto3": "Background Photo 3",
+    "landingHeroRevealPhoto": "Spotlight Photo",
+    "landingHeroUploadPrompt": "Click to upload",
+    "landingHeroSaveButton": "Save Landing Page",
+    "landingHeroSavedMessage": "Landing page updated.",
+    "landingHeroSaveError": "Couldn't save — please try again.",
+    "landingHeroImageTooLargeError": "Image must be under 8MB.",
+    "landingHeroImageInvalidTypeError": "Please choose an image file."
   },
   "FoodCost": {
     "title": "Food Cost Percentage Calculator",
