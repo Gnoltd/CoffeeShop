@@ -245,7 +245,10 @@
     "paymentCanceledNotice": "Đã hủy thanh toán — giỏ hàng của bạn vẫn còn, hãy thử phương thức khác.",
     "placeOrder": "Đặt Hàng",
     "emptyCart": "Giỏ hàng trống — hãy thêm món trước khi thanh toán.",
-    "browseMenu": "Xem Thực Đơn"
+    "browseMenu": "Xem Thực Đơn",
+    "shopClosedTitle": "Quán hiện đang đóng cửa",
+    "shopClosedBody": "Hiện chưa có ca làm việc nào được mở nên chúng tôi chưa thể nhận đơn mới. Vui lòng quay lại sau.",
+    "shopClosedError": "Quán hiện đang đóng cửa — chưa có ca làm việc nào được mở để nhận đơn này."
   },
   "OrderHistory": {
     "filterAll": "Tất Cả",
@@ -387,7 +390,9 @@
     "paymentMethodComingSoon": "Sắp có — chưa khả dụng",
     "chargeError": "Thanh toán thất bại. Vui lòng thử lại.",
     "backToMenu": "Về Thực Đơn",
-    "viewOrder": "Xem Đơn ({count})"
+    "viewOrder": "Xem Đơn ({count})",
+    "noOpenShiftNotice": "Chưa có ca làm việc nào được mở — hãy mở ca tại Màn hình bếp trước khi nhận đơn.",
+    "noOpenShiftError": "Chưa có ca làm việc nào được mở — hãy mở ca tại Màn hình bếp trước khi thanh toán đơn này."
   },
   "KitchenDisplay": {
     "columnNew": "Mới",
@@ -435,7 +440,18 @@
     "queueLabel": "Hàng Chờ",
     "queueOrders": "{count} Đơn",
     "waitTimeLabel": "TG Chờ Dự Kiến",
-    "waitTimeValue": "~{minutes} phút"
+    "waitTimeValue": "~{minutes} phút",
+    "openShiftButton": "Mở ca",
+    "closeShiftButton": "Đóng ca",
+    "joinShiftButton": "Vào ca",
+    "leaveShiftButton": "Rời ca",
+    "openShiftError": "Không thể mở ca — vui lòng thử lại.",
+    "closeShiftError": "Không thể đóng ca — vui lòng thử lại.",
+    "startingCashLabel": "Tiền mặt đầu ca trong ngăn kéo (VNĐ)",
+    "plannedStartLabel": "Giờ bắt đầu dự kiến (tùy chọn)",
+    "plannedEndLabel": "Giờ kết thúc dự kiến (tùy chọn)",
+    "countedCashLabel": "Tiền mặt kiểm đếm trong ngăn kéo (VNĐ)",
+    "notesLabel": "Ghi chú (tùy chọn)"
   },
   "MyRedemptions": {
     "title": "Ưu Đãi Của Tôi",
@@ -591,7 +607,19 @@
     "differenceShort": "Thiếu",
     "differenceExact": "Khớp",
     "openNewShift": "Mở Ca Mới",
-    "loading": "Đang tải…"
+    "loading": "Đang tải…",
+    "openedByLabel": "Mở ca bởi",
+    "closedByLabel": "Đóng ca bởi",
+    "plannedStartLabel": "Giờ bắt đầu dự kiến (tùy chọn)",
+    "plannedEndLabel": "Giờ kết thúc dự kiến (tùy chọn)",
+    "plannedWindowLabel": "Khung giờ dự kiến",
+    "plannedWindowUnset": "chưa đặt",
+    "itemsSoldTitle": "Sản phẩm đã bán trong ca",
+    "emptyItemsSold": "Chưa có sản phẩm nào được bán trong ca này.",
+    "itemQuantity": "Đã bán {count}",
+    "workersTitle": "Nhân viên làm việc trong ca",
+    "emptyWorkers": "Chưa có nhân viên nào được ghi nhận trong ca này.",
+    "workerAnonymous": "Nhân viên chưa đặt tên"
   },
   "AdminMenu": {
     "title": "Quản Lý Thực Đơn",

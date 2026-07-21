@@ -1,47 +1,120 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { createClient } from "@/lib/supabase/client"
-import { getShiftReport, type ShiftReport } from "@/lib/supabase/shift-data"
+import { useRealtimeChannel } from "@/hooks/useRealtimeChannel"
+import {
+  getShiftReport,
+  openShift as openShiftQuery,
+  closeShift as closeShiftQuery,
+  joinShift as joinShiftQuery,
+  leaveShift as leaveShiftQuery,
+  type ShiftReport,
+} from "@/lib/supabase/shift-data"
 
-export function useShift() {
+type ShiftContextValue = {
+  supabase: ReturnType<typeof createClient>
+  report: ShiftReport | null
+  isLoading: boolean
+  isShiftOpen: boolean
+  currentUserId: string | null
+  isCurrentUserWorking: boolean
+  refetch: () => void
+  openShift: (startingCash: number, plannedStartAt?: number | null, plannedEndAt?: number | null) => Promise<void>
+  closeShift: (countedCash: number, notes?: string) => Promise<void>
+  joinShift: () => Promise<void>
+  leaveShift: () => Promise<void>
+}
+
+const ShiftContext = createContext<ShiftContextValue | null>(null)
+
+export function ShiftProvider({ children }: { children: ReactNode }) {
   const [supabase] = useState(() => createClient())
   const [report, setReport] = useState<ShiftReport | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [refreshKey, setRefreshKey] = useState(0)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id ?? null))
+  }, [supabase])
+
+  function refetch() {
+    getShiftReport(supabase)
+      .then((result) => setReport(result))
+      .finally(() => setIsLoading(false))
+  }
 
   useEffect(() => {
     let cancelled = false
-
-    function refetch() {
-      getShiftReport(supabase)
-        .then((result) => {
-          if (!cancelled) setReport(result)
-        })
-        .finally(() => {
-          if (!cancelled) setIsLoading(false)
-        })
-    }
-
-    refetch()
-
-    const channel = supabase
-      .channel("shift-report-changes")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        if (!cancelled) refetch()
+    getShiftReport(supabase)
+      .then((result) => {
+        if (!cancelled) setReport(result)
       })
-      .subscribe((status) => {
-        if (status !== "SUBSCRIBED" && status !== "CLOSED") {
-          console.warn(`Shift report realtime subscription status: ${status}`)
-        }
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
       })
-
     return () => {
       cancelled = true
-      supabase.removeChannel(channel)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey])
+  }, [supabase])
 
-  return { supabase, report, isLoading, refetch: () => setRefreshKey((k) => k + 1) }
+  // Shift open/close/join/leave never touch `orders`, and a paid order
+  // changes what the live report's totals show — all three tables need
+  // their own subscription for the report to stay live for every staff
+  // member watching, not just the one who took the action.
+  useRealtimeChannel(supabase, "shift-report-changes", [
+    { table: "orders", event: "*", onChange: () => refetch() },
+    { table: "shifts", event: "*", onChange: () => refetch() },
+    { table: "shift_workers", event: "*", onChange: () => refetch() },
+  ])
+
+  async function openShift(startingCash: number, plannedStartAt?: number | null, plannedEndAt?: number | null) {
+    const result = await openShiftQuery(supabase, startingCash, plannedStartAt, plannedEndAt)
+    setReport(result)
+  }
+
+  async function closeShift(countedCash: number, notes?: string) {
+    const result = await closeShiftQuery(supabase, countedCash, notes)
+    setReport(result)
+  }
+
+  async function joinShift() {
+    const result = await joinShiftQuery(supabase)
+    setReport(result)
+  }
+
+  async function leaveShift() {
+    const result = await leaveShiftQuery(supabase)
+    setReport(result)
+  }
+
+  const isCurrentUserWorking =
+    currentUserId !== null &&
+    (report?.workers.some((w) => w.staffId === currentUserId && w.leftAt === null) ?? false)
+
+  return (
+    <ShiftContext.Provider
+      value={{
+        supabase,
+        report,
+        isLoading,
+        isShiftOpen: report !== null,
+        currentUserId,
+        isCurrentUserWorking,
+        refetch,
+        openShift,
+        closeShift,
+        joinShift,
+        leaveShift,
+      }}
+    >
+      {children}
+    </ShiftContext.Provider>
+  )
+}
+
+export function useShift(): ShiftContextValue {
+  const ctx = useContext(ShiftContext)
+  if (!ctx) throw new Error("useShift must be used within a ShiftProvider")
+  return ctx
 }

@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
-import { CreditCard, Banknote, QrCode, TableIcon, Sparkles, Gift, Check } from "lucide-react"
+import { CreditCard, Banknote, QrCode, TableIcon, Sparkles, Gift, Check, AlertTriangle } from "lucide-react"
 import { Link, useRouter } from "@/i18n/navigation"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { formatVND } from "@/lib/format"
 import { createClient } from "@/lib/supabase/client"
 import { cancelPendingOrder } from "@/lib/supabase/orders-data"
+import { isShiftOpen } from "@/lib/supabase/shift-data"
 import { getMyRedemptions, type MyRedemption } from "@/lib/supabase/rewards-data"
 import { getShopSettings, getLoyaltySettings } from "@/lib/supabase/settings-data"
 import { useCart } from "@/hooks/useCart"
@@ -52,6 +53,10 @@ export function CheckoutView() {
   const searchParams = useSearchParams()
   const [canceledNotice, setCanceledNotice] = useState(false)
   const [isScannerOpen, setIsScannerOpen] = useState(false)
+  // Optimistic true so the form doesn't flash "closed" while the first
+  // check is in flight — place_order's own no_open_shift rejection is
+  // still the real, server-authoritative gate.
+  const [shiftOpen, setShiftOpen] = useState(true)
 
   // One fixed redemption chunk per toggle-on, same UX as the old mock's
   // single "50 points for X đ" option — only the VND-per-point conversion
@@ -83,6 +88,27 @@ export function CheckoutView() {
       setLoyaltyEnabled(settings.enabled)
     })
     getShopSettings(supabase).then((settings) => setTaxRatePercent(settings.taxRatePercent))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    function checkShiftOpen() {
+      isShiftOpen(supabase)
+        .then((open) => {
+          if (!cancelled) setShiftOpen(open)
+        })
+        .catch(() => {
+          // Fail open on a check error — place_order's own gate is the
+          // real enforcement; this is only an early UX hint.
+        })
+    }
+    checkShiftOpen()
+    const interval = setInterval(checkShiftOpen, 15000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -119,7 +145,13 @@ export function CheckoutView() {
   }
 
   async function handlePlaceOrder() {
-    if (items.length === 0 || (payAt === "now" && !paymentMethod) || (orderType === "dine-in" && !activeTable)) return
+    if (
+      items.length === 0 ||
+      !shiftOpen ||
+      (payAt === "now" && !paymentMethod) ||
+      (orderType === "dine-in" && !activeTable)
+    )
+      return
     setError(null)
     setIsPlacing(true)
     try {
@@ -162,6 +194,9 @@ export function CheckoutView() {
       if (message.includes("invalid_redemption_code") || message.includes("redemption_already_used") || message.includes("redemption_expired")) {
         setError(t("redemptionInvalidError"))
         setSelectedRedemptionIds([])
+      } else if (message.includes("no_open_shift")) {
+        setShiftOpen(false)
+        setError(t("shopClosedError"))
       } else {
         setError(paymentMethod === "stripe" ? t("cardPaymentUnavailable") : t("placeOrderError"))
       }
@@ -182,6 +217,15 @@ export function CheckoutView() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 pb-32 pt-4 sm:px-6 md:max-w-5xl md:px-8 md:pb-8">
+      {!shiftOpen && (
+        <div className="nb-border nb-shadow-sm mb-6 flex items-start gap-3 rounded-xl bg-destructive/10 p-4">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <div>
+            <p className="font-extrabold text-destructive">{t("shopClosedTitle")}</p>
+            <p className="text-sm text-destructive/80">{t("shopClosedBody")}</p>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col gap-6 md:flex-row md:items-start md:gap-8">
         {/* Left Column: Order configurations */}
         <div className="flex-1 min-w-0 md:flex-[3]">
@@ -431,7 +475,12 @@ export function CheckoutView() {
             <Button
               variant="neubrutal"
               onClick={handlePlaceOrder}
-              disabled={(payAt === "now" && !paymentMethod) || (orderType === "dine-in" && !activeTable) || isPlacing}
+              disabled={
+                !shiftOpen ||
+                (payAt === "now" && !paymentMethod) ||
+                (orderType === "dine-in" && !activeTable) ||
+                isPlacing
+              }
               className="h-12 w-full text-base"
             >
               {t("placeOrder")}

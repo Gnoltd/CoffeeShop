@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { Banknote, Clock, CreditCard, QrCode } from "lucide-react"
+import { Banknote, Clock, CreditCard, QrCode, Users, Package, CalendarClock } from "lucide-react"
 import { formatVND, formatOrderId } from "@/lib/format"
 import type { ShiftReport } from "@/lib/supabase/shift-data"
 
@@ -27,13 +27,24 @@ export function ShiftReportDetail({ report, locale }: { report: ShiftReport; loc
         <p className="mb-1 flex items-center gap-1.5 text-sm text-muted-foreground">
           <Clock className="h-4 w-4" />
           {t("openedAtLabel")}: {formatDateTime(report.openedAt, locale)}
+          {report.openedByName && <> ({report.openedByName})</>}
           {report.closedAt !== null && (
             <>
               {" · "}
               {t("closedAtLabel")}: {formatDateTime(report.closedAt, locale)}
+              {report.closedByName && <> ({report.closedByName})</>}
             </>
           )}
         </p>
+        {(report.plannedStartAt !== null || report.plannedEndAt !== null) && (
+          <p className="mb-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <CalendarClock className="h-3.5 w-3.5" />
+            {t("plannedWindowLabel")}:{" "}
+            {report.plannedStartAt !== null ? formatDateTime(report.plannedStartAt, locale) : t("plannedWindowUnset")}
+            {" – "}
+            {report.plannedEndAt !== null ? formatDateTime(report.plannedEndAt, locale) : t("plannedWindowUnset")}
+          </p>
+        )}
         <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <div>
             <p className="text-xs text-muted-foreground">{t("startingCashStat")}</p>
@@ -114,6 +125,56 @@ export function ShiftReportDetail({ report, locale }: { report: ShiftReport; loc
               </tbody>
             </table>
           </div>
+        )}
+      </section>
+
+      <section className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
+        <h3 className="mb-3 flex items-center gap-1.5 font-bold text-card-foreground">
+          <Package className="h-4 w-4" />
+          {t("itemsSoldTitle")}
+        </h3>
+        {report.itemsSold.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">{t("emptyItemsSold")}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <tbody>
+                {report.itemsSold.map((item) => (
+                  <tr key={item.menuItemId} className="border-b last:border-0">
+                    <td className="px-2 py-2 font-bold text-card-foreground">
+                      {locale === "vi" ? item.nameVi : item.nameEn}
+                    </td>
+                    <td className="px-2 py-2 text-muted-foreground">{t("itemQuantity", { count: item.quantity })}</td>
+                    <td className="px-2 py-2 text-right font-bold text-card-foreground">{formatVND(item.revenue)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="nb-border-sm nb-shadow-sm rounded-xl bg-card p-5">
+        <h3 className="mb-3 flex items-center gap-1.5 font-bold text-card-foreground">
+          <Users className="h-4 w-4" />
+          {t("workersTitle")}
+        </h3>
+        {report.workers.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">{t("emptyWorkers")}</p>
+        ) : (
+          <ul className="flex flex-col gap-2">
+            {report.workers.map((worker) => (
+              <li key={worker.staffId} className="nb-border-sm flex items-center justify-between rounded-lg bg-chip p-3">
+                <span className="text-sm font-bold text-card-foreground">
+                  {worker.fullName ?? t("workerAnonymous")}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatDateTime(worker.joinedAt, locale)}
+                  {worker.leftAt !== null && <> – {formatDateTime(worker.leftAt, locale)}</>}
+                </span>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
     </div>

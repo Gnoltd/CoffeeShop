@@ -245,7 +245,10 @@
     "paymentCanceledNotice": "Payment cancelled — your cart is still here, try another method.",
     "placeOrder": "Place Order",
     "emptyCart": "Your cart is empty — add items before checking out.",
-    "browseMenu": "Browse Menu"
+    "browseMenu": "Browse Menu",
+    "shopClosedTitle": "The shop is currently closed",
+    "shopClosedBody": "No shift is open right now, so we can't take new orders. Please check back soon.",
+    "shopClosedError": "The shop is currently closed — no shift is open to take this order."
   },
   "OrderHistory": {
     "filterAll": "All",
@@ -387,7 +390,9 @@
     "paymentMethodComingSoon": "Coming soon — not available yet",
     "chargeError": "Failed to charge order. Try again.",
     "backToMenu": "Back to Menu",
-    "viewOrder": "View Order ({count})"
+    "viewOrder": "View Order ({count})",
+    "noOpenShiftNotice": "No shift is open — open one from Kitchen Display before taking orders.",
+    "noOpenShiftError": "No shift is open — open one from Kitchen Display before charging this order."
   },
   "KitchenDisplay": {
     "columnNew": "New",
@@ -435,7 +440,18 @@
     "queueLabel": "Queue",
     "queueOrders": "{count, plural, one {# Order} other {# Orders}}",
     "waitTimeLabel": "Wait Time",
-    "waitTimeValue": "~{minutes} min"
+    "waitTimeValue": "~{minutes} min",
+    "openShiftButton": "Open Shift",
+    "closeShiftButton": "Close Shift",
+    "joinShiftButton": "Join Shift",
+    "leaveShiftButton": "Leave Shift",
+    "openShiftError": "Couldn't open the shift — please try again.",
+    "closeShiftError": "Couldn't close the shift — please try again.",
+    "startingCashLabel": "Starting cash in drawer (VND)",
+    "plannedStartLabel": "Planned start time (optional)",
+    "plannedEndLabel": "Planned end time (optional)",
+    "countedCashLabel": "Counted cash in drawer (VND)",
+    "notesLabel": "Note (optional)"
   },
   "MyRedemptions": {
     "title": "My Rewards",
@@ -591,7 +607,19 @@
     "differenceShort": "Short",
     "differenceExact": "Exact",
     "openNewShift": "Open New Shift",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "openedByLabel": "Opened by",
+    "closedByLabel": "Closed by",
+    "plannedStartLabel": "Planned start time (optional)",
+    "plannedEndLabel": "Planned end time (optional)",
+    "plannedWindowLabel": "Planned window",
+    "plannedWindowUnset": "not set",
+    "itemsSoldTitle": "Items Sold This Shift",
+    "emptyItemsSold": "No items sold in this shift yet.",
+    "itemQuantity": "{count, plural, one {# sold} other {# sold}}",
+    "workersTitle": "Staff Working This Shift",
+    "emptyWorkers": "No staff recorded on this shift.",
+    "workerAnonymous": "Unnamed staff member"
   },
   "AdminMenu": {
     "title": "Manage Menu",

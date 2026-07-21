@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client"
 import type { MenuCategory, MenuIcon, MenuItem } from "@/lib/supabase/menu-data"
 import { useTables } from "@/hooks/useTables"
 import { useKitchenOrders } from "@/hooks/useKitchenOrders"
+import { useShift } from "@/hooks/useShift"
 import { KitchenPendingPayment } from "@/components/staff/kitchen-pending-payment"
 import { PosItemPicker, type PosPickerSelection } from "@/components/staff/pos-item-picker"
 import { getShopSettings } from "@/lib/supabase/settings-data"
@@ -47,6 +48,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
   const [supabase] = useState(() => createClient())
   const { tables } = useTables()
   const { pendingPaymentOrders, confirmCashPayment } = useKitchenOrders()
+  const { isShiftOpen } = useShift()
 
   const [selectedCategory, setSelectedCategory] = useState(categories[0]?.id ?? "")
   const [searchQuery, setSearchQuery] = useState("")
@@ -163,8 +165,9 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
       if (invokeError || data?.error) throw invokeError ?? new Error(data.error)
       setOrder([])
       setMobileView("menu")
-    } catch {
-      setChargeError(t("chargeError"))
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      setChargeError(message.includes("no_open_shift") ? t("noOpenShiftError") : t("chargeError"))
     } finally {
       setIsCharging(false)
     }
@@ -252,6 +255,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
           total={total}
           chargeError={chargeError}
           isCharging={isCharging}
+          isShiftOpen={isShiftOpen}
           handleCharge={handleCharge}
         />
       </aside>
@@ -294,6 +298,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
               total={total}
               chargeError={chargeError}
               isCharging={isCharging}
+              isShiftOpen={isShiftOpen}
               handleCharge={handleCharge}
               onBack={() => setMobileView("menu")}
             />
@@ -329,6 +334,7 @@ type OrderPanelProps = {
   total: number
   chargeError: string | null
   isCharging: boolean
+  isShiftOpen: boolean
   handleCharge: () => void
   onBack?: () => void
 }
@@ -350,6 +356,7 @@ function OrderPanel({
   total,
   chargeError,
   isCharging,
+  isShiftOpen,
   handleCharge,
   onBack,
 }: OrderPanelProps) {
@@ -516,6 +523,9 @@ function OrderPanel({
           </div>
         </div>
 
+        {!isShiftOpen && (
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{t("noOpenShiftNotice")}</p>
+        )}
         {chargeError && (
           <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{chargeError}</p>
         )}
@@ -523,7 +533,7 @@ function OrderPanel({
         <button
           type="button"
           onClick={handleCharge}
-          disabled={order.length === 0 || isCharging}
+          disabled={order.length === 0 || isCharging || !isShiftOpen}
           className="nb-border nb-shadow nb-press flex items-center justify-between rounded-xl bg-primary px-5 py-4 text-primary-foreground disabled:opacity-50"
         >
           <span className="flex flex-col items-start">

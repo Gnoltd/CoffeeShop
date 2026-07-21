@@ -24,6 +24,8 @@ export function ShiftClosing() {
   const { supabase, report, isLoading, refetch } = useShift()
   const [tab, setTab] = useState<Tab>("current")
   const [startingCashInput, setStartingCashInput] = useState("")
+  const [plannedStartInput, setPlannedStartInput] = useState("")
+  const [plannedEndInput, setPlannedEndInput] = useState("")
   const [countedCashInput, setCountedCashInput] = useState("")
   const [notesInput, setNotesInput] = useState("")
   const [closedSummary, setClosedSummary] = useState<ShiftReport | null>(null)
@@ -49,8 +51,15 @@ export function ShiftClosing() {
     setError(null)
     setIsSubmitting(true)
     try {
-      await openShift(supabase, Math.round(amount))
+      await openShift(
+        supabase,
+        Math.round(amount),
+        plannedStartInput ? new Date(plannedStartInput).getTime() : null,
+        plannedEndInput ? new Date(plannedEndInput).getTime() : null
+      )
       setStartingCashInput("")
+      setPlannedStartInput("")
+      setPlannedEndInput("")
       setClosedSummary(null)
       refetch()
     } catch {
@@ -149,7 +158,7 @@ export function ShiftClosing() {
                   <label className="mb-1 mt-3 block text-xs font-medium text-muted-foreground">
                     {t("startingCashLabel")}
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <input
                       type="number"
                       min="0"
@@ -160,6 +169,30 @@ export function ShiftClosing() {
                     <Button variant="neubrutal" className="h-11" disabled={isSubmitting || startingCashInput === ""} onClick={handleOpen}>
                       {t("openShiftButton")}
                     </Button>
+                  </div>
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        {t("plannedStartLabel")}
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={plannedStartInput}
+                        onChange={(e) => setPlannedStartInput(e.target.value)}
+                        className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                        {t("plannedEndLabel")}
+                      </label>
+                      <input
+                        type="datetime-local"
+                        value={plannedEndInput}
+                        onChange={(e) => setPlannedEndInput(e.target.value)}
+                        className="nb-border-sm h-11 w-full rounded-xl bg-card px-4 text-card-foreground"
+                      />
+                    </div>
                   </div>
                 </section>
               ) : (
@@ -241,6 +274,13 @@ export function ShiftClosing() {
                     <p className="text-sm text-muted-foreground">
                       {t("totalRevenueStat")}: {formatVND(shift.totalRevenue)}
                     </p>
+                    {(shift.openedByName || shift.closedByName) && (
+                      <p className="text-xs text-muted-foreground">
+                        {shift.openedByName && <>{t("openedByLabel")}: {shift.openedByName}</>}
+                        {shift.openedByName && shift.closedByName && " · "}
+                        {shift.closedByName && <>{t("closedByLabel")}: {shift.closedByName}</>}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-3">
                     <p
