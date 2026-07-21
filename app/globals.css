@@ -185,6 +185,31 @@
   }
 }
 
+/* Base-layer crossfade gallery — 3 photos, ~5s hold + 0.5s fade each,
+   full 18s cycle. Each layer gets a staggered animation-delay (0s, 6s,
+   12s) via inline style in spotlight-hero.tsx, same convention as
+   .hero-anim's staggered animationDelay above. */
+@keyframes heroCrossfade {
+  0% { opacity: 0; }
+  2.7% { opacity: 1; }
+  30.5% { opacity: 1; }
+  33.3% { opacity: 0; }
+  100% { opacity: 0; }
+}
+.hero-crossfade {
+  animation: heroCrossfade 18s ease-in-out infinite;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-crossfade {
+    animation: none;
+    opacity: 0;
+  }
+  .hero-crossfade-first {
+    opacity: 1;
+  }
+}
+
 /* Neubrutalist Modern shared primitives (spec: 2026-07-12-elevated-warm-redesign-design.md) */
 @layer components {
   .nb-border {
