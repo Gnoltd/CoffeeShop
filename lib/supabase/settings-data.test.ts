@@ -1,6 +1,13 @@
 import { describe, it, expect, vi } from "vitest"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { getShopSettings, updateShopSettings, getLoyaltySettings, updateLoyaltySettings } from "./settings-data"
+import {
+  getShopSettings,
+  updateShopSettings,
+  getLoyaltySettings,
+  updateLoyaltySettings,
+  getLandingHeroSettings,
+  updateLandingHeroSettings,
+} from "./settings-data"
 
 describe("getShopSettings", () => {
   it("maps the row to camelCase and converts tax_rate to a whole percent", async () => {
@@ -100,5 +107,58 @@ describe("updateLoyaltySettings", () => {
     } as unknown as SupabaseClient
 
     await expect(updateLoyaltySettings(supabase, { enabled: true, earnRateVndPerPoint: 10000, redeemValueVndPerPoint: 100 })).rejects.toThrow("boom")
+  })
+})
+
+describe("getLandingHeroSettings", () => {
+  it("maps the row to camelCase", async () => {
+    const row = {
+      landing_hero_base_images: ["https://x/base-1.webp", "https://x/base-2.webp", "https://x/base-3.webp"],
+      landing_hero_reveal_image: "https://x/reveal.webp",
+    }
+    const singleSpy = vi.fn(() => Promise.resolve({ data: row, error: null }))
+    const eqSpy = vi.fn(() => ({ single: singleSpy }))
+    const selectSpy = vi.fn(() => ({ eq: eqSpy }))
+    const supabase = { from: () => ({ select: selectSpy }) } as unknown as SupabaseClient
+
+    const result = await getLandingHeroSettings(supabase)
+
+    expect(selectSpy).toHaveBeenCalledWith("landing_hero_base_images, landing_hero_reveal_image")
+    expect(eqSpy).toHaveBeenCalledWith("id", 1)
+    expect(result).toEqual({
+      baseImages: ["https://x/base-1.webp", "https://x/base-2.webp", "https://x/base-3.webp"],
+      revealImage: "https://x/reveal.webp",
+    })
+  })
+
+  it("maps a null reveal image to null", async () => {
+    const row = { landing_hero_base_images: [], landing_hero_reveal_image: null }
+    const supabase = {
+      from: () => ({ select: () => ({ eq: () => ({ single: () => Promise.resolve({ data: row, error: null }) }) }) }),
+    } as unknown as SupabaseClient
+
+    const result = await getLandingHeroSettings(supabase)
+
+    expect(result.revealImage).toBeNull()
+    expect(result.baseImages).toEqual([])
+  })
+})
+
+describe("updateLandingHeroSettings", () => {
+  it("writes both columns", async () => {
+    const eqSpy = vi.fn(() => Promise.resolve({ error: null }))
+    const updateSpy = vi.fn(() => ({ eq: eqSpy }))
+    const supabase = { from: () => ({ update: updateSpy }) } as unknown as SupabaseClient
+
+    await updateLandingHeroSettings(supabase, {
+      baseImages: ["https://x/1.webp", "https://x/2.webp", "https://x/3.webp"],
+      revealImage: "https://x/reveal.webp",
+    })
+
+    expect(updateSpy).toHaveBeenCalledWith({
+      landing_hero_base_images: ["https://x/1.webp", "https://x/2.webp", "https://x/3.webp"],
+      landing_hero_reveal_image: "https://x/reveal.webp",
+    })
+    expect(eqSpy).toHaveBeenCalledWith("id", 1)
   })
 })

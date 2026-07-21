@@ -99,3 +99,41 @@ export async function updateLoyaltySettings(supabase: SupabaseClient, input: Loy
     .eq("id", 1)
   if (error) throw error
 }
+
+export type LandingHeroSettings = {
+  baseImages: string[]
+  revealImage: string | null
+}
+
+type LandingHeroSettingsRow = {
+  landing_hero_base_images: string[]
+  landing_hero_reveal_image: string | null
+}
+
+export async function getLandingHeroSettings(supabase: SupabaseClient): Promise<LandingHeroSettings> {
+  const { data, error } = await supabase
+    .from("shop_settings")
+    .select("landing_hero_base_images, landing_hero_reveal_image")
+    .eq("id", 1)
+    .single()
+  if (error) throw error
+  const row = data as LandingHeroSettingsRow
+  return {
+    baseImages: row.landing_hero_base_images,
+    revealImage: row.landing_hero_reveal_image,
+  }
+}
+
+export async function updateLandingHeroSettings(
+  supabase: SupabaseClient,
+  input: LandingHeroSettings
+): Promise<void> {
+  const { error } = await supabase
+    .from("shop_settings")
+    .update({
+      landing_hero_base_images: input.baseImages,
+      landing_hero_reveal_image: input.revealImage,
+    })
+    .eq("id", 1)
+  if (error) throw error
+}
