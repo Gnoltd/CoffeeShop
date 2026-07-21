@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { createClient } from "@/lib/supabase/client"
+import { LandingHeroSettingsCard } from "@/components/admin/landing-hero-settings-card"
 import {
   getShopSettings,
   updateShopSettings,
@@ -233,6 +234,8 @@ export function SettingsView() {
           </div>
         </CardContent>
       </Card>
+
+      <LandingHeroSettingsCard />
 
       <div className="flex items-center gap-3">
         <Button variant="neubrutal" className="h-11 bg-card px-6 text-foreground" onClick={handleCancel} disabled={isSaving}>
