@@ -10,6 +10,7 @@ import { formatVND } from "@/lib/format"
 import { QrScannerOverlay } from "@/components/customer/qr-scanner-overlay"
 import { ItemImage } from "@/components/customer/item-image"
 import type { MenuItem } from "@/lib/supabase/menu-data"
+import type { LandingHeroSettings } from "@/lib/supabase/settings-data"
 
 const CATEGORY_CHIPS = [
   { id: "coffee", labelVi: "Cà Phê", labelEn: "Coffee" },
@@ -18,7 +19,13 @@ const CATEGORY_CHIPS = [
   { id: "blended", labelVi: "Đá Xay", labelEn: "Blended" },
 ]
 
-export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
+export function LandingView({
+  bestSellers,
+  landingHero,
+}: {
+  bestSellers: MenuItem[]
+  landingHero: LandingHeroSettings
+}) {
   const locale = useLocale()
   const t = useTranslations("Landing")
   const [isScannerOpen, setIsScannerOpen] = useState(false)
@@ -27,7 +34,11 @@ export function LandingView({ bestSellers }: { bestSellers: MenuItem[] }) {
     <div className="w-full">
       <div className="relative">
         <LandingNav />
-        <SpotlightHero onScanQr={() => setIsScannerOpen(true)} />
+        <SpotlightHero
+          onScanQr={() => setIsScannerOpen(true)}
+          baseImages={landingHero.baseImages}
+          revealImage={landingHero.revealImage}
+        />
       </div>
 
       <div className="mx-auto w-full max-w-2xl md:max-w-6xl md:px-8">
