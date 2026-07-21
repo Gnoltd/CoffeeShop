@@ -5,6 +5,7 @@ import { QrCode } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { SPOTLIGHT_R, spotlightMask } from "@/lib/spotlight-mask"
+import { cn } from "@/lib/utils"
 
 // Phone viewports get a 40% smaller reveal radius — the 260px desktop default
 // (tuned for mouse-cursor use) covers more than half the width of a phone
@@ -12,14 +13,15 @@ import { SPOTLIGHT_R, spotlightMask } from "@/lib/spotlight-mask"
 const MOBILE_SPOTLIGHT_R = SPOTLIGHT_R * 0.6
 const MOBILE_BREAKPOINT = 640
 
-// Swappable hero photography (CSS backgrounds, no next/image config needed).
-// Base: dark moody coffee; reveal: warm glowing cup, shown through the spotlight.
-const BASE_IMAGE =
-  "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=1600&q=80"
-const REVEAL_IMAGE =
-  "https://images.unsplash.com/photo-1509042239860-f550ce710b93?auto=format&fit=crop&w=1600&q=80"
-
-export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
+export function SpotlightHero({
+  onScanQr,
+  baseImages,
+  revealImage,
+}: {
+  onScanQr: () => void
+  baseImages: string[]
+  revealImage: string | null
+}) {
   const t = useTranslations("Landing")
   const mouse = useRef({ x: 0, y: 0 })
   const smooth = useRef({ x: 0, y: 0 })
@@ -74,18 +76,26 @@ export function SpotlightHero({ onScanQr }: { onScanQr: () => void }) {
       className="relative h-screen w-full overflow-hidden bg-black"
       style={{ height: "100dvh" }}
     >
-      <div
-        className="hero-zoom absolute inset-0 z-10 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${BASE_IMAGE})` }}
-      />
-      <div
-        className="pointer-events-none absolute inset-0 z-30 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url(${REVEAL_IMAGE})`,
-          maskImage: mask,
-          WebkitMaskImage: mask,
-        }}
-      />
+      {baseImages.map((image, index) => (
+        <div
+          key={image}
+          className={cn(
+            "hero-crossfade absolute inset-0 z-10 bg-cover bg-center bg-no-repeat",
+            index === 0 && "hero-crossfade-first"
+          )}
+          style={{ backgroundImage: `url(${image})`, animationDelay: `${index * 6}s` }}
+        />
+      ))}
+      {revealImage && (
+        <div
+          className="pointer-events-none absolute inset-0 z-30 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: `url(${revealImage})`,
+            maskImage: mask,
+            WebkitMaskImage: mask,
+          }}
+        />
+      )}
       <div
         className="pointer-events-none absolute inset-x-0 bottom-0 z-40 h-28 bg-gradient-to-t from-background to-transparent"
         aria-hidden
