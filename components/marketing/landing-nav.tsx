@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { Coffee } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
+import { useHeaderActionsClearance } from "@/hooks/useHeaderActionsClearance"
 
 const NAV_LINKS = [
   { key: "navMenu", href: "/menu" },
@@ -12,28 +12,9 @@ const NAV_LINKS = [
   { key: "navProfile", href: "/profile" },
 ] as const
 
-const HEADER_ACTIONS_GAP_PX = 16
-// Safe upper-bound guess for the header-actions-stack width (role badge +
-// theme toggle + language switcher) used only until the real width is
-// measured on mount — avoids a flash of overlap on first paint.
-const FALLBACK_CLEARANCE_PX = 280
-
 export function LandingNav() {
   const t = useTranslations("Landing")
-  const [signUpClearance, setSignUpClearance] = useState(FALLBACK_CLEARANCE_PX)
-
-  useEffect(() => {
-    const stack = document.getElementById("header-actions-stack")
-    if (!stack) return
-
-    const updateClearance = () =>
-      setSignUpClearance(stack.getBoundingClientRect().width + HEADER_ACTIONS_GAP_PX)
-
-    updateClearance()
-    const observer = new ResizeObserver(updateClearance)
-    observer.observe(stack)
-    return () => observer.disconnect()
-  }, [])
+  const signUpClearance = useHeaderActionsClearance()
 
   return (
     <nav className="absolute top-0 left-0 right-0 z-[60] flex items-center justify-between p-4 sm:p-5">
