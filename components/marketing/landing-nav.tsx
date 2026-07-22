@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { Coffee, Menu as MenuIcon, X } from "lucide-react"
 import { useTranslations } from "next-intl"
-import { Link } from "@/i18n/navigation"
+import { Link, useRouter } from "@/i18n/navigation"
+import { createClient } from "@/lib/supabase/client"
 import { useHeaderActionsClearance } from "@/hooks/useHeaderActionsClearance"
 
 const NAV_LINKS = [
@@ -13,10 +14,17 @@ const NAV_LINKS = [
   { key: "navProfile", href: "/profile" },
 ] as const
 
-export function LandingNav() {
+export function LandingNav({ userName = null }: { userName?: string | null }) {
   const t = useTranslations("Landing")
+  const router = useRouter()
   const signUpClearance = useHeaderActionsClearance()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.refresh()
+  }
 
   return (
     <nav className="absolute top-0 left-0 right-0 z-[60] flex items-center justify-between p-4 sm:p-5">
@@ -39,19 +47,34 @@ export function LandingNav() {
           </Link>
         ))}
       </div>
-      <div className="hidden items-center gap-2 md:flex" style={{ marginRight: signUpClearance }}>
-        <Link
-          href="/login"
-          className="rounded-full border border-white/40 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
-        >
-          {t("navLogin")}
-        </Link>
-        <Link
-          href="/signup"
-          className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-100"
-        >
-          {t("navSignUp")}
-        </Link>
+      <div className="hidden items-center gap-3 md:flex" style={{ marginRight: signUpClearance }}>
+        {userName ? (
+          <>
+            <span className="text-sm font-medium text-white/90">{t("navGreeting", { name: userName })}</span>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-full border border-white/40 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {t("navLogout")}
+            </button>
+          </>
+        ) : (
+          <>
+            <Link
+              href="/login"
+              className="rounded-full border border-white/40 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              {t("navLogin")}
+            </Link>
+            <Link
+              href="/signup"
+              className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+            >
+              {t("navSignUp")}
+            </Link>
+          </>
+        )}
       </div>
 
       <div className="relative md:hidden">
@@ -73,21 +96,41 @@ export function LandingNav() {
               onClick={() => setIsMobileMenuOpen(false)}
               className="fixed inset-0 cursor-default"
             />
-            <div className="absolute right-0 top-12 flex w-40 flex-col gap-1 rounded-2xl bg-white p-2 shadow-lg">
-              <Link
-                href="/login"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
-              >
-                {t("navLogin")}
-              </Link>
-              <Link
-                href="/signup"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
-              >
-                {t("navSignUp")}
-              </Link>
+            <div className="absolute right-0 top-12 flex w-48 flex-col gap-1 rounded-2xl bg-white p-2 shadow-lg">
+              {userName ? (
+                <>
+                  <p className="truncate px-4 pt-1 pb-2 text-sm font-semibold text-gray-900">
+                    {t("navGreeting", { name: userName })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false)
+                      handleLogout()
+                    }}
+                    className="rounded-xl px-4 py-2 text-left text-sm font-semibold text-gray-900 hover:bg-gray-100"
+                  >
+                    {t("navLogout")}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+                  >
+                    {t("navLogin")}
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+                  >
+                    {t("navSignUp")}
+                  </Link>
+                </>
+              )}
             </div>
           </>
         )}

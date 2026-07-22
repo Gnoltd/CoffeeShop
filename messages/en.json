@@ -39,6 +39,8 @@
     "navLogin": "Log In",
     "navMenuLabel": "Account menu",
     "navSignUp": "Sign Up",
+    "navGreeting": "Hello, {name}",
+    "navLogout": "Log Out",
     "scanInstructions": "Point your camera at the table's QR code",
     "closeScanner": "Close",
     "cameraPermissionDenied": "Camera access is needed to scan a QR code.",

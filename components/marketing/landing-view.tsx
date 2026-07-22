@@ -22,9 +22,11 @@ const CATEGORY_CHIPS = [
 export function LandingView({
   bestSellers,
   landingHero,
+  userName = null,
 }: {
   bestSellers: MenuItem[]
   landingHero: LandingHeroSettings
+  userName?: string | null
 }) {
   const locale = useLocale()
   const t = useTranslations("Landing")
@@ -33,7 +35,7 @@ export function LandingView({
   return (
     <div className="w-full">
       <div className="relative">
-        <LandingNav />
+        <LandingNav userName={userName} />
         <SpotlightHero
           onScanQr={() => setIsScannerOpen(true)}
           baseImages={landingHero.baseImages}

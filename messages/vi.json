@@ -39,6 +39,8 @@
     "navLogin": "Đăng Nhập",
     "navMenuLabel": "Menu tài khoản",
     "navSignUp": "Đăng ký",
+    "navGreeting": "Xin chào, {name}",
+    "navLogout": "Đăng Xuất",
     "scanInstructions": "Hướng camera vào mã QR trên bàn",
     "closeScanner": "Đóng",
     "cameraPermissionDenied": "Cần quyền truy cập camera để quét mã QR.",
