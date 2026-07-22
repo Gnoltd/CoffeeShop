@@ -5,6 +5,7 @@ import { Coffee } from "lucide-react"
 import { Link, usePathname } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { canAccessAdmin } from "@/lib/roles"
+import { useHeaderActionsClearance } from "@/hooks/useHeaderActionsClearance"
 
 const NAV_ITEMS = [
   { href: "/staff/pos", labelKey: "pos" },
@@ -16,13 +17,17 @@ export function StaffNav({ role = null }: { role?: string | null }) {
   const tBrand = useTranslations("Brand")
   const tNav = useTranslations("Nav")
   const pathname = usePathname()
+  const clearance = useHeaderActionsClearance()
 
   const navItems = canAccessAdmin(role)
     ? [...NAV_ITEMS, { href: "/admin/dashboard", labelKey: "dashboard" } as const]
     : NAV_ITEMS
 
   return (
-    <header className="flex min-h-14 shrink-0 flex-col items-start gap-5 border-b bg-card px-4 py-2 md:flex-row md:items-center md:gap-6 md:py-0">
+    <header
+      className="flex min-h-14 shrink-0 flex-col items-start gap-5 border-b bg-card px-4 py-2 md:flex-row md:items-center md:gap-6 md:py-0"
+      style={{ paddingRight: clearance }}
+    >
       <Link href="/" className="flex items-center gap-2 font-semibold text-primary">
         <Coffee className="h-5 w-5" />
         {tBrand("name")}
