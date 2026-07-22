@@ -37,13 +37,20 @@ export function LandingNav() {
           </Link>
         ))}
       </div>
-      <Link
-        href="/signup"
-        style={{ marginRight: signUpClearance }}
-        className="hidden rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-100 md:block"
-      >
-        {t("navSignUp")}
-      </Link>
+      <div className="hidden items-center gap-2 md:flex" style={{ marginRight: signUpClearance }}>
+        <Link
+          href="/login"
+          className="rounded-full border border-white/40 px-6 py-2.5 text-sm font-semibold text-white hover:bg-white/10"
+        >
+          {t("navLogin")}
+        </Link>
+        <Link
+          href="/signup"
+          className="rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+        >
+          {t("navSignUp")}
+        </Link>
+      </div>
     </nav>
   )
 }

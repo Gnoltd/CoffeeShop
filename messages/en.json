@@ -36,6 +36,7 @@
     "navOrders": "Orders",
     "navLoyalty": "Loyalty",
     "navProfile": "Profile",
+    "navLogin": "Log In",
     "navSignUp": "Sign Up",
     "scanInstructions": "Point your camera at the table's QR code",
     "closeScanner": "Close",
