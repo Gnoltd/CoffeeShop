@@ -1,0 +1,14 @@
+-- 0055_drop_stale_open_shift_overload.sql
+-- Migration 0053 changed open_shift's signature (added
+-- p_planned_start_at/p_planned_end_at), so `create or replace function
+-- open_shift(...)` created a second overload instead of replacing the
+-- original single-argument open_shift(int) from migration 0031 --
+-- Postgres resolves functions by full signature, not just name.
+--
+-- The stale overload is dead in practice (0054 removed the shifts
+-- INSERT policy it relies on, so calling it now fails with an RLS
+-- violation rather than writing anything), but leaving two overloads
+-- around is confusing dead surface with no legitimate caller --
+-- lib/supabase/shift-data.ts's openShift() always sends all three
+-- named params, which PostgREST resolves to the 3-arg version.
+drop function if exists public.open_shift(int);
