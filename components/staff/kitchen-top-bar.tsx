@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation"
 import { cn } from "@/lib/utils"
 import { useKitchenOrders } from "@/hooks/useKitchenOrders"
 import { useShift } from "@/hooks/useShift"
+import { useHeaderActionsClearance } from "@/hooks/useHeaderActionsClearance"
 import { ShiftControlsDialog } from "@/components/staff/shift-controls-dialog"
 
 export function KitchenTopBar() {
@@ -14,6 +15,7 @@ export function KitchenTopBar() {
   const t = useTranslations("KitchenDisplay")
   const { isRealtimeConnected } = useKitchenOrders()
   const { isShiftOpen, isCurrentUserWorking, joinShift, leaveShift } = useShift()
+  const clearance = useHeaderActionsClearance()
   const [dialogMode, setDialogMode] = useState<"open" | "close" | null>(null)
   const [isTogglingMembership, setIsTogglingMembership] = useState(false)
 
@@ -33,7 +35,10 @@ export function KitchenTopBar() {
   }
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b bg-card pl-4 pr-52 md:px-4">
+    <header
+      className="flex h-16 shrink-0 items-center justify-between border-b bg-card pl-4"
+      style={{ paddingRight: clearance }}
+    >
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <Coffee className="h-5 w-5" />
@@ -42,7 +47,7 @@ export function KitchenTopBar() {
         <div className="hidden h-6 w-px bg-border md:block" />
         <span className="hidden text-sm font-semibold text-muted-foreground md:inline">{t("stationLabel")}</span>
       </div>
-      <div className="flex items-center gap-3 md:mr-52">
+      <div className="flex items-center gap-3">
         <div className="nb-border-sm flex items-center gap-2 rounded-lg bg-chip px-2 py-1.5 md:px-3">
           <span
             className={cn(
