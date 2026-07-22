@@ -194,22 +194,25 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2 px-4 pt-4">
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              type="button"
-              onClick={() => setSelectedCategory(category.id)}
-              className={cn(
-                "nb-border-sm nb-shadow-sm nb-press-sm whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-extrabold",
-                selectedCategory === category.id
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-card text-card-foreground"
-              )}
-            >
-              {categoryLabel(category)}
-            </button>
-          ))}
+        <div className="relative">
+          <div className="flex gap-2 overflow-x-auto px-4 pt-4">
+            {categories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                onClick={() => setSelectedCategory(category.id)}
+                className={cn(
+                  "nb-border-sm nb-shadow-sm nb-press-sm shrink-0 whitespace-nowrap rounded-lg px-5 py-2.5 text-sm font-extrabold",
+                  selectedCategory === category.id
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-card-foreground"
+                )}
+              >
+                {categoryLabel(category)}
+              </button>
+            ))}
+          </div>
+          <div className="pointer-events-none absolute inset-y-0 top-4 right-0 w-8 bg-gradient-to-l from-background to-transparent" />
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 pb-24 md:pb-4">
