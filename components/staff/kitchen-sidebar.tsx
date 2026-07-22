@@ -1,7 +1,7 @@
 "use client"
 
 import { useTranslations } from "next-intl"
-import { CookingPot, Gauge, History, Boxes, ShoppingCart, LayoutDashboard } from "lucide-react"
+import { CookingPot, Gauge, History, Wallet, Boxes, ShoppingCart, LayoutDashboard } from "lucide-react"
 import { Link, usePathname } from "@/i18n/navigation"
 import { canAccessAdmin } from "@/lib/roles"
 
@@ -18,6 +18,8 @@ export function KitchenSidebar({
   const tNav = useTranslations("Nav")
   const pathname = usePathname()
   const isHistoryActive = pathname === "/staff/orders/history"
+  const isShiftHistoryActive = pathname === "/staff/orders/shift-history"
+  const isLiveOrdersActive = !isHistoryActive && !isShiftHistoryActive
 
   return (
     <aside className="nb-border border-y-0 border-l-0 hidden w-64 shrink-0 flex-col bg-muted/40 py-4 md:flex">
@@ -35,7 +37,7 @@ export function KitchenSidebar({
         <Link
           href="/staff/orders"
           className={
-            !isHistoryActive
+            isLiveOrdersActive
               ? "nb-border-sm flex items-center gap-3 rounded-lg bg-chip px-4 py-3 font-bold text-secondary"
               : "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
           }
@@ -53,6 +55,17 @@ export function KitchenSidebar({
         >
           <History className="h-4 w-4" />
           {t("orderHistoryNav")}
+        </Link>
+        <Link
+          href="/staff/orders/shift-history"
+          className={
+            isShiftHistoryActive
+              ? "nb-border-sm flex items-center gap-3 rounded-lg bg-chip px-4 py-3 font-bold text-secondary"
+              : "flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-muted-foreground hover:bg-muted/40"
+          }
+        >
+          <Wallet className="h-4 w-4" />
+          {t("shiftHistoryNav")}
         </Link>
         <button
           type="button"

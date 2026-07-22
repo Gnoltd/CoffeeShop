@@ -18,7 +18,9 @@ export function StaffOrdersLayoutClient({
   const t = useTranslations("KitchenDisplay")
   const tNav = useTranslations("Nav")
   const pathname = usePathname()
+  const isLiveOrdersActive = pathname === "/staff/orders"
   const isHistoryActive = pathname === "/staff/orders/history"
+  const isShiftHistoryActive = pathname === "/staff/orders/shift-history"
   const { completedCount, avgTimeLabel } = useKitchenOrders()
 
   return (
@@ -30,7 +32,7 @@ export function StaffOrdersLayoutClient({
             href="/staff/orders"
             className={cn(
               "rounded-lg px-3 py-1.5 text-xs font-bold",
-              !isHistoryActive ? "bg-secondary/20 text-secondary" : "text-muted-foreground"
+              isLiveOrdersActive ? "bg-secondary/20 text-secondary" : "text-muted-foreground"
             )}
           >
             {t("liveOrders")}
@@ -43,6 +45,15 @@ export function StaffOrdersLayoutClient({
             )}
           >
             {t("orderHistoryNav")}
+          </Link>
+          <Link
+            href="/staff/orders/shift-history"
+            className={cn(
+              "rounded-lg px-3 py-1.5 text-xs font-bold",
+              isShiftHistoryActive ? "bg-secondary/20 text-secondary" : "text-muted-foreground"
+            )}
+          >
+            {t("shiftHistoryNav")}
           </Link>
           <Link href="/staff/pos" className="rounded-lg px-3 py-1.5 text-xs font-bold text-muted-foreground">
             {tNav("pos")}
