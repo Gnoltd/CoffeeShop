@@ -42,6 +42,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#b3341f",
+  // Without this, mobile browsers keep the layout viewport full-size when the
+  // on-screen keyboard opens (default overlays-content) — any h-dvh/fixed
+  // positioning (BottomSheet, the KDS/admin h-dvh shells) can't shrink to
+  // stay above the keyboard, since there's nothing to recalculate against.
+  interactiveWidget: "resizes-content",
 };
 
 export const dynamic = "force-dynamic";
