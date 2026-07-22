@@ -16,6 +16,8 @@ import {
   LogOut,
   ChevronRight,
   LayoutDashboard,
+  ClipboardList,
+  ShoppingCart,
 } from "lucide-react"
 import { Link, usePathname, useRouter } from "@/i18n/navigation"
 import { formatNumber, formatOrderId } from "@/lib/format"
@@ -23,7 +25,7 @@ import { createClient } from "@/lib/supabase/client"
 import { getLoyaltyBalance } from "@/lib/supabase/loyalty-data"
 import { getProfile, updateProfile } from "@/lib/supabase/profile-data"
 import { Button } from "@/components/ui/button"
-import { ROLE_HOME } from "@/lib/roles"
+import { canAccessAdmin } from "@/lib/roles"
 import { PressFeedback } from "@/components/motion/press-feedback"
 
 type Field = "name" | "phone"
@@ -37,11 +39,17 @@ const FIELD_LABEL_KEYS: Record<Field, "fullName" | "phoneNumber"> = {
 
 export function ProfileView({ role = null }: { role?: string | null }) {
   const t = useTranslations("Profile")
+  const tNav = useTranslations("Nav")
   const locale = useLocale()
   const router = useRouter()
   const pathname = usePathname()
   const params = useParams()
   const isStaffRole = role === "staff" || role === "manager" || role === "admin"
+  const quickLinks = [
+    ...(isStaffRole ? [{ href: "/staff/orders", label: tNav("kitchenDisplay"), Icon: ClipboardList }] : []),
+    ...(isStaffRole ? [{ href: "/staff/pos", label: tNav("pos"), Icon: ShoppingCart }] : []),
+    ...(canAccessAdmin(role) ? [{ href: "/admin/dashboard", label: tNav("dashboard"), Icon: LayoutDashboard }] : []),
+  ]
 
   const [profile, setProfile] = useState(EMPTY_PROFILE)
   const [email, setEmail] = useState("")
@@ -152,14 +160,20 @@ export function ProfileView({ role = null }: { role?: string | null }) {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="neubrutal"
-                className="h-11 w-full bg-secondary"
-                render={<Link href={ROLE_HOME[role]} />}
-                nativeButton={false}
-              >
-                {role === "staff" ? t("staffAccessButtonStaff") : t("staffAccessButtonAdmin")}
-              </Button>
+              <div className="flex flex-col gap-2">
+                {quickLinks.map(({ href, label, Icon }) => (
+                  <Button
+                    key={href}
+                    variant="neubrutal"
+                    className="h-11 w-full bg-secondary"
+                    render={<Link href={href} />}
+                    nativeButton={false}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {label}
+                  </Button>
+                ))}
+              </div>
             </section>
           )}
 
