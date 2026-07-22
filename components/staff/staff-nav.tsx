@@ -49,7 +49,7 @@ export function StaffNav({ role = null }: { role?: string | null }) {
             </Link>
           ))}
         </nav>
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 rounded-r-lg bg-gradient-to-l from-card to-transparent md:hidden" />
+        <div className="pointer-events-none absolute inset-y-0.5 right-0.5 w-8 bg-gradient-to-l from-card to-transparent md:hidden" />
       </div>
     </header>
   )
