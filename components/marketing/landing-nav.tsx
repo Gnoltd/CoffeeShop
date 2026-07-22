@@ -1,6 +1,7 @@
 "use client"
 
-import { Coffee } from "lucide-react"
+import { useState } from "react"
+import { Coffee, Menu as MenuIcon, X } from "lucide-react"
 import { useTranslations } from "next-intl"
 import { Link } from "@/i18n/navigation"
 import { useHeaderActionsClearance } from "@/hooks/useHeaderActionsClearance"
@@ -15,6 +16,7 @@ const NAV_LINKS = [
 export function LandingNav() {
   const t = useTranslations("Landing")
   const signUpClearance = useHeaderActionsClearance()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
     <nav className="absolute top-0 left-0 right-0 z-[60] flex items-center justify-between p-4 sm:p-5">
@@ -50,6 +52,45 @@ export function LandingNav() {
         >
           {t("navSignUp")}
         </Link>
+      </div>
+
+      <div className="relative md:hidden">
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen((open) => !open)}
+          aria-label={t("navMenuLabel")}
+          aria-expanded={isMobileMenuOpen}
+          className="nb-border-sm flex h-10 w-10 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md"
+        >
+          {isMobileMenuOpen ? <X className="h-5 w-5" /> : <MenuIcon className="h-5 w-5" />}
+        </button>
+        {isMobileMenuOpen && (
+          <>
+            <button
+              type="button"
+              aria-hidden
+              tabIndex={-1}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 cursor-default"
+            />
+            <div className="absolute right-0 top-12 flex w-40 flex-col gap-1 rounded-2xl bg-white p-2 shadow-lg">
+              <Link
+                href="/login"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+              >
+                {t("navLogin")}
+              </Link>
+              <Link
+                href="/signup"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="rounded-xl px-4 py-2 text-sm font-semibold text-gray-900 hover:bg-gray-100"
+              >
+                {t("navSignUp")}
+              </Link>
+            </div>
+          </>
+        )}
       </div>
     </nav>
   )
