@@ -32,22 +32,25 @@ export function StaffNav({ role = null }: { role?: string | null }) {
         <Coffee className="h-5 w-5" />
         {tBrand("name")}
       </Link>
-      <nav className="nb-border-sm nb-shadow-sm flex items-center gap-1 overflow-x-auto rounded-lg bg-card p-1">
-        {navItems.map(({ href, labelKey }) => (
-          <Link
-            key={href}
-            href={href}
-            className={cn(
-              "flex shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-extrabold",
-              pathname === href
-                ? "bg-primary text-primary-foreground"
-                : "text-muted-foreground"
-            )}
-          >
-            {tNav(labelKey)}
-          </Link>
-        ))}
-      </nav>
+      <div className="relative w-full min-w-0 md:w-auto">
+        <nav className="nb-border-sm nb-shadow-sm flex w-full min-w-0 items-center gap-1 overflow-x-auto rounded-lg bg-card p-1 md:w-auto">
+          {navItems.map(({ href, labelKey }) => (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-extrabold",
+                pathname === href
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground"
+              )}
+            >
+              {tNav(labelKey)}
+            </Link>
+          ))}
+        </nav>
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-8 rounded-r-lg bg-gradient-to-l from-card to-transparent md:hidden" />
+      </div>
     </header>
   )
 }
