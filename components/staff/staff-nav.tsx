@@ -32,13 +32,13 @@ export function StaffNav({ role = null }: { role?: string | null }) {
         <Coffee className="h-5 w-5" />
         {tBrand("name")}
       </Link>
-      <nav className="nb-border-sm nb-shadow-sm flex gap-1 rounded-lg bg-card p-1">
+      <nav className="nb-border-sm nb-shadow-sm flex items-center gap-1 overflow-x-auto rounded-lg bg-card p-1">
         {navItems.map(({ href, labelKey }) => (
           <Link
             key={href}
             href={href}
             className={cn(
-              "rounded-md px-3 py-1.5 text-sm font-extrabold",
+              "flex shrink-0 items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-extrabold",
               pathname === href
                 ? "bg-primary text-primary-foreground"
                 : "text-muted-foreground"

@@ -195,7 +195,7 @@ export function PosTerminal({ categories, items }: { categories: MenuCategory[];
         )}
 
         <div className="relative">
-          <div className="flex gap-2 overflow-x-auto px-4 pt-4">
+          <div className="flex gap-2 overflow-x-auto px-4 pb-2 pt-4">
             {categories.map((category) => (
               <button
                 key={category.id}
