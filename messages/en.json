@@ -426,6 +426,7 @@
     "terminalSubtitle": "Main Hall Station",
     "liveOrders": "Live Orders",
     "orderHistoryNav": "Order History",
+    "shiftHistoryNav": "Shift History",
     "inventoryNav": "Inventory",
     "shiftStats": "Shift Stats",
     "completedLabel": "Completed",
