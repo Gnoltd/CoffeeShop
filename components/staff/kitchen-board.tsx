@@ -65,9 +65,9 @@ export function KitchenBoard({
           <section
             key={column.status}
             className={cn(
-              "nb-border-sm h-full flex-col overflow-hidden rounded-xl bg-muted",
+              "nb-border-sm min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-muted",
               activeColumn === column.status ? "flex" : "hidden",
-              "md:flex"
+              "md:h-full md:flex"
             )}
           >
             <header className={cn("flex shrink-0 items-center justify-between p-4 text-white", column.headerClass)}>

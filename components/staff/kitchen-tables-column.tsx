@@ -17,9 +17,9 @@ export function KitchenTablesColumn({ active }: { active: boolean }) {
   return (
     <section
       className={cn(
-        "nb-border-sm h-full flex-col overflow-hidden rounded-xl bg-muted",
+        "nb-border-sm min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-muted",
         active ? "flex" : "hidden",
-        "md:flex"
+        "md:h-full md:flex"
       )}
     >
       <header className="flex shrink-0 items-center justify-between bg-zinc-600 p-4 text-white">

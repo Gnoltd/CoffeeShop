@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <InventoryProvider>
       <ShiftProvider>
-        <div className="flex h-screen flex-col overflow-hidden md:flex-row">
+        <div className="flex h-dvh flex-col overflow-hidden md:flex-row">
           <AdminMobileHeader onOpenMenu={() => setIsDrawerOpen(true)} />
           <AdminSidebar open={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
           <main className="flex-1 overflow-y-auto bg-muted/30 p-6 md:pt-16">{children}</main>
