@@ -55,7 +55,7 @@ export function KitchenTopBar() {
               isRealtimeConnected ? "animate-pulse bg-green-500" : "bg-destructive"
             )}
           />
-          <span className="hidden text-xs text-muted-foreground md:inline">
+          <span className="text-xs text-muted-foreground">
             {isRealtimeConnected ? t("systemOnline") : t("systemOffline")}
           </span>
         </div>
@@ -65,10 +65,13 @@ export function KitchenTopBar() {
               type="button"
               disabled={isTogglingMembership}
               onClick={handleToggleMembership}
-              className="nb-border-sm flex items-center gap-1.5 rounded-lg bg-chip px-2 py-1.5 text-xs font-bold text-muted-foreground md:px-3"
+              className={cn(
+                "nb-border-sm flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-bold md:px-3",
+                isCurrentUserWorking ? "bg-secondary/20 text-secondary" : "bg-chip text-muted-foreground"
+              )}
             >
               {isCurrentUserWorking ? <LogOut className="h-3.5 w-3.5" /> : <LogIn className="h-3.5 w-3.5" />}
-              <span className="hidden md:inline">{isCurrentUserWorking ? t("leaveShiftButton") : t("joinShiftButton")}</span>
+              <span>{isCurrentUserWorking ? t("leaveShiftButton") : t("joinShiftButton")}</span>
             </button>
             <button
               type="button"
@@ -76,7 +79,7 @@ export function KitchenTopBar() {
               className="nb-border-sm flex items-center gap-1.5 rounded-lg bg-primary px-2 py-1.5 text-xs font-bold text-primary-foreground md:px-3"
             >
               <Wallet className="h-3.5 w-3.5" />
-              <span className="hidden md:inline">{t("closeShiftButton")}</span>
+              <span>{t("closeShiftButton")}</span>
             </button>
           </div>
         ) : (
@@ -86,7 +89,7 @@ export function KitchenTopBar() {
             className="nb-border-sm flex items-center gap-1.5 rounded-lg bg-primary px-2 py-1.5 text-xs font-bold text-primary-foreground md:px-3"
           >
             <Wallet className="h-3.5 w-3.5" />
-            <span className="hidden md:inline">{t("openShiftButton")}</span>
+            <span>{t("openShiftButton")}</span>
           </button>
         )}
         <div className="hidden items-center gap-3 md:flex">

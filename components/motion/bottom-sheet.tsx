@@ -16,14 +16,14 @@ export function BottomSheet({
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-[60] flex items-end justify-center bg-black/40 md:backdrop-blur-xs sm:items-center sm:p-4"
+        className="fixed inset-x-0 top-0 z-[60] flex h-dvh items-end justify-center bg-black/40 md:backdrop-blur-xs sm:items-center sm:p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
       >
         <motion.div
-          className="nb-border border-x-0 border-b-0 sm:border-x-2 sm:border-b-2 flex w-full max-w-sm md:max-w-md flex-col overflow-hidden rounded-t-2xl bg-card sm:rounded-2xl"
+          className="nb-border border-x-0 border-b-0 sm:border-x-2 sm:border-b-2 flex w-full max-w-sm md:max-w-md max-h-[85dvh] flex-col overflow-y-auto rounded-t-2xl bg-card sm:rounded-2xl"
           initial={{ y: "100%" }}
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
