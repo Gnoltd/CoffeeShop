@@ -36,8 +36,8 @@ export function KitchenTopBar() {
 
   return (
     <header
-      className="flex h-16 shrink-0 items-center justify-between border-b bg-card pl-4"
-      style={{ paddingRight: clearance }}
+      className="flex shrink-0 flex-col gap-2 border-b bg-card px-4 pt-14 pb-2 md:h-16 md:flex-row md:items-center md:justify-between md:gap-0 md:pt-0 md:pb-0 md:pr-[var(--header-clearance)]"
+      style={{ "--header-clearance": `${clearance}px` } as React.CSSProperties}
     >
       <div className="flex items-center gap-4">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
@@ -47,7 +47,7 @@ export function KitchenTopBar() {
         <div className="hidden h-6 w-px bg-border md:block" />
         <span className="hidden text-sm font-semibold text-muted-foreground md:inline">{t("stationLabel")}</span>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <div className="nb-border-sm flex items-center gap-2 rounded-lg bg-chip px-2 py-1.5 md:px-3">
           <span
             className={cn(
